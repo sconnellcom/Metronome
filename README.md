@@ -32,6 +32,13 @@ The Auto Mode is designed specifically for practicing violin, cello, or other ac
 ### 🎚️ Controls
 
 - **BPM Slider**: Adjust tempo from 40 to 240 BPM
+- **Sound Selector**: Choose from 6 different sound options:
+  - **Beep**: Classic 1000Hz sine wave (default)
+  - **Bass Drum**: Deep, punchy bass drum sound
+  - **Cymbal**: Metallic cymbal crash
+  - **Tock**: Wooden metronome tock sound
+  - **4-Count Riff**: Bass drum on beats 1 & 3, Cymbal on beats 2 & 4
+  - **8-Count Riff**: Alternating bass and cymbal over 8 beats
 - **Visual Pulse**: Animated circle that pulses with the beat
 - **Sensitivity Adjustment**: Control how responsive the auto mode is
 - **Start/Stop**: Simple controls to begin and end practice sessions
@@ -47,10 +54,11 @@ The Auto Mode is designed specifically for practicing violin, cello, or other ac
 ### Regular & Silent Modes
 
 1. Select your desired mode (Regular or Silent)
-2. Adjust the BPM using the slider
-3. Click "Start" to begin the metronome
-4. Practice along with the visual pulse (and audio in Regular mode)
-5. Click "Stop" when finished
+2. Choose your preferred sound from the Sound dropdown (Regular mode only)
+3. Adjust the BPM using the slider
+4. Click "Start" to begin the metronome
+5. Practice along with the visual pulse (and audio in Regular mode)
+6. Click "Stop" when finished
 
 ### Auto Mode
 

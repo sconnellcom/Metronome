@@ -8,6 +8,8 @@ class Metronome {
         this.intervalId = null;
         this.audioContext = null;
         this.beatTimes = [];
+        this.soundType = 'beep'; // 'beep', 'bass', 'cymbal', 'tock', 'riff4', 'riff8'
+        this.beatCount = 0; // For tracking position in drum riffs
         
         // Auto mode properties
         this.isListening = false;
@@ -54,6 +56,7 @@ class Metronome {
         this.bpmValue = document.getElementById('bpmValue');
         this.startStopBtn = document.getElementById('startStop');
         this.pulseElement = document.getElementById('pulse');
+        this.soundSelector = document.getElementById('soundSelector');
         
         // Mode buttons
         this.modeRegularBtn = document.getElementById('modeRegular');
@@ -89,6 +92,12 @@ class Metronome {
             } else {
                 this.start();
             }
+        });
+
+        // Sound selector
+        this.soundSelector.addEventListener('change', (e) => {
+            this.soundType = e.target.value;
+            this.beatCount = 0; // Reset beat counter when changing sounds
         });
 
         // Mode buttons
@@ -159,6 +168,7 @@ class Metronome {
         this.startStopBtn.textContent = 'Stop';
         this.startStopBtn.classList.add('active');
         this.beatTimes = [];
+        this.beatCount = 0; // Reset beat counter
         
         this.scheduleBeat();
     }
@@ -199,16 +209,46 @@ class Metronome {
             this.beatTimes.shift();
         }
         
+        // Increment beat counter for riffs
+        this.beatCount++;
+        
         // Sound based on mode
         if (this.mode === 'regular') {
-            this.playBeep();
+            this.playSound();
         } else if (this.mode === 'auto') {
             // In auto mode, only play beep if user is off-beat
             if (this.offBeatCount >= this.consecutiveOffBeatsThreshold) {
-                this.playBeep();
+                this.playSound();
             }
         }
         // Silent mode: no sound
+    }
+
+    playSound() {
+        if (!this.audioContext) return;
+        
+        switch(this.soundType) {
+            case 'beep':
+                this.playBeep();
+                break;
+            case 'bass':
+                this.playBassDrum();
+                break;
+            case 'cymbal':
+                this.playCymbal();
+                break;
+            case 'tock':
+                this.playTock();
+                break;
+            case 'riff4':
+                this.playDrumRiff(4);
+                break;
+            case 'riff8':
+                this.playDrumRiff(8);
+                break;
+            default:
+                this.playBeep();
+        }
     }
 
     playBeep() {
@@ -243,11 +283,159 @@ class Metronome {
             this.stopListening();
         } else if (this.isVibrating) {
             this.stopVibrating();
+    playBassDrum() {
+        if (!this.audioContext) return;
+        
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        // Bass drum: low frequency with quick pitch drop
+        oscillator.frequency.setValueAtTime(150, this.audioContext.currentTime);
+        oscillator.frequency.exponentialRampToValueAtTime(50, this.audioContext.currentTime + 0.1);
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.6, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
+        
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + 0.2);
+    }
+
+    playCymbal() {
+        if (!this.audioContext) return;
+        
+        // Cymbal: use noise with bandpass filter
+        const bufferSize = this.audioContext.sampleRate * 0.3;
+        const buffer = this.audioContext.createBuffer(1, bufferSize, this.audioContext.sampleRate);
+        const data = buffer.getChannelData(0);
+        
+        // Generate white noise
+        for (let i = 0; i < bufferSize; i++) {
+            data[i] = Math.random() * 2 - 1;
+        }
+        
+        const noise = this.audioContext.createBufferSource();
+        noise.buffer = buffer;
+        
+        const bandpass = this.audioContext.createBiquadFilter();
+        bandpass.type = 'bandpass';
+        bandpass.frequency.value = 5000;
+        bandpass.Q.value = 1;
+        
+        const gainNode = this.audioContext.createGain();
+        
+        noise.connect(bandpass);
+        bandpass.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+        
+        noise.start(this.audioContext.currentTime);
+        noise.stop(this.audioContext.currentTime + 0.3);
+    }
+
+    playTock() {
+        if (!this.audioContext) return;
+        
+        const oscillator = this.audioContext.createOscillator();
+        const gainNode = this.audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(this.audioContext.destination);
+        
+        // Tock: woody sound - lower frequency square wave
+        oscillator.frequency.value = 800;
+        oscillator.type = 'square';
+        
+        gainNode.gain.setValueAtTime(0.15, this.audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.05);
+        
+        oscillator.start(this.audioContext.currentTime);
+        oscillator.stop(this.audioContext.currentTime + 0.05);
+    }
+
+    playDrumRiff(count) {
+        if (!this.audioContext) return;
+        
+        // Calculate position in the riff pattern (1-based)
+        const position = ((this.beatCount - 1) % count) + 1;
+        
+        if (count === 4) {
+            // 4-count pattern: Bass on 1 & 3, Cymbal on 2 & 4
+            if (position === 1 || position === 3) {
+                this.playBassDrum();
+            } else {
+                this.playCymbal();
+            }
+        } else if (count === 8) {
+            // 8-count pattern: Bass on 1, 3, 5, 7; Cymbal on 2, 4, 6, 8
+            if (position % 2 === 1) {
+                this.playBassDrum();
+            } else {
+                this.playCymbal();
+            }
         }
     }
 
     async startListening() {
         try {
+            // Check if mediaDevices API is available
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                alert('Your browser does not support microphone access. Please use a modern browser like Chrome, Firefox, Safari, or Edge.');
+                return;
+            }
+
+            // Check if any audio input devices are available
+            // Note: Some browsers may not show device labels until permission is granted,
+            // but they will still show the device kind. We check for zero devices which
+            // indicates a real hardware issue, not just a permission issue.
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const audioInputs = devices.filter(device => device.kind === 'audioinput');
+                
+                if (audioInputs.length === 0) {
+                    alert('No microphone detected. Please check:\n\n' +
+                          '• Your microphone is properly connected\n' +
+                          '• Your microphone is enabled in system settings\n' +
+                          '• Your browser has permission to access audio devices at the OS level\n\n' +
+                          'Windows: Settings > Privacy > Microphone\n' +
+                          'Mac: System Settings > Privacy & Security > Microphone\n' +
+                          'Linux: Check PulseAudio/ALSA settings');
+                    return;
+                }
+            } catch (enumError) {
+                console.log('Could not enumerate devices:', enumError);
+                // Continue anyway - some browsers may restrict enumeration before permission
+            }
+
+            // Check current permission state if the API is available
+            if (navigator.permissions && navigator.permissions.query) {
+                try {
+                    const permissionStatus = await navigator.permissions.query({ name: 'microphone' });
+                    
+                    if (permissionStatus.state === 'denied') {
+                        alert('Microphone access was denied. Please allow microphone access in your browser settings:\n\n' +
+                              '• Chrome/Edge: Click the lock/info icon in the address bar\n' +
+                              '• Firefox: Click the lock icon in the address bar\n' +
+                              '• Safari: Go to Settings > Websites > Microphone\n\n' +
+                              'You may also need to enable microphone access at the system level:\n' +
+                              '• Windows: Settings > Privacy > Microphone\n' +
+                              '• Mac: System Settings > Privacy & Security > Microphone\n' +
+                              '• Linux: Check PulseAudio/ALSA settings');
+                        return;
+                    }
+                } catch (permError) {
+                    // Permission query not supported in this browser, continue with getUserMedia
+                    console.log('Permission query not supported:', permError);
+                }
+            }
+
+            // Request microphone access
+            this.autoStatus.textContent = 'Requesting microphone access...';
             this.mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true });
             
             if (!this.audioContext) {
@@ -279,7 +467,46 @@ class Metronome {
             
         } catch (error) {
             console.error('Error accessing microphone:', error);
-            alert('Could not access microphone. Please grant permission and try again.');
+            
+            // Reset status
+            this.autoStatus.textContent = 'Inactive';
+            
+            // Provide specific error messages based on error type
+            if (error.name === 'NotAllowedError') {
+                alert('Microphone access was denied. Please allow microphone access and try again.\n\n' +
+                      'To enable microphone access:\n' +
+                      '• Chrome/Edge: Click the lock/info icon in the address bar\n' +
+                      '• Firefox: Click the lock icon in the address bar\n' +
+                      '• Safari: Go to Settings > Websites > Microphone');
+            } else if (error.name === 'NotFoundError') {
+                alert('No microphone found or microphone cannot be accessed.\n\n' +
+                      'Please check:\n' +
+                      '• Your microphone is properly connected and powered on\n' +
+                      '• Your microphone is not being used by another application\n' +
+                      '• Your microphone is enabled in system settings:\n' +
+                      '  - Windows: Settings > Privacy > Microphone\n' +
+                      '  - Mac: System Settings > Privacy & Security > Microphone\n' +
+                      '  - Linux: Check PulseAudio/ALSA settings\n' +
+                      '• Your browser has OS-level permission to access the microphone\n' +
+                      '• Try restarting your browser after enabling permissions');
+            } else if (error.name === 'NotReadableError') {
+                alert('Microphone is already in use by another application or cannot be accessed.\n\n' +
+                      'Please try:\n' +
+                      '• Close other applications that might be using the microphone (Zoom, Skype, Discord, etc.)\n' +
+                      '• Close other browser tabs that might be using the microphone\n' +
+                      '• Restart your browser\n' +
+                      '• Check if your microphone works in other applications');
+            } else if (error.name === 'OverconstrainedError') {
+                alert('Could not access microphone due to constraints. Please try again.');
+            } else if (error.name === 'TypeError') {
+                alert('Browser error: Please make sure you are using HTTPS or localhost, as microphone access requires a secure connection.');
+            } else {
+                alert('Could not access microphone: ' + error.message + '\n\nPlease make sure:\n' +
+                      '• You have a microphone connected\n' +
+                      '• You are using HTTPS or localhost\n' +
+                      '• You grant permission when prompted\n' +
+                      '• Your browser and OS allow microphone access');
+            }
         }
     }
 

@@ -26,6 +26,19 @@
             <input type="range" id="bpmSlider" min="40" max="240" value="120" step="1">
         </div>
 
+        <!-- Sound Selection -->
+        <div class="control-group">
+            <label for="soundSelector">Sound:</label>
+            <select id="soundSelector" class="sound-select">
+                <option value="beep">Beep</option>
+                <option value="bass">Bass Drum</option>
+                <option value="cymbal">Cymbal</option>
+                <option value="tock">Tock</option>
+                <option value="riff4">4-Count Riff (Bass & Cymbal)</option>
+                <option value="riff8">8-Count Riff (Bass & Cymbal)</option>
+            </select>
+        </div>
+
         <!-- Start/Stop Button -->
         <button id="startStop" class="btn btn-primary">Start</button>
 
@@ -75,7 +88,7 @@
         <div class="info-section">
             <h3>How to Use</h3>
             <ul>
-                <li><strong>Regular Mode:</strong> Visual pulse with beep sound</li>
+                <li><strong>Regular Mode:</strong> Visual pulse with customizable sound (choose from 6 sound options)</li>
                 <li><strong>Silent Mode:</strong> Visual pulse only, no sound</li>
                 <li><strong>Auto Mode (Listen):</strong> Listens to your playing via microphone and beeps only when you go off-beat</li>
                 <li><strong>Auto Mode (Vibrate):</strong> Detects your beat via device motion/tapping and beeps only when you go off-beat</li>
