@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metronome</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Metronome</h1>
+        
+        <!-- Visual Pulse Indicator -->
+        <div class="pulse-container">
+            <div id="pulse" class="pulse"></div>
+        </div>
+
+        <!-- BPM Display -->
+        <div class="bpm-display">
+            <span id="bpmValue">120</span> BPM
+        </div>
+
+        <!-- BPM Slider -->
+        <div class="control-group">
+            <label for="bpmSlider">Tempo:</label>
+            <input type="range" id="bpmSlider" min="40" max="240" value="120" step="1">
+        </div>
+
+        <!-- Start/Stop Button -->
+        <button id="startStop" class="btn btn-primary">Start</button>
+
+        <!-- Mode Selection -->
+        <div class="mode-section">
+            <h2>Mode</h2>
+            <div class="mode-buttons">
+                <button id="modeRegular" class="mode-btn active">Regular</button>
+                <button id="modeSilent" class="mode-btn">Silent</button>
+                <button id="modeAuto" class="mode-btn">Auto</button>
+            </div>
+        </div>
+
+        <!-- Auto Mode Settings -->
+        <div id="autoModeSettings" class="auto-settings" style="display: none;">
+            <h3>Auto Mode Settings</h3>
+            <div class="control-group">
+                <label for="sensitivitySlider">Sensitivity:</label>
+                <input type="range" id="sensitivitySlider" min="1" max="10" value="5" step="1">
+                <span id="sensitivityValue">5</span>
+            </div>
+            <div class="status-info">
+                <p><strong>Status:</strong> <span id="autoStatus">Inactive</span></p>
+                <p><strong>Detected BPM:</strong> <span id="detectedBpm">--</span></p>
+                <p><strong>Beat Accuracy:</strong> <span id="beatAccuracy">--</span></p>
+            </div>
+            <button id="startListening" class="btn btn-secondary">Start Listening</button>
+        </div>
+
+        <!-- Info Section -->
+        <div class="info-section">
+            <h3>How to Use</h3>
+            <ul>
+                <li><strong>Regular Mode:</strong> Visual pulse with beep sound</li>
+                <li><strong>Silent Mode:</strong> Visual pulse only, no sound</li>
+                <li><strong>Auto Mode:</strong> Listens to your playing and beeps only when you go off-beat</li>
+            </ul>
+        </div>
+    </div>
+
+    <script src="metronome.js"></script>
+</body>
+</html>

@@ -1,0 +1,303 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+.container {
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    max-width: 600px;
+    width: 100%;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 30px;
+    font-size: 2.5em;
+}
+
+h2 {
+    color: #555;
+    margin-top: 30px;
+    margin-bottom: 15px;
+    font-size: 1.5em;
+}
+
+h3 {
+    color: #666;
+    margin-bottom: 15px;
+    font-size: 1.2em;
+}
+
+/* Pulse Indicator */
+.pulse-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 200px;
+    margin-bottom: 30px;
+}
+
+.pulse {
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: #667eea;
+    transition: transform 0.1s ease, background 0.1s ease;
+}
+
+.pulse.active {
+    transform: scale(1.2);
+    background: #ff6b6b;
+    box-shadow: 0 0 30px rgba(255, 107, 107, 0.6);
+}
+
+/* BPM Display */
+.bpm-display {
+    text-align: center;
+    font-size: 3em;
+    font-weight: bold;
+    color: #667eea;
+    margin-bottom: 30px;
+}
+
+/* Control Groups */
+.control-group {
+    margin-bottom: 25px;
+}
+
+.control-group label {
+    display: block;
+    margin-bottom: 10px;
+    color: #555;
+    font-weight: 600;
+    font-size: 1.1em;
+}
+
+input[type="range"] {
+    width: 100%;
+    height: 8px;
+    border-radius: 5px;
+    background: #ddd;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+    transition: background 0.3s;
+}
+
+input[type="range"]::-webkit-slider-thumb:hover {
+    background: #764ba2;
+}
+
+input[type="range"]::-moz-range-thumb {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #667eea;
+    cursor: pointer;
+    border: none;
+    transition: background 0.3s;
+}
+
+input[type="range"]::-moz-range-thumb:hover {
+    background: #764ba2;
+}
+
+/* Buttons */
+.btn {
+    width: 100%;
+    padding: 15px;
+    font-size: 1.2em;
+    font-weight: 600;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 10px;
+}
+
+.btn-primary {
+    background: #667eea;
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #764ba2;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-primary.active {
+    background: #ff6b6b;
+}
+
+.btn-primary.active:hover {
+    background: #ee5a52;
+}
+
+.btn-secondary {
+    background: #48bb78;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #38a169;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(72, 187, 120, 0.4);
+}
+
+.btn-secondary.active {
+    background: #e53e3e;
+}
+
+.btn-secondary.active:hover {
+    background: #c53030;
+}
+
+/* Mode Section */
+.mode-section {
+    margin-top: 30px;
+}
+
+.mode-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.mode-btn {
+    flex: 1;
+    padding: 12px;
+    font-size: 1em;
+    font-weight: 600;
+    border: 2px solid #667eea;
+    background: white;
+    color: #667eea;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.mode-btn:hover {
+    background: #f0f4ff;
+}
+
+.mode-btn.active {
+    background: #667eea;
+    color: white;
+}
+
+/* Auto Mode Settings */
+.auto-settings {
+    background: #f7fafc;
+    padding: 20px;
+    border-radius: 10px;
+    margin-top: 20px;
+}
+
+.status-info {
+    background: white;
+    padding: 15px;
+    border-radius: 8px;
+    margin: 15px 0;
+}
+
+.status-info p {
+    margin: 8px 0;
+    color: #555;
+    font-size: 1em;
+}
+
+.status-info strong {
+    color: #333;
+}
+
+#autoStatus {
+    color: #718096;
+    font-weight: 600;
+}
+
+#autoStatus.listening {
+    color: #48bb78;
+}
+
+#autoStatus.alert {
+    color: #e53e3e;
+}
+
+/* Info Section */
+.info-section {
+    margin-top: 30px;
+    padding: 20px;
+    background: #f7fafc;
+    border-radius: 10px;
+}
+
+.info-section ul {
+    list-style: none;
+    padding: 0;
+}
+
+.info-section li {
+    margin: 10px 0;
+    padding-left: 20px;
+    position: relative;
+    color: #555;
+    line-height: 1.6;
+}
+
+.info-section li:before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #667eea;
+    font-weight: bold;
+    font-size: 1.5em;
+}
+
+/* Responsive Design */
+@media (max-width: 600px) {
+    .container {
+        padding: 20px;
+    }
+
+    h1 {
+        font-size: 2em;
+    }
+
+    .bpm-display {
+        font-size: 2.5em;
+    }
+
+    .pulse {
+        width: 120px;
+        height: 120px;
+    }
+
+    .mode-buttons {
+        flex-direction: column;
+    }
+}
