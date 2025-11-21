@@ -227,7 +227,7 @@ class Metronome {
                           '• Your microphone is enabled in system settings\n' +
                           '• Your browser has permission to access audio devices at the OS level\n\n' +
                           'Windows: Settings > Privacy > Microphone\n' +
-                          'Mac: System Preferences > Security & Privacy > Microphone\n' +
+                          'Mac: System Settings > Privacy & Security > Microphone\n' +
                           'Linux: Check PulseAudio/ALSA settings');
                     return;
                 }
@@ -245,7 +245,11 @@ class Metronome {
                         alert('Microphone access was denied. Please allow microphone access in your browser settings:\n\n' +
                               '• Chrome/Edge: Click the lock/info icon in the address bar\n' +
                               '• Firefox: Click the lock icon in the address bar\n' +
-                              '• Safari: Go to Settings > Websites > Microphone');
+                              '• Safari: Go to Settings > Websites > Microphone\n\n' +
+                              'You may also need to enable microphone access at the system level:\n' +
+                              '• Windows: Settings > Privacy > Microphone\n' +
+                              '• Mac: System Settings > Privacy & Security > Microphone\n' +
+                              '• Linux: Check PulseAudio/ALSA settings');
                         return;
                     }
                 } catch (permError) {
@@ -305,7 +309,7 @@ class Metronome {
                       '• Your microphone is not being used by another application\n' +
                       '• Your microphone is enabled in system settings:\n' +
                       '  - Windows: Settings > Privacy > Microphone\n' +
-                      '  - Mac: System Preferences > Security & Privacy > Microphone\n' +
+                      '  - Mac: System Settings > Privacy & Security > Microphone\n' +
                       '  - Linux: Check PulseAudio/ALSA settings\n' +
                       '• Your browser has OS-level permission to access the microphone\n' +
                       '• Try restarting your browser after enabling permissions');
