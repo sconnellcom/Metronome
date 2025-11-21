@@ -48,13 +48,21 @@ h3 {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 200px;
-    margin-bottom: 30px;
+    gap: 40px;
+    margin-bottom: 20px;
+    padding: 20px 0;
+}
+
+.pulse-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
 }
 
 .pulse {
-    width: 150px;
-    height: 150px;
+    width: 100px;
+    height: 100px;
     border-radius: 50%;
     background: #667eea;
     transition: transform 0.1s ease, background 0.1s ease;
@@ -64,6 +72,64 @@ h3 {
     transform: scale(1.2);
     background: #ff6b6b;
     box-shadow: 0 0 30px rgba(255, 107, 107, 0.6);
+}
+
+.detected-pulse {
+    background: #48bb78;
+}
+
+.detected-pulse.active {
+    transform: scale(1.2);
+    background: #38a169;
+    box-shadow: 0 0 30px rgba(72, 187, 120, 0.6);
+}
+
+.pulse-label {
+    font-size: 0.9em;
+    color: #666;
+    font-weight: 500;
+}
+
+/* Beat Detection Info */
+.beat-info {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: #f7fafc;
+    border-radius: 10px;
+}
+
+.beat-info-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.beat-info-label {
+    font-size: 0.85em;
+    color: #666;
+    font-weight: 600;
+}
+
+.beat-info-value {
+    font-size: 1.1em;
+    color: #333;
+    font-weight: 700;
+}
+
+.beat-info-value.status-inactive {
+    color: #718096;
+}
+
+.beat-info-value.status-listening {
+    color: #48bb78;
+}
+
+.beat-info-value.status-alert {
+    color: #e53e3e;
 }
 
 /* BPM Display */
@@ -355,9 +421,28 @@ input[type="range"]::-moz-range-thumb:hover {
         font-size: 2.5em;
     }
 
+    .pulse-container {
+        gap: 20px;
+    }
+
     .pulse {
-        width: 120px;
-        height: 120px;
+        width: 80px;
+        height: 80px;
+    }
+
+    .pulse-label {
+        font-size: 0.8em;
+    }
+
+    .beat-info {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .beat-info-item {
+        flex-direction: row;
+        justify-content: space-between;
+        width: 100%;
     }
 
     .mode-buttons {

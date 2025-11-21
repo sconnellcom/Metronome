@@ -56,7 +56,13 @@ class Metronome {
         this.bpmValue = document.getElementById('bpmValue');
         this.startStopBtn = document.getElementById('startStop');
         this.pulseElement = document.getElementById('pulse');
+        this.detectedPulseElement = document.getElementById('detectedPulse');
         this.soundSelector = document.getElementById('soundSelector');
+        
+        // Beat info displays at the top
+        this.beatStatusTop = document.getElementById('beatStatus');
+        this.beatDetectedBpmTop = document.getElementById('beatDetectedBpm');
+        this.beatAccuracyTopDisplay = document.getElementById('beatAccuracyTop');
         
         // Mode buttons
         this.modeRegularBtn = document.getElementById('modeRegular');
@@ -283,6 +289,9 @@ class Metronome {
             this.stopListening();
         } else if (this.isVibrating) {
             this.stopVibrating();
+        }
+    }
+
     playBassDrum() {
         if (!this.audioContext) return;
         
@@ -458,6 +467,12 @@ class Metronome {
             this.detectedBeats = [];
             this.offBeatCount = 0;
             
+            // Initialize top displays
+            this.beatStatusTop.textContent = 'Listening...';
+            this.beatStatusTop.className = 'beat-info-value status-listening';
+            this.beatDetectedBpmTop.textContent = '--';
+            this.beatAccuracyTopDisplay.textContent = '--';
+            
             // Start the metronome if not already running
             if (!this.isRunning) {
                 this.start();
@@ -526,6 +541,12 @@ class Metronome {
         this.offBeatCount = 0;
         this.detectedBpmDisplay.textContent = '--';
         this.beatAccuracy.textContent = '--';
+        
+        // Reset top displays
+        this.beatStatusTop.textContent = '--';
+        this.beatStatusTop.className = 'beat-info-value status-inactive';
+        this.beatDetectedBpmTop.textContent = '--';
+        this.beatAccuracyTopDisplay.textContent = '--';
     }
 
     async startVibrating() {
@@ -553,6 +574,12 @@ class Metronome {
             
             this.detectedBeats = [];
             this.offBeatCount = 0;
+            
+            // Initialize top displays
+            this.beatStatusTop.textContent = 'Detecting motion...';
+            this.beatStatusTop.className = 'beat-info-value status-listening';
+            this.beatDetectedBpmTop.textContent = '--';
+            this.beatAccuracyTopDisplay.textContent = '--';
             
             // Start the metronome if not already running
             if (!this.isRunning) {
@@ -585,6 +612,12 @@ class Metronome {
         this.offBeatCount = 0;
         this.detectedBpmDisplay.textContent = '--';
         this.beatAccuracy.textContent = '--';
+        
+        // Reset top displays
+        this.beatStatusTop.textContent = '--';
+        this.beatStatusTop.className = 'beat-info-value status-inactive';
+        this.beatDetectedBpmTop.textContent = '--';
+        this.beatAccuracyTopDisplay.textContent = '--';
     }
 
     handleMotion(event) {
@@ -614,6 +647,9 @@ class Metronome {
             if (this.detectedBeats.length === 0 || (now - this.detectedBeats[this.detectedBeats.length - 1]) > this.BEAT_DEBOUNCE_MS) {
                 this.detectedBeats.push(now);
                 
+                // Flash the detected pulse indicator
+                this.flashDetectedPulse();
+                
                 // Keep only recent beats
                 if (this.detectedBeats.length > 10) {
                     this.detectedBeats.shift();
@@ -628,6 +664,7 @@ class Metronome {
                     const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
                     this.detectedBPM = Math.round(60000 / avgInterval);
                     this.detectedBpmDisplay.textContent = this.detectedBPM;
+                    this.beatDetectedBpmTop.textContent = this.detectedBPM;
                 }
                 
                 // Check if beat is on time with metronome
@@ -662,6 +699,9 @@ class Metronome {
             if (this.detectedBeats.length === 0 || (now - this.detectedBeats[this.detectedBeats.length - 1]) > this.BEAT_DEBOUNCE_MS) {
                 this.detectedBeats.push(now);
                 
+                // Flash the detected pulse indicator
+                this.flashDetectedPulse();
+                
                 // Keep only recent beats
                 if (this.detectedBeats.length > 10) {
                     this.detectedBeats.shift();
@@ -676,6 +716,7 @@ class Metronome {
                     const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
                     this.detectedBPM = Math.round(60000 / avgInterval);
                     this.detectedBpmDisplay.textContent = this.detectedBPM;
+                    this.beatDetectedBpmTop.textContent = this.detectedBPM;
                 }
                 
                 // Check if beat is on time with metronome
@@ -717,20 +758,34 @@ class Metronome {
             this.offBeatCount = Math.max(0, this.offBeatCount - 1);
             const accuracy = Math.round((1 - closestDiff / beatInterval) * 100);
             this.beatAccuracy.textContent = `${accuracy}% (On beat)`;
+            this.beatAccuracyTopDisplay.textContent = `${accuracy}%`;
             this.autoStatus.textContent = 'On beat';
             this.autoStatus.classList.remove('alert');
             this.autoStatus.classList.add('listening');
+            this.beatStatusTop.textContent = 'On beat';
+            this.beatStatusTop.className = 'beat-info-value status-listening';
         } else {
             this.offBeatCount++;
             const accuracy = Math.round((1 - closestDiff / beatInterval) * 100);
             this.beatAccuracy.textContent = `${accuracy}% (Off beat)`;
+            this.beatAccuracyTopDisplay.textContent = `${accuracy}%`;
             
             if (this.offBeatCount >= this.consecutiveOffBeatsThreshold) {
                 this.autoStatus.textContent = 'Off beat - Beeping!';
                 this.autoStatus.classList.remove('listening');
                 this.autoStatus.classList.add('alert');
+                this.beatStatusTop.textContent = 'Off beat!';
+                this.beatStatusTop.className = 'beat-info-value status-alert';
             }
         }
+    }
+
+    flashDetectedPulse() {
+        // Flash the detected pulse indicator
+        this.detectedPulseElement.classList.add('active');
+        setTimeout(() => {
+            this.detectedPulseElement.classList.remove('active');
+        }, 100);
     }
 }
 
