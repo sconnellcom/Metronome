@@ -12,7 +12,30 @@
         
         <!-- Visual Pulse Indicator -->
         <div class="pulse-container">
-            <div id="pulse" class="pulse"></div>
+            <div class="pulse-wrapper">
+                <div id="pulse" class="pulse"></div>
+                <div class="pulse-label">Metronome</div>
+            </div>
+            <div class="pulse-wrapper">
+                <div id="detectedPulse" class="pulse detected-pulse"></div>
+                <div class="pulse-label">Detected Beat</div>
+            </div>
+        </div>
+
+        <!-- Beat Detection Info -->
+        <div class="beat-info">
+            <div class="beat-info-item">
+                <span class="beat-info-label">Status:</span>
+                <span id="beatStatus" class="beat-info-value">--</span>
+            </div>
+            <div class="beat-info-item">
+                <span class="beat-info-label">Detected BPM:</span>
+                <span id="beatDetectedBpm" class="beat-info-value">--</span>
+            </div>
+            <div class="beat-info-item">
+                <span class="beat-info-label">Accuracy:</span>
+                <span id="beatAccuracyTop" class="beat-info-value">--</span>
+            </div>
         </div>
 
         <!-- BPM Display -->
