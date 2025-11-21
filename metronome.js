@@ -21,7 +21,6 @@ class Metronome {
         this.detectedBPM = null;
         
         // Accelerometer properties
-        this.accelerometerData = { x: 0, y: 0, z: 0 };
         this.lastAcceleration = 0;
         this.motionHandler = null;
         
@@ -306,7 +305,7 @@ class Metronome {
         try {
             // Check if device motion is supported
             if (!window.DeviceMotionEvent) {
-                alert('Device motion is not supported on this device or browser.');
+                alert('Device motion is not supported on this device or browser. Please use the "Listen (Microphone)" mode instead.');
                 return;
             }
 
@@ -314,7 +313,7 @@ class Metronome {
             if (typeof DeviceMotionEvent.requestPermission === 'function') {
                 const permission = await DeviceMotionEvent.requestPermission();
                 if (permission !== 'granted') {
-                    alert('Permission to access device motion was denied.');
+                    alert('Permission to access device motion was denied. Please enable motion permissions in your browser settings or use the "Listen (Microphone)" mode instead.');
                     return;
                 }
             }
@@ -339,7 +338,7 @@ class Metronome {
             
         } catch (error) {
             console.error('Error accessing device motion:', error);
-            alert('Could not access device motion. Please ensure your device has an accelerometer and try again.');
+            alert('Could not access device motion. Please ensure your device has an accelerometer and try again, or use the "Listen (Microphone)" mode instead.');
         }
     }
 
