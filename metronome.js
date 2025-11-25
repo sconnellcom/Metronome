@@ -612,9 +612,9 @@ class Metronome {
 
         if (isOnBeat) {
             this.offBeatCount = Math.max(0, this.offBeatCount - 1);
-            const accuracy = Math.round((1 - closestDiff / beatInterval) * 100);
-            this.beatAccuracy.textContent = `${accuracy}% (On beat - ${Math.round(closestDiff)}ms off)`;
-            this.beatAccuracyTopDisplay.textContent = `${accuracy}%`;
+            const msOff = Math.round(closestDiff);
+            this.beatAccuracy.textContent = `On beat - ${msOff}ms off`;
+            this.beatAccuracyTopDisplay.textContent = `${msOff}ms`;
             this.autoStatus.textContent = 'On beat';
             this.autoStatus.classList.remove('alert');
             this.autoStatus.classList.add('listening');
@@ -622,9 +622,9 @@ class Metronome {
             this.beatStatusTop.className = 'beat-info-value status-listening';
         } else {
             this.offBeatCount++;
-            const accuracy = Math.round((1 - closestDiff / beatInterval) * 100);
-            this.beatAccuracy.textContent = `${accuracy}% (Off beat - ${Math.round(closestDiff)}ms off)`;
-            this.beatAccuracyTopDisplay.textContent = `${accuracy}%`;
+            const msOff = Math.round(closestDiff);
+            this.beatAccuracy.textContent = `Off beat - ${msOff}ms off`;
+            this.beatAccuracyTopDisplay.textContent = `${msOff}ms`;
 
             if (this.offBeatCount >= this.consecutiveOffBeatsThreshold) {
                 this.autoStatus.textContent = 'Off beat - Beeping!';
