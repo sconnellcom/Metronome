@@ -183,7 +183,14 @@ class Metronome {
         this.beatTimes = [];
         this.beatCount = 0; // Reset beat counter
 
+        // Initialize timing for precise audio sync
+        this.nextBeatTime = this.audioContext.currentTime;
+        this.scheduleAheadTime = 0.1; // Schedule 100ms ahead
+        this.schedulerInterval = 25; // Check every 25ms
+
         this.scheduleBeat();
+        // Start scheduler loop
+        this.intervalId = setInterval(() => this.scheduleBeat(), this.schedulerInterval);
     }
 
     stop() {
@@ -192,7 +199,7 @@ class Metronome {
         this.startStopBtn.classList.remove('active');
 
         if (this.intervalId) {
-            clearTimeout(this.intervalId);
+            clearInterval(this.intervalId);
             this.intervalId = null;
         }
     }
@@ -200,71 +207,77 @@ class Metronome {
     scheduleBeat() {
         if (!this.isRunning) return;
 
-        const beatInterval = (60 / this.bpm) * 1000; // Convert BPM to milliseconds
-        this.playBeat();
+        const beatInterval = 60 / this.bpm; // Beat interval in seconds
 
-        this.intervalId = setTimeout(() => {
-            this.scheduleBeat();
-        }, beatInterval);
+        // Schedule all beats that need to play in the next scheduleAheadTime window
+        while (this.nextBeatTime < this.audioContext.currentTime + this.scheduleAheadTime) {
+            this.playBeat(this.nextBeatTime);
+            this.nextBeatTime += beatInterval;
+        }
     }
 
-    playBeat() {
-        // Visual pulse
-        this.pulseElement.classList.add('active');
-        setTimeout(() => {
-            this.pulseElement.classList.remove('active');
-        }, 100);
+    playBeat(time) {
+        // Calculate milliseconds until this beat for visual sync
+        const msUntilBeat = (time - this.audioContext.currentTime) * 1000;
 
-        // Store beat time for auto mode
-        this.lastBeatTime = Date.now();
-        this.beatTimes.push(this.lastBeatTime);
-        if (this.beatTimes.length > 10) {
-            this.beatTimes.shift();
-        }
+        // Schedule visual pulse to sync with audio
+        setTimeout(() => {
+            this.pulseElement.classList.add('active');
+            setTimeout(() => {
+                this.pulseElement.classList.remove('active');
+            }, 100);
+
+            // Store beat time for auto mode
+            this.lastBeatTime = Date.now();
+            this.beatTimes.push(this.lastBeatTime);
+            if (this.beatTimes.length > 10) {
+                this.beatTimes.shift();
+            }
+        }, Math.max(0, msUntilBeat));
 
         // Increment beat counter for riffs
         this.beatCount++;
 
         // Sound based on mode
         if (this.mode === 'regular') {
-            this.playSound();
+            this.playSound(time);
         } else if (this.mode === 'auto') {
             // In auto mode, only play beep if user is off-beat
             if (this.offBeatCount >= this.consecutiveOffBeatsThreshold) {
-                this.playSound();
+                this.playSound(time);
             }
         }
         // Silent mode: no sound
     }
 
-    playSound() {
+    playSound(time) {
         if (!this.audioContext) return;
 
         switch (this.soundType) {
             case 'beep':
-                this.playBeep();
+                this.playBeep(time);
                 break;
             case 'bass':
-                this.playBassDrum();
+                this.playBassDrum(time);
                 break;
             case 'cymbal':
-                this.playCymbal();
+                this.playCymbal(time);
                 break;
             case 'tock':
-                this.playTock();
+                this.playTock(time);
                 break;
             case 'riff4':
-                this.playDrumRiff(4);
+                this.playDrumRiff(4, time);
                 break;
             case 'riff8':
-                this.playDrumRiff(8);
+                this.playDrumRiff(8, time);
                 break;
             default:
-                this.playBeep();
+                this.playBeep(time);
         }
     }
 
-    playBeep() {
+    playBeep(time) {
         if (!this.audioContext) return;
 
         const oscillator = this.audioContext.createOscillator();
@@ -276,11 +289,11 @@ class Metronome {
         oscillator.frequency.value = 1000; // 1000 Hz beep
         oscillator.type = 'sine';
 
-        gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.1);
+        gainNode.gain.setValueAtTime(0.3, time);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.1);
 
-        oscillator.start(this.audioContext.currentTime);
-        oscillator.stop(this.audioContext.currentTime + 0.1);
+        oscillator.start(time);
+        oscillator.stop(time + 0.1);
     }
 
     async startDetection() {
@@ -353,7 +366,7 @@ class Metronome {
         this.updateAccelerationBar(0);
     }
 
-    playBassDrum() {
+    playBassDrum(time) {
         if (!this.audioContext) return;
 
         const oscillator = this.audioContext.createOscillator();
@@ -363,18 +376,18 @@ class Metronome {
         gainNode.connect(this.audioContext.destination);
 
         // Bass drum: low frequency with quick pitch drop
-        oscillator.frequency.setValueAtTime(200, this.audioContext.currentTime);
-        oscillator.frequency.exponentialRampToValueAtTime(80, this.audioContext.currentTime + 0.1);
+        oscillator.frequency.setValueAtTime(200, time);
+        oscillator.frequency.exponentialRampToValueAtTime(80, time + 0.1);
         oscillator.type = 'sine';
 
-        gainNode.gain.setValueAtTime(1.0, this.audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.2);
+        gainNode.gain.setValueAtTime(1.0, time);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.2);
 
-        oscillator.start(this.audioContext.currentTime);
-        oscillator.stop(this.audioContext.currentTime + 0.2);
+        oscillator.start(time);
+        oscillator.stop(time + 0.2);
     }
 
-    playCymbal() {
+    playCymbal(time) {
         if (!this.audioContext) return;
 
         // Cymbal: use noise with bandpass filter
@@ -401,14 +414,14 @@ class Metronome {
         bandpass.connect(gainNode);
         gainNode.connect(this.audioContext.destination);
 
-        gainNode.gain.setValueAtTime(0.3, this.audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.3);
+        gainNode.gain.setValueAtTime(0.3, time);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.3);
 
-        noise.start(this.audioContext.currentTime);
-        noise.stop(this.audioContext.currentTime + 0.3);
+        noise.start(time);
+        noise.stop(time + 0.3);
     }
 
-    playTock() {
+    playTock(time) {
         if (!this.audioContext) return;
 
         const oscillator = this.audioContext.createOscillator();
@@ -421,14 +434,14 @@ class Metronome {
         oscillator.frequency.value = 800;
         oscillator.type = 'square';
 
-        gainNode.gain.setValueAtTime(0.15, this.audioContext.currentTime);
-        gainNode.gain.exponentialRampToValueAtTime(0.01, this.audioContext.currentTime + 0.05);
+        gainNode.gain.setValueAtTime(0.15, time);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, time + 0.05);
 
-        oscillator.start(this.audioContext.currentTime);
-        oscillator.stop(this.audioContext.currentTime + 0.05);
+        oscillator.start(time);
+        oscillator.stop(time + 0.05);
     }
 
-    playDrumRiff(count) {
+    playDrumRiff(count, time) {
         if (!this.audioContext) return;
 
         // Calculate position in the riff pattern (1-based)
@@ -437,26 +450,26 @@ class Metronome {
         if (count === 4) {
             // 4-count pattern: Bass on 1, 2, 3; Cymbal on 4
             if (position === 4) {
-                this.playCymbal();
+                this.playCymbal(time);
             } else {
-                this.playBassDrum();
+                this.playBassDrum(time);
             }
         } else if (count === 8) {
             // 8-count pattern: "bum bum chish de de bum bum chish"
             // Beat: 1=bum, 2=bum, 3=chish, 4=de+de, 5=bum, 6=bum, 7=chish, 8=rest
-            const beatInterval = (60 / this.bpm) * 1000;
+            const beatInterval = 60 / this.bpm; // in seconds
             const eighthNote = beatInterval / 2;
 
             if (position === 1 || position === 2 || position === 5 || position === 6) {
                 // Quarter note bass (bum)
-                this.playBassDrum();
+                this.playBassDrum(time);
             } else if (position === 3 || position === 7) {
                 // Quarter note cymbal (chish)
-                this.playCymbal();
+                this.playCymbal(time);
             } else if (position === 4) {
                 // Two eighth note bass hits (de de)
-                this.playBassDrum();
-                setTimeout(() => this.playBassDrum(), eighthNote);
+                this.playBassDrum(time);
+                this.playBassDrum(time + eighthNote);
             }
             // position 8 is rest (no sound)
         }
