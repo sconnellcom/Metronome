@@ -80,9 +80,14 @@
         <!-- Auto Mode Settings (sensitivity only, shown when auto mode) -->
         <div id="autoModeSettings" class="auto-settings" style="display: none;">
             <div class="control-group sensitivity-group">
-                <label for="sensitivitySlider">Sensitivity:</label>
+                <label for="sensitivitySlider">Beat Detection:</label>
                 <input type="range" id="sensitivitySlider" min="1" max="10" value="5" step="1">
                 <span id="sensitivityValue">5</span>
+            </div>
+            <div class="control-group sensitivity-group">
+                <label for="toleranceSlider">Timing Tolerance:</label>
+                <input type="range" id="toleranceSlider" min="5" max="1000" value="100" step="5">
+                <span id="toleranceValue">100</span>ms
             </div>
         </div>
 
@@ -107,6 +112,8 @@
                     <li><strong>Regular Mode:</strong> Visual pulse with customizable sound</li>
                     <li><strong>Silent Mode:</strong> Visual pulse only, no sound</li>
                     <li><strong>Auto Mode:</strong> Detects your beat via device motion and beeps only when you go off-beat</li>
+                    <li><strong>Beat Detection:</strong> Higher = more sensitive (easier to detect beats). Range 1-10, default 5</li>
+                    <li><strong>Timing Tolerance:</strong> How many milliseconds off-beat is acceptable. Range 5-1000ms, default 100ms</li>
                 </ul>
             </div>
         </div>

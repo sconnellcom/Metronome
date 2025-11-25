@@ -14,6 +14,7 @@ class Metronome {
         this.isDetecting = false;
         this.detectedBeats = [];
         this.sensitivity = 5;
+        this.timingTolerance = 15; // milliseconds tolerance for being "on beat"
         this.offBeatCount = 0;
         this.lastBeatTime = 0;
         this.detectedBPM = null;
@@ -26,10 +27,11 @@ class Metronome {
         // Constants for beat detection
         this.BEAT_DEBOUNCE_MS = 200;
         this.MAX_SENSITIVITY = 10;
+        this.MIN_SENSITIVITY = 1;
 
         // Constants for accelerometer beat detection
-        this.BASE_ACCELERATION_THRESHOLD = 5;
-        this.ACCELERATION_SENSITIVITY_MULTIPLIER = 1;
+        this.BASE_ACCELERATION_THRESHOLD = 8; // Increased default for less sensitivity
+        this.ACCELERATION_SENSITIVITY_MULTIPLIER = 1.5; // Adjusted multiplier
         this.MAX_ACCELERATION_DISPLAY = 10; // For visualization scaling
         this.ACCELERATION_HIGH_THRESHOLD = 40; // Percentage for high (orange) color
         this.ACCELERATION_VERY_HIGH_THRESHOLD = 70; // Percentage for very high (red) color
@@ -38,10 +40,6 @@ class Metronome {
         this.BASE_OFF_BEAT_THRESHOLD = 6;
         this.SENSITIVITY_DIVISOR = 2;
         this.consecutiveOffBeatsThreshold = this.BASE_OFF_BEAT_THRESHOLD;
-
-        // Constants for timing tolerance
-        this.BASE_TOLERANCE_PERCENTAGE = 0.20;
-        this.TOLERANCE_ADJUSTMENT_FACTOR = 0.02;
 
         this.initializeUI();
         this.setupEventListeners();
@@ -69,6 +67,8 @@ class Metronome {
         this.autoModeSettings = document.getElementById('autoModeSettings');
         this.sensitivitySlider = document.getElementById('sensitivitySlider');
         this.sensitivityValue = document.getElementById('sensitivityValue');
+        this.toleranceSlider = document.getElementById('toleranceSlider');
+        this.toleranceValue = document.getElementById('toleranceValue');
         this.autoStatus = document.getElementById('autoStatus');
         this.detectedBpmDisplay = document.getElementById('detectedBpm');
         this.beatAccuracy = document.getElementById('beatAccuracy');
@@ -118,12 +118,18 @@ class Metronome {
             this.setMode(e.target.value);
         });
 
-        // Sensitivity slider
+        // Sensitivity slider - for beat detection threshold
         this.sensitivitySlider.addEventListener('input', (e) => {
             this.sensitivity = parseInt(e.target.value);
             this.sensitivityValue.textContent = this.sensitivity;
-            // Higher sensitivity = fewer consecutive beats required to trigger alert
-            this.consecutiveOffBeatsThreshold = Math.max(1, this.BASE_OFF_BEAT_THRESHOLD - Math.floor(this.sensitivity / this.SENSITIVITY_DIVISOR));
+        });
+
+        // Tolerance slider - for timing tolerance (how far off beat is acceptable)
+        this.toleranceSlider.addEventListener('input', (e) => {
+            this.timingTolerance = parseInt(e.target.value);
+            this.toleranceValue.textContent = this.timingTolerance;
+            // Higher tolerance = more consecutive off-beats needed to trigger alert
+            this.consecutiveOffBeatsThreshold = Math.max(1, this.BASE_OFF_BEAT_THRESHOLD - Math.floor(this.timingTolerance / 200));
         });
 
         // Info button
@@ -477,8 +483,8 @@ class Metronome {
         this.updateAccelerationBar(accelerationChange);
 
         // Detect beat based on acceleration threshold
-        // Lower sensitivity = higher threshold (harder to detect)
-        const threshold = this.BASE_ACCELERATION_THRESHOLD + ((this.MAX_SENSITIVITY - this.sensitivity) * this.ACCELERATION_SENSITIVITY_MULTIPLIER);
+        // Higher sensitivity number = lower threshold (easier to detect)
+        const threshold = this.BASE_ACCELERATION_THRESHOLD - ((this.sensitivity - this.MIN_SENSITIVITY) * this.ACCELERATION_SENSITIVITY_MULTIPLIER);
 
         if (accelerationChange > threshold) {
             const now = Date.now();
@@ -531,9 +537,8 @@ class Metronome {
         if (this.beatTimes.length === 0) return;
 
         const beatInterval = (60 / this.bpm) * 1000;
-        // Adjust tolerance based on sensitivity: higher sensitivity = tighter tolerance
-        const toleranceAdjustment = (this.MAX_SENSITIVITY - this.sensitivity) * this.TOLERANCE_ADJUSTMENT_FACTOR;
-        const tolerance = beatInterval * (this.BASE_TOLERANCE_PERCENTAGE + toleranceAdjustment);
+        // Use the timing tolerance slider value directly (in milliseconds)
+        const tolerance = this.timingTolerance;
 
         // Find the closest metronome beat
         let minDiff = Infinity;
@@ -556,7 +561,7 @@ class Metronome {
         if (isOnBeat) {
             this.offBeatCount = Math.max(0, this.offBeatCount - 1);
             const accuracy = Math.round((1 - closestDiff / beatInterval) * 100);
-            this.beatAccuracy.textContent = `${accuracy}% (On beat)`;
+            this.beatAccuracy.textContent = `${accuracy}% (On beat - ${Math.round(closestDiff)}ms off)`;
             this.beatAccuracyTopDisplay.textContent = `${accuracy}%`;
             this.autoStatus.textContent = 'On beat';
             this.autoStatus.classList.remove('alert');
@@ -566,7 +571,7 @@ class Metronome {
         } else {
             this.offBeatCount++;
             const accuracy = Math.round((1 - closestDiff / beatInterval) * 100);
-            this.beatAccuracy.textContent = `${accuracy}% (Off beat)`;
+            this.beatAccuracy.textContent = `${accuracy}% (Off beat - ${Math.round(closestDiff)}ms off)`;
             this.beatAccuracyTopDisplay.textContent = `${accuracy}%`;
 
             if (this.offBeatCount >= this.consecutiveOffBeatsThreshold) {
