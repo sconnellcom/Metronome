@@ -11,36 +11,61 @@ body {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 20px;
+    padding: 10px;
 }
 
 .container {
     background: white;
     border-radius: 20px;
-    padding: 40px;
+    padding: 20px;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    max-width: 600px;
+    max-width: 400px;
     width: 100%;
+    position: relative;
+}
+
+/* Header Row */
+.header-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin-bottom: 15px;
 }
 
 h1 {
     text-align: center;
     color: #333;
-    margin-bottom: 30px;
-    font-size: 2.5em;
+    font-size: 1.8em;
+}
+
+.info-btn {
+    position: absolute;
+    right: 0;
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    color: #667eea;
+    cursor: pointer;
+    padding: 5px;
+    transition: color 0.3s;
+}
+
+.info-btn:hover {
+    color: #764ba2;
 }
 
 h2 {
     color: #555;
-    margin-top: 30px;
-    margin-bottom: 15px;
-    font-size: 1.5em;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-size: 1.3em;
 }
 
 h3 {
     color: #666;
-    margin-bottom: 15px;
-    font-size: 1.2em;
+    margin-bottom: 10px;
+    font-size: 1.1em;
 }
 
 /* Pulse Indicator */
@@ -48,21 +73,21 @@ h3 {
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 40px;
-    margin-bottom: 20px;
-    padding: 20px 0;
+    gap: 30px;
+    margin-bottom: 10px;
+    padding: 10px 0;
 }
 
 .pulse-wrapper {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 5px;
 }
 
 .pulse {
-    width: 100px;
-    height: 100px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     background: #667eea;
     transition: transform 0.1s ease, background 0.1s ease;
@@ -76,8 +101,8 @@ h3 {
 
 /* Acceleration Meter */
 .acceleration-meter {
-    width: 100px;
-    height: 100px;
+    width: 80px;
+    height: 80px;
     border-radius: 50%;
     background: #e2e8f0;
     border: 3px solid #cbd5e0;
@@ -107,7 +132,7 @@ h3 {
 }
 
 .pulse-label {
-    font-size: 0.9em;
+    font-size: 0.8em;
     color: #666;
     font-weight: 500;
 }
@@ -116,28 +141,28 @@ h3 {
 .beat-info {
     display: flex;
     justify-content: center;
-    gap: 30px;
-    margin-bottom: 20px;
-    padding: 15px;
+    gap: 20px;
+    margin-bottom: 10px;
+    padding: 10px;
     background: #f7fafc;
-    border-radius: 10px;
+    border-radius: 8px;
 }
 
 .beat-info-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 5px;
+    gap: 2px;
 }
 
 .beat-info-label {
-    font-size: 0.85em;
+    font-size: 0.75em;
     color: #666;
     font-weight: 600;
 }
 
 .beat-info-value {
-    font-size: 1.1em;
+    font-size: 0.95em;
     color: #333;
     font-weight: 700;
 }
@@ -157,23 +182,23 @@ h3 {
 /* BPM Display */
 .bpm-display {
     text-align: center;
-    font-size: 3em;
+    font-size: 2.5em;
     font-weight: bold;
     color: #667eea;
-    margin-bottom: 30px;
+    margin-bottom: 15px;
 }
 
 /* Control Groups */
 .control-group {
-    margin-bottom: 25px;
+    margin-bottom: 15px;
 }
 
 .control-group label {
     display: block;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
     color: #555;
     font-weight: 600;
-    font-size: 1.1em;
+    font-size: 0.95em;
 }
 
 input[type="range"] {
@@ -188,8 +213,8 @@ input[type="range"] {
 input[type="range"]::-webkit-slider-thumb {
     -webkit-appearance: none;
     appearance: none;
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background: #667eea;
     cursor: pointer;
@@ -201,8 +226,8 @@ input[type="range"]::-webkit-slider-thumb:hover {
 }
 
 input[type="range"]::-moz-range-thumb {
-    width: 24px;
-    height: 24px;
+    width: 20px;
+    height: 20px;
     border-radius: 50%;
     background: #667eea;
     cursor: pointer;
@@ -214,11 +239,29 @@ input[type="range"]::-moz-range-thumb:hover {
     background: #764ba2;
 }
 
-/* Sound Selector */
-.sound-select {
+/* Compact Controls Row */
+.compact-controls {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.dropdown-group {
+    flex: 1;
+}
+
+.dropdown-group label {
+    display: block;
+    margin-bottom: 5px;
+    color: #555;
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
+.dropdown-select {
     width: 100%;
-    padding: 10px;
-    font-size: 1em;
+    padding: 8px;
+    font-size: 0.9em;
     border: 2px solid #667eea;
     border-radius: 8px;
     background: white;
@@ -228,12 +271,12 @@ input[type="range"]::-moz-range-thumb:hover {
     transition: all 0.3s ease;
 }
 
-.sound-select:hover {
+.dropdown-select:hover {
     border-color: #764ba2;
     background: #f0f4ff;
 }
 
-.sound-select:focus {
+.dropdown-select:focus {
     border-color: #764ba2;
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
@@ -241,14 +284,14 @@ input[type="range"]::-moz-range-thumb:hover {
 /* Buttons */
 .btn {
     width: 100%;
-    padding: 15px;
-    font-size: 1.2em;
+    padding: 12px;
+    font-size: 1.1em;
     font-weight: 600;
     border: none;
     border-radius: 10px;
     cursor: pointer;
     transition: all 0.3s ease;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
 }
 
 .btn-primary {
@@ -289,68 +332,35 @@ input[type="range"]::-moz-range-thumb:hover {
     background: #c53030;
 }
 
-/* Mode Section */
-.mode-section {
-    margin-top: 30px;
-}
-
-.mode-buttons {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.mode-btn {
-    flex: 1;
-    padding: 12px;
-    font-size: 1em;
-    font-weight: 600;
-    border: 2px solid #667eea;
-    background: white;
-    color: #667eea;
-    border-radius: 10px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.mode-btn:hover {
-    background: #f0f4ff;
-}
-
-.mode-btn.active {
-    background: #667eea;
-    color: white;
-}
-
 /* Auto Mode Settings */
 .auto-settings {
     background: #f7fafc;
-    padding: 20px;
-    border-radius: 10px;
-    margin-top: 20px;
-}
-
-.auto-mode-description {
-    color: #666;
-    margin-bottom: 15px;
-    font-size: 0.95em;
-}
-
-.status-info {
-    background: white;
-    padding: 15px;
+    padding: 10px 15px;
     border-radius: 8px;
-    margin: 15px 0;
+    margin-bottom: 10px;
 }
 
-.status-info p {
-    margin: 8px 0;
-    color: #555;
-    font-size: 1em;
+.sensitivity-group {
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
-.status-info strong {
-    color: #333;
+.sensitivity-group label {
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+.sensitivity-group input[type="range"] {
+    flex: 1;
+}
+
+.sensitivity-group span {
+    min-width: 20px;
+    text-align: center;
+    font-weight: 600;
+    color: #667eea;
 }
 
 #autoStatus {
@@ -366,71 +376,112 @@ input[type="range"]::-moz-range-thumb:hover {
     color: #e53e3e;
 }
 
-/* Info Section */
-.info-section {
-    margin-top: 30px;
-    padding: 20px;
-    background: #f7fafc;
-    border-radius: 10px;
+/* Info Modal */
+.info-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 
-.info-section ul {
+.info-modal-content {
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    max-width: 350px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.info-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.info-modal-header h3 {
+    margin: 0;
+    color: #333;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1.5em;
+    cursor: pointer;
+    color: #666;
+    padding: 0;
+    line-height: 1;
+}
+
+.close-btn:hover {
+    color: #333;
+}
+
+.info-modal-content ul {
     list-style: none;
     padding: 0;
 }
 
-.info-section li {
+.info-modal-content li {
     margin: 10px 0;
-    padding-left: 20px;
+    padding-left: 15px;
     position: relative;
     color: #555;
-    line-height: 1.6;
+    line-height: 1.5;
+    font-size: 0.9em;
 }
 
-.info-section li:before {
+.info-modal-content li:before {
     content: "•";
     position: absolute;
     left: 0;
     color: #667eea;
     font-weight: bold;
-    font-size: 1.5em;
 }
 
 /* Responsive Design */
-@media (max-width: 600px) {
+@media (max-width: 400px) {
     .container {
-        padding: 20px;
+        padding: 15px;
     }
 
     h1 {
-        font-size: 2em;
+        font-size: 1.5em;
     }
 
     .bpm-display {
-        font-size: 2.5em;
+        font-size: 2em;
     }
 
     .pulse-container {
-        gap: 20px;
+        gap: 15px;
     }
 
     .pulse {
-        width: 80px;
-        height: 80px;
+        width: 60px;
+        height: 60px;
     }
 
     .acceleration-meter {
-        width: 80px;
-        height: 80px;
+        width: 60px;
+        height: 60px;
     }
 
     .pulse-label {
-        font-size: 0.8em;
+        font-size: 0.7em;
     }
 
     .beat-info {
         flex-direction: column;
-        gap: 10px;
+        gap: 5px;
     }
 
     .beat-info-item {
@@ -439,7 +490,8 @@ input[type="range"]::-moz-range-thumb:hover {
         width: 100%;
     }
 
-    .mode-buttons {
+    .compact-controls {
         flex-direction: column;
+        gap: 10px;
     }
 }

@@ -8,7 +8,10 @@
 </head>
 <body>
     <div class="container">
-        <h1>Metronome</h1>
+        <div class="header-row">
+            <h1>Metronome</h1>
+            <button id="infoBtn" class="info-btn" title="How to Use">ⓘ</button>
+        </div>
         
         <!-- Visual Pulse Indicator -->
         <div class="pulse-container">
@@ -51,58 +54,61 @@
             <input type="range" id="bpmSlider" min="40" max="240" value="120" step="1">
         </div>
 
-        <!-- Sound Selection -->
-        <div class="control-group">
-            <label for="soundSelector">Sound:</label>
-            <select id="soundSelector" class="sound-select">
-                <option value="beep">Beep</option>
-                <option value="bass">Bass Drum</option>
-                <option value="cymbal">Cymbal</option>
-                <option value="tock">Tock</option>
-                <option value="riff4">4-Count Riff (Bass & Cymbal)</option>
-                <option value="riff8">8-Count Riff (Bass & Cymbal)</option>
-            </select>
+        <!-- Compact Controls Row -->
+        <div class="compact-controls">
+            <div class="dropdown-group">
+                <label for="modeSelector">Mode:</label>
+                <select id="modeSelector" class="dropdown-select">
+                    <option value="regular">Regular</option>
+                    <option value="silent">Silent</option>
+                    <option value="auto">Auto</option>
+                </select>
+            </div>
+            <div class="dropdown-group">
+                <label for="soundSelector">Sound:</label>
+                <select id="soundSelector" class="dropdown-select">
+                    <option value="beep">Beep</option>
+                    <option value="bass">Bass Drum</option>
+                    <option value="cymbal">Cymbal</option>
+                    <option value="tock">Tock</option>
+                    <option value="riff4">4-Count Riff</option>
+                    <option value="riff8">8-Count Riff</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Auto Mode Settings (sensitivity only, shown when auto mode) -->
+        <div id="autoModeSettings" class="auto-settings" style="display: none;">
+            <div class="control-group sensitivity-group">
+                <label for="sensitivitySlider">Sensitivity:</label>
+                <input type="range" id="sensitivitySlider" min="1" max="10" value="5" step="1">
+                <span id="sensitivityValue">5</span>
+            </div>
         </div>
 
         <!-- Start/Stop Button -->
         <button id="startStop" class="btn btn-primary">Start</button>
 
-        <!-- Mode Selection -->
-        <div class="mode-section">
-            <h2>Mode</h2>
-            <div class="mode-buttons">
-                <button id="modeRegular" class="mode-btn active">Regular</button>
-                <button id="modeSilent" class="mode-btn">Silent</button>
-                <button id="modeAuto" class="mode-btn">Auto</button>
-            </div>
+        <!-- Hidden elements for auto mode (kept for JS compatibility) -->
+        <div style="display: none;">
+            <span id="autoStatus">Inactive</span>
+            <span id="detectedBpm">--</span>
+            <span id="beatAccuracy">--</span>
         </div>
 
-        <!-- Auto Mode Settings -->
-        <div id="autoModeSettings" class="auto-settings" style="display: none;">
-            <h3>Auto Mode Settings</h3>
-            <p class="auto-mode-description">Uses your device's accelerometer to detect tapping or physical beats</p>
-            
-            <div class="control-group">
-                <label for="sensitivitySlider">Sensitivity:</label>
-                <input type="range" id="sensitivitySlider" min="1" max="10" value="5" step="1">
-                <span id="sensitivityValue">5</span>
+        <!-- Info Modal -->
+        <div id="infoModal" class="info-modal" style="display: none;">
+            <div class="info-modal-content">
+                <div class="info-modal-header">
+                    <h3>How to Use</h3>
+                    <button id="closeInfoBtn" class="close-btn">&times;</button>
+                </div>
+                <ul>
+                    <li><strong>Regular Mode:</strong> Visual pulse with customizable sound</li>
+                    <li><strong>Silent Mode:</strong> Visual pulse only, no sound</li>
+                    <li><strong>Auto Mode:</strong> Detects your beat via device motion and beeps only when you go off-beat</li>
+                </ul>
             </div>
-            <div class="status-info">
-                <p><strong>Status:</strong> <span id="autoStatus">Inactive</span></p>
-                <p><strong>Detected BPM:</strong> <span id="detectedBpm">--</span></p>
-                <p><strong>Beat Accuracy:</strong> <span id="beatAccuracy">--</span></p>
-            </div>
-            <button id="startListening" class="btn btn-secondary">Start</button>
-        </div>
-
-        <!-- Info Section -->
-        <div class="info-section">
-            <h3>How to Use</h3>
-            <ul>
-                <li><strong>Regular Mode:</strong> Visual pulse with customizable sound (choose from 6 sound options)</li>
-                <li><strong>Silent Mode:</strong> Visual pulse only, no sound</li>
-                <li><strong>Auto Mode:</strong> Detects your beat via device motion/tapping and beeps only when you go off-beat</li>
-            </ul>
         </div>
     </div>
 

@@ -61,19 +61,21 @@ class Metronome {
         this.beatDetectedBpmTop = document.getElementById('beatDetectedBpm');
         this.beatAccuracyTopDisplay = document.getElementById('beatAccuracyTop');
         
-        // Mode buttons
-        this.modeRegularBtn = document.getElementById('modeRegular');
-        this.modeSilentBtn = document.getElementById('modeSilent');
-        this.modeAutoBtn = document.getElementById('modeAuto');
+        // Mode dropdown
+        this.modeSelector = document.getElementById('modeSelector');
         
         // Auto mode elements
         this.autoModeSettings = document.getElementById('autoModeSettings');
         this.sensitivitySlider = document.getElementById('sensitivitySlider');
         this.sensitivityValue = document.getElementById('sensitivityValue');
-        this.startDetectionBtn = document.getElementById('startListening');
         this.autoStatus = document.getElementById('autoStatus');
         this.detectedBpmDisplay = document.getElementById('detectedBpm');
         this.beatAccuracy = document.getElementById('beatAccuracy');
+        
+        // Info modal elements
+        this.infoBtn = document.getElementById('infoBtn');
+        this.infoModal = document.getElementById('infoModal');
+        this.closeInfoBtn = document.getElementById('closeInfoBtn');
     }
 
     setupEventListeners() {
@@ -91,8 +93,16 @@ class Metronome {
         this.startStopBtn.addEventListener('click', () => {
             if (this.isRunning) {
                 this.stop();
+                // Also stop detection if in auto mode
+                if (this.mode === 'auto' && this.isDetecting) {
+                    this.stopDetection();
+                }
             } else {
                 this.start();
+                // Auto-start detection if in auto mode
+                if (this.mode === 'auto') {
+                    this.startDetection();
+                }
             }
         });
 
@@ -102,10 +112,10 @@ class Metronome {
             this.beatCount = 0; // Reset beat counter when changing sounds
         });
 
-        // Mode buttons
-        this.modeRegularBtn.addEventListener('click', () => this.setMode('regular'));
-        this.modeSilentBtn.addEventListener('click', () => this.setMode('silent'));
-        this.modeAutoBtn.addEventListener('click', () => this.setMode('auto'));
+        // Mode dropdown
+        this.modeSelector.addEventListener('change', (e) => {
+            this.setMode(e.target.value);
+        });
 
         // Sensitivity slider
         this.sensitivitySlider.addEventListener('input', (e) => {
@@ -115,37 +125,42 @@ class Metronome {
             this.consecutiveOffBeatsThreshold = Math.max(1, this.BASE_OFF_BEAT_THRESHOLD - Math.floor(this.sensitivity / this.SENSITIVITY_DIVISOR));
         });
 
-        // Start detection button
-        this.startDetectionBtn.addEventListener('click', () => {
-            if (this.isDetecting) {
-                this.stopDetection();
-            } else {
-                this.startDetection();
+        // Info button
+        this.infoBtn.addEventListener('click', () => {
+            this.infoModal.style.display = 'flex';
+        });
+
+        // Close info modal
+        this.closeInfoBtn.addEventListener('click', () => {
+            this.infoModal.style.display = 'none';
+        });
+
+        // Close modal when clicking outside
+        this.infoModal.addEventListener('click', (e) => {
+            if (e.target === this.infoModal) {
+                this.infoModal.style.display = 'none';
             }
         });
     }
 
     setMode(mode) {
+        const previousMode = this.mode;
         this.mode = mode;
         
-        // Update button states
-        this.modeRegularBtn.classList.remove('active');
-        this.modeSilentBtn.classList.remove('active');
-        this.modeAutoBtn.classList.remove('active');
-        
         if (mode === 'regular') {
-            this.modeRegularBtn.classList.add('active');
             this.autoModeSettings.style.display = 'none';
         } else if (mode === 'silent') {
-            this.modeSilentBtn.classList.add('active');
             this.autoModeSettings.style.display = 'none';
         } else if (mode === 'auto') {
-            this.modeAutoBtn.classList.add('active');
             this.autoModeSettings.style.display = 'block';
+            // Auto-start detection when entering auto mode if metronome is running
+            if (this.isRunning && !this.isDetecting) {
+                this.startDetection();
+            }
         }
         
         // Stop detection if switching away from auto mode
-        if (mode !== 'auto' && this.isDetecting) {
+        if (previousMode === 'auto' && mode !== 'auto' && this.isDetecting) {
             this.stopDetection();
         }
     }
@@ -279,8 +294,6 @@ class Metronome {
             }
 
             this.isDetecting = true;
-            this.startDetectionBtn.textContent = 'Stop';
-            this.startDetectionBtn.classList.add('active');
             this.autoStatus.textContent = 'Detecting motion...';
             this.autoStatus.classList.add('listening');
             
@@ -310,8 +323,6 @@ class Metronome {
 
     stopDetection() {
         this.isDetecting = false;
-        this.startDetectionBtn.textContent = 'Start';
-        this.startDetectionBtn.classList.remove('active');
         this.autoStatus.textContent = 'Inactive';
         this.autoStatus.classList.remove('listening', 'alert');
         
