@@ -54,6 +54,7 @@ class Metronome {
         this.startStopBtn = document.getElementById('startStop');
         this.pulseElement = document.getElementById('pulse');
         this.accelerationBar = document.getElementById('accelerationBar');
+        this.accelerationMeter = this.accelerationBar.parentElement;
         this.soundSelector = document.getElementById('soundSelector');
 
         // Beat info displays at the top
@@ -486,6 +487,9 @@ class Metronome {
             if (this.detectedBeats.length === 0 || (now - this.detectedBeats[this.detectedBeats.length - 1]) > this.BEAT_DEBOUNCE_MS) {
                 this.detectedBeats.push(now);
 
+                // Flash the acceleration meter to show beat detected
+                this.flashBeatDetected();
+
                 // Keep only recent beats
                 if (this.detectedBeats.length > 10) {
                     this.detectedBeats.shift();
@@ -573,6 +577,14 @@ class Metronome {
                 this.beatStatusTop.className = 'beat-info-value status-alert';
             }
         }
+    }
+
+    flashBeatDetected() {
+        // Add beat-detected class to acceleration meter
+        this.accelerationMeter.classList.add('beat-detected');
+        setTimeout(() => {
+            this.accelerationMeter.classList.remove('beat-detected');
+        }, 150);
     }
 }
 
