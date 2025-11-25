@@ -29,10 +29,9 @@ class Metronome {
         this.MAX_SENSITIVITY = 10;
         this.MIN_SENSITIVITY = 1;
 
-        // Constants for accelerometer beat detection - fine-tuned range
-        // Maps slider values 1-10 to threshold range 6.0 to 4.0
-        this.MIN_ACCELERATION_THRESHOLD = 4.0; // Most sensitive (slider = 10)
-        this.MAX_ACCELERATION_THRESHOLD = 6.0; // Least sensitive (slider = 1)
+        // Constants for accelerometer beat detection
+        this.BASE_ACCELERATION_THRESHOLD = 5; // Increased default for less sensitivity
+        this.ACCELERATION_SENSITIVITY_MULTIPLIER = 1; // Adjusted multiplier
         this.MAX_ACCELERATION_DISPLAY = 3; // For visualization scaling
         this.ACCELERATION_HIGH_THRESHOLD = 40; // Percentage for high (orange) color
         this.ACCELERATION_VERY_HIGH_THRESHOLD = 70; // Percentage for very high (red) color
@@ -484,10 +483,8 @@ class Metronome {
         this.updateAccelerationBar(accelerationChange);
 
         // Detect beat based on acceleration threshold
-        // Map slider 1-10 to threshold range 6.0-4.0 (linearly interpolated)
         // Higher sensitivity number = lower threshold (easier to detect)
-        const sensitivityRatio = (this.sensitivity - this.MIN_SENSITIVITY) / (this.MAX_SENSITIVITY - this.MIN_SENSITIVITY);
-        const threshold = this.MAX_ACCELERATION_THRESHOLD - (sensitivityRatio * (this.MAX_ACCELERATION_THRESHOLD - this.MIN_ACCELERATION_THRESHOLD));
+        const threshold = this.BASE_ACCELERATION_THRESHOLD - ((this.sensitivity - this.MIN_SENSITIVITY) * this.ACCELERATION_SENSITIVITY_MULTIPLIER);
 
         if (accelerationChange > threshold) {
             const now = Date.now();
