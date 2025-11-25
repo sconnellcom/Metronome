@@ -31,6 +31,8 @@ class Metronome {
         this.BASE_ACCELERATION_THRESHOLD = 5;
         this.ACCELERATION_SENSITIVITY_MULTIPLIER = 1;
         this.MAX_ACCELERATION_DISPLAY = 30; // For visualization scaling
+        this.ACCELERATION_HIGH_THRESHOLD = 40; // Percentage for high (orange) color
+        this.ACCELERATION_VERY_HIGH_THRESHOLD = 70; // Percentage for very high (red) color
         
         // Constants for off-beat threshold calculation
         this.BASE_OFF_BEAT_THRESHOLD = 6;
@@ -492,9 +494,9 @@ class Metronome {
         
         // Update color based on intensity
         this.accelerationBar.classList.remove('high', 'very-high');
-        if (percentage > 70) {
+        if (percentage > this.ACCELERATION_VERY_HIGH_THRESHOLD) {
             this.accelerationBar.classList.add('very-high');
-        } else if (percentage > 40) {
+        } else if (percentage > this.ACCELERATION_HIGH_THRESHOLD) {
             this.accelerationBar.classList.add('high');
         }
     }

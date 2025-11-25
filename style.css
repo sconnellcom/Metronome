@@ -74,16 +74,6 @@ h3 {
     box-shadow: 0 0 30px rgba(255, 107, 107, 0.6);
 }
 
-.detected-pulse {
-    background: #48bb78;
-}
-
-.detected-pulse.active {
-    transform: scale(1.2);
-    background: #38a169;
-    box-shadow: 0 0 30px rgba(72, 187, 120, 0.6);
-}
-
 /* Acceleration Meter */
 .acceleration-meter {
     width: 100px;
