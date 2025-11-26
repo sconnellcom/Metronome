@@ -109,8 +109,8 @@
         <div id="autoModeSettings" class="auto-settings" style="display: none;">
             <div class="control-group sensitivity-group">
                 <label for="sensitivitySlider">Beat Detection:</label>
-                <input type="range" id="sensitivitySlider" min="1" max="10" value="5" step="1">
-                <span id="sensitivityValue">5</span>
+                <input type="range" id="sensitivitySlider" min="0" max="100" value="50" step="5">
+                <span id="sensitivityValue">50</span>%
             </div>
             <div class="control-group sensitivity-group">
                 <label for="toleranceSlider">Timing Tolerance:</label>
@@ -173,8 +173,9 @@
 
                     <h4>Auto Mode Settings</h4>
                     <ul>
-                        <li><strong>Beat Detection (1-10):</strong> How sensitive motion detection is. Higher = easier
-                            to detect taps. Default: 5</li>
+                        <li><strong>Beat Detection (0-100%):</strong> How sensitive motion detection is. Higher % =
+                            easier
+                            to detect light taps. Lower % = only detects harder hits. Default: 50%</li>
                         <li><strong>Timing Tolerance (5-1000ms):</strong> How many milliseconds off you can be and still
                             count as "on beat".
                             <ul>

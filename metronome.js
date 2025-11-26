@@ -9,6 +9,7 @@ class Metronome {
         this.beatTimes = [];
         this.soundType = 'beep'; // 'beep', 'bass', 'cymbal', 'tock', 'riff4', 'riff8'
         this.beatCount = 0; // For tracking position in drum riffs
+        this.sensitivityPercent = 50; // User-facing percentage (0-100)
 
         // Visual synchronization using requestAnimationFrame
         this.scheduledVisualBeats = [];
@@ -55,6 +56,8 @@ class Metronome {
         this.initializeUI();
         this.setupEventListeners();
         this.initializeTheme();
+        // Initialize sensitivity from percentage
+        this.sensitivity = Math.max(1, Math.min(10, Math.round(1 + (this.sensitivityPercent / 100) * 9)));
     }
 
     initializeTheme() {
@@ -205,8 +208,11 @@ class Metronome {
 
         // Sensitivity slider - for beat detection threshold
         this.sensitivitySlider.addEventListener('input', (e) => {
-            this.sensitivity = parseInt(e.target.value);
-            this.sensitivityValue.textContent = this.sensitivity;
+            this.sensitivityPercent = parseInt(e.target.value);
+            this.sensitivityValue.textContent = this.sensitivityPercent;
+            // Convert percentage (0-100) to internal scale (1-10)
+            // 0% = 1 (least sensitive), 100% = 10 (most sensitive)
+            this.sensitivity = Math.max(1, Math.min(10, Math.round(1 + (this.sensitivityPercent / 100) * 9)));
         });
 
         // Tolerance slider - for timing tolerance (how far off beat is acceptable)
