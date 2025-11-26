@@ -23,6 +23,7 @@ class Metronome {
         this.detectedBeats = [];
         this.sensitivity = 5;
         this.timingTolerance = 100; // milliseconds tolerance for being "on beat"
+        this.bpmTolerance = 5; // BPM tolerance for being "on beat"
         this.offBeatCount = 0;
         this.lastBeatTime = 0;
         this.detectedBPM = null;
@@ -49,6 +50,7 @@ class Metronome {
         this.SENSITIVITY_DIVISOR = 2;
         this.consecutiveOffBeatsThreshold = this.BASE_OFF_BEAT_THRESHOLD;
         this.consecutiveOnBeatsNeeded = 6; // Number of consecutive on-beats needed to stop the sound
+        this.minimumBeatsToPlay = 4; // Minimum number of beats to play when off beat
 
         this.initializeUI();
         this.setupEventListeners();
@@ -78,6 +80,8 @@ class Metronome {
         this.sensitivityValue = document.getElementById('sensitivityValue');
         this.toleranceSlider = document.getElementById('toleranceSlider');
         this.toleranceValue = document.getElementById('toleranceValue');
+        this.bpmToleranceSlider = document.getElementById('bpmToleranceSlider');
+        this.bpmToleranceValue = document.getElementById('bpmToleranceValue');
         this.autoStatus = document.getElementById('autoStatus');
         this.detectedBpmDisplay = document.getElementById('detectedBpm');
         this.beatAccuracy = document.getElementById('beatAccuracy');
@@ -139,6 +143,12 @@ class Metronome {
             this.toleranceValue.textContent = this.timingTolerance;
             // Higher tolerance = more consecutive off-beats needed to trigger alert
             this.consecutiveOffBeatsThreshold = Math.max(1, this.BASE_OFF_BEAT_THRESHOLD - Math.floor(this.timingTolerance / 200));
+        });
+
+        // BPM Tolerance slider
+        this.bpmToleranceSlider.addEventListener('input', (e) => {
+            this.bpmTolerance = parseInt(e.target.value);
+            this.bpmToleranceValue.textContent = this.bpmTolerance;
         });
 
         // Info button
@@ -645,13 +655,21 @@ class Metronome {
         const diffFromExpectedAlt = beatInterval - diffFromExpected;
         const closestDiff = Math.min(minDiff, diffFromExpected, diffFromExpectedAlt);
 
-        // Check if beat is within tolerance
-        const isOnBeat = closestDiff < tolerance;
+        // Check if beat is within timing tolerance
+        const isTimingOnBeat = closestDiff < tolerance;
+
+        // Check if BPM is within tolerance
+        const bpmDiff = this.detectedBPM ? Math.abs(this.detectedBPM - this.bpm) : 0;
+        const isBpmOnBeat = bpmDiff <= this.bpmTolerance;
+
+        // Must be within both timing AND BPM tolerance to be on beat
+        const isOnBeat = isTimingOnBeat && isBpmOnBeat;
 
         if (isOnBeat) {
             this.offBeatCount = Math.max(0, this.offBeatCount - 1);
             const msOff = Math.round(closestDiff);
-            this.beatAccuracy.textContent = `On beat - ${msOff}ms off`;
+            const bpmDiff = this.detectedBPM ? Math.abs(this.detectedBPM - this.bpm) : 0;
+            this.beatAccuracy.textContent = `On beat - ${msOff}ms, ${bpmDiff.toFixed(1)} BPM off`;
             this.beatAccuracyTopDisplay.textContent = `${msOff}ms`;
             this.autoStatus.textContent = 'On beat';
             this.autoStatus.classList.remove('alert');
@@ -661,7 +679,16 @@ class Metronome {
         } else {
             this.offBeatCount++;
             const msOff = Math.round(closestDiff);
-            this.beatAccuracy.textContent = `Off beat - ${msOff}ms off`;
+            const bpmDiff = this.detectedBPM ? Math.abs(this.detectedBPM - this.bpm) : 0;
+            let reason = '';
+            if (!isTimingOnBeat && !isBpmOnBeat) {
+                reason = 'timing & BPM';
+            } else if (!isTimingOnBeat) {
+                reason = 'timing';
+            } else {
+                reason = 'BPM';
+            }
+            this.beatAccuracy.textContent = `Off beat (${reason}) - ${msOff}ms, ${bpmDiff.toFixed(1)} BPM off`;
             this.beatAccuracyTopDisplay.textContent = `${msOff}ms`;
 
             if (this.offBeatCount >= this.consecutiveOffBeatsThreshold) {

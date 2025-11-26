@@ -25,7 +25,7 @@
                 <div class="acceleration-meter">
                     <div id="accelerationBar" class="acceleration-bar"></div>
                 </div>
-                <div class="pulse-label">Acceleration</div>
+                <div class="pulse-label">Your Beat</div>
             </div>
         </div>
 
@@ -91,6 +91,11 @@
                 <input type="range" id="toleranceSlider" min="5" max="1000" value="100" step="5">
                 <span id="toleranceValue">100</span>ms
             </div>
+            <div class="control-group sensitivity-group">
+                <label for="bpmToleranceSlider">BPM Tolerance:</label>
+                <input type="range" id="bpmToleranceSlider" min="0" max="20" value="5" step="1">
+                <span id="bpmToleranceValue">5</span> BPM
+            </div>
         </div>
 
         <!-- Start/Stop Button -->
@@ -125,11 +130,18 @@
                     <ul>
                         <li>The metronome runs silently in the background</li>
                         <li>Your device detects when you tap/move (e.g., tapping your phone, moving to the beat)</li>
-                        <li>System checks if your tap is within the "Timing Tolerance" (in milliseconds) of the
-                            metronome beat</li>
-                        <li>If you're within tolerance → You're ON BEAT (no sound, green status)</li>
-                        <li>If you're outside tolerance → You're OFF BEAT (count increases)</li>
+                        <li>System checks TWO things:
+                            <ul>
+                                <li><strong>Timing:</strong> Is your tap within the "Timing Tolerance" (in milliseconds)
+                                    of the metronome beat?</li>
+                                <li><strong>Tempo:</strong> Is your detected BPM within the "BPM Tolerance" of the
+                                    target tempo?</li>
+                            </ul>
+                        </li>
+                        <li>If BOTH timing and tempo are within tolerance → You're ON BEAT (no sound, green status)</li>
+                        <li>If EITHER timing or tempo is off → You're OFF BEAT (count increases)</li>
                         <li>After 6 consecutive OFF BEAT detections → Metronome starts beeping to guide you back</li>
+                        <li>Metronome will beep for at least 6 beats once it starts</li>
                         <li>After 6 consecutive ON BEAT detections → Beeping stops</li>
                     </ul>
 
@@ -145,6 +157,20 @@
                                 <li>Higher = more forgiving</li>
                             </ul>
                         </li>
+                        <li><strong>BPM Tolerance (0-20):</strong> How many BPM off you can be and still count as "on
+                            beat".
+                            <ul>
+                                <li>5 BPM = your tempo can be 115-125 BPM when target is 120 BPM</li>
+                                <li>0 = must match target BPM exactly</li>
+                                <li>Higher = more forgiving for tempo drift</li>
+                            </ul>
+                        </li>
+                    </ul>
+                    
+                    <p><strong>Tip:</strong> Want to focus on just one metric? Set the other tolerance very high!</p>
+                    <ul>
+                        <li>Focus on tempo only: Set Timing Tolerance to 1000ms (max)</li>
+                        <li>Focus on timing only: Set BPM Tolerance to 20 (max)</li>
                     </ul>
 
                     <h4>Display Info</h4>
