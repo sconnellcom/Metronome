@@ -498,6 +498,9 @@ class Metronome {
             case 'riff8':
                 this.playDrumRiff(8, time);
                 break;
+            case 'vibrate':
+                this.playVibrate(time);
+                break;
             default:
                 this.playBeep(time);
         }
@@ -520,6 +523,18 @@ class Metronome {
 
         oscillator.start(time);
         oscillator.stop(time + 0.1);
+    }
+
+    playVibrate(time) {
+        // Calculate delay from scheduled time to now
+        const delay = Math.max(0, (time - this.audioContext.currentTime) * 1000);
+
+        // Schedule the vibration to occur at the right time
+        setTimeout(() => {
+            if ('vibrate' in navigator) {
+                navigator.vibrate(100); // Vibrate for 100ms
+            }
+        }, delay);
     }
 
     async startDetection() {
