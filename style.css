@@ -310,11 +310,16 @@ h1 {
     border: 2px solid var(--border-color);
     border-radius: 12px;
     padding: 10px;
-    display: flex;
-    flex-direction: column;
+    display: none;
+    grid-template-columns: 32px 32px;
     gap: 8px;
     box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
     z-index: 1000;
+}
+
+.theme-dropdown[style*="display: flex"],
+.theme-dropdown[style*="display: grid"] {
+    display: grid !important;
 }
 
 .theme-btn {

@@ -263,8 +263,8 @@ class Metronome {
         // Theme switcher - toggle dropdown
         this.themeBtnActive.addEventListener('click', (e) => {
             e.stopPropagation();
-            const isVisible = this.themeDropdown.style.display === 'flex';
-            this.themeDropdown.style.display = isVisible ? 'none' : 'flex';
+            const isVisible = this.themeDropdown.style.display === 'grid';
+            this.themeDropdown.style.display = isVisible ? 'none' : 'grid';
         });
 
         // Theme selection from dropdown
