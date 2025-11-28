@@ -48,7 +48,7 @@
         </div>
 
         <!-- Beat Detection Info -->
-        <div class="beat-info">
+        <div class="beat-info" style="display: none;">
             <div class="beat-info-item">
                 <span class="beat-info-label">Status:</span>
                 <span id="beatStatus" class="beat-info-value">--</span>
@@ -70,6 +70,11 @@
 
         <!-- BPM Preset Menu -->
         <div id="bpmPresetMenu" class="bpm-preset-menu" style="display: none;">
+            <!-- BPM Slider -->
+            <div class="control-group">
+                <label for="bpmSlider">Tempo:</label>
+                <input type="range" id="bpmSlider" min="40" max="240" value="120" step="1">
+            </div>
             <div class="bpm-preset-header">Quick Tempo Presets</div>
             <div class="bpm-preset-grid">
                 <button class="bpm-preset-btn" data-bpm="60">60 - Largo</button>
@@ -83,37 +88,7 @@
             </div>
         </div>
 
-        <!-- BPM Slider -->
-        <div class="control-group">
-            <label for="bpmSlider">Tempo:</label>
-            <input type="range" id="bpmSlider" min="40" max="240" value="120" step="1">
-        </div>
-
-        <!-- Compact Controls Row -->
-        <div class="compact-controls">
-            <div class="dropdown-group">
-                <label for="modeSelector">Mode:</label>
-                <select id="modeSelector" class="dropdown-select">
-                    <option value="regular">Regular</option>
-                    <option value="silent">Silent</option>
-                    <option value="auto">Auto</option>
-                </select>
-            </div>
-            <div class="dropdown-group">
-                <label for="soundSelector">Sound:</label>
-                <select id="soundSelector" class="dropdown-select">
-                    <option value="beep">Beep</option>
-                    <option value="bass">Bass Drum</option>
-                    <option value="cymbal">Cymbal</option>
-                    <option value="tock">Tock</option>
-                    <option value="riff4">4-Count Riff</option>
-                    <option value="riff8">8-Count Riff</option>
-                    <option value="vibrate">Vibrate</option>
-                </select>
-            </div>
-        </div>
-
-        <!-- Auto Mode Settings (sensitivity only, shown when auto mode) -->
+        <!-- Auto Mode Settings (sensitivity only, shown when beat detection enabled) -->
         <div id="autoModeSettings" class="auto-settings" style="display: none;">
             <div class="control-group sensitivity-group">
                 <label for="sensitivitySlider">Beat Detection:</label>
@@ -129,6 +104,28 @@
                 <label for="bpmToleranceSlider">BPM Tolerance:</label>
                 <input type="range" id="bpmToleranceSlider" min="0" max="20" value="5" step="1">
                 <span id="bpmToleranceValue">5</span> BPM
+            </div>
+        </div>
+
+        <!-- Sound and Beat Detection Row -->
+        <div class="compact-controls">
+            <div class="dropdown-group">
+                <select id="soundSelector" class="dropdown-select">
+                    <option value="beep">Beep</option>
+                    <option value="bass">Bass Drum</option>
+                    <option value="cymbal">Cymbal</option>
+                    <option value="tock">Tock</option>
+                    <option value="riff4">4-Count Riff</option>
+                    <option value="riff8">8-Count Riff</option>
+                    <option value="vibrate">Vibrate</option>
+                    <option value="silent">Silent</option>
+                </select>
+            </div>
+            <div class="dropdown-group" style="padding-top: 8px;">
+                <label for="beatDetectionToggle">
+                    <input type="checkbox" id="beatDetectionToggle" class="toggle-checkbox">
+                    <span class="toggle-label">Beat Detection</span>
+                </label>
             </div>
         </div>
 
@@ -210,7 +207,7 @@
 
                     <h4>Display Info</h4>
                     <ul>
-                        <li><strong>Status:</strong> Shows if you're "On beat", "Off beat", or detecting motion</li>
+                        <li><strong>Status:</strong> Shows if you're "On beat", "Off beat", or detecting taps</li>
                         <li><strong>Detected BPM:</strong> Your actual tapping tempo (calculated from your beats)</li>
                         <li><strong>Accuracy:</strong> How many milliseconds off you are from the metronome beat</li>
                     </ul>

@@ -677,6 +677,84 @@ input[type="range"]::-moz-range-thumb:hover {
     background: var(--primary-hover);
 }
 
+/* Checkbox Toggle */
+.btn-toggle {
+    width: 100%;
+    padding: 8px;
+    font-size: 0.9em;
+    font-weight: 600;
+    border: 2px solid var(--primary-color);
+    border-radius: 8px;
+    background: var(--container-bg);
+    color: var(--text-color);
+    cursor: pointer;
+    outline: none;
+    transition: all 0.3s ease;
+}
+
+.btn-toggle:hover {
+    border-color: var(--primary-hover);
+    background: var(--surface-bg);
+}
+
+.btn-toggle[data-active="true"] {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.btn-toggle[data-active="true"]:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-hover);
+}
+
+.toggle-checkbox {
+    margin-right: 8px;
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+    appearance: none;
+    -webkit-appearance: none;
+    border: 2px solid var(--primary-color);
+    border-radius: 3px;
+    background: var(--surface-bg);
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.toggle-checkbox:checked {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.toggle-checkbox:checked::after {
+    content: '✓';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.toggle-checkbox:hover {
+    border-color: var(--primary-hover);
+}
+
+.toggle-label {
+    cursor: pointer;
+    user-select: none;
+}
+
+.control-group label:has(.toggle-checkbox) {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 0;
+}
+
 /* Compact Controls Row */
 .compact-controls {
     display: flex;
@@ -695,6 +773,14 @@ input[type="range"]::-moz-range-thumb:hover {
     font-weight: 600;
     font-size: 0.95em;
     transition: color 0.3s ease;
+}
+
+.dropdown-group label:has(.toggle-checkbox) {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 5px;
+    margin-top: 0;
 }
 
 .dropdown-select {

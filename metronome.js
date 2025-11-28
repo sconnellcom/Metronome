@@ -3,11 +3,11 @@ class Metronome {
     constructor() {
         this.bpm = 120;
         this.isRunning = false;
-        this.mode = 'regular'; // 'regular', 'silent', 'auto'
+        this.beatDetectionEnabled = false; // Toggle for beat detection
         this.intervalId = null;
         this.audioContext = null;
         this.beatTimes = [];
-        this.soundType = 'beep'; // 'beep', 'bass', 'cymbal', 'tock', 'riff4', 'riff8'
+        this.soundType = 'beep'; // 'beep', 'bass', 'cymbal', 'tock', 'riff4', 'riff8', 'vibrate', 'silent'
         this.beatCount = 0; // For tracking position in drum riffs
         this.sensitivityPercent = 50; // User-facing percentage (0-100)
 
@@ -127,12 +127,13 @@ class Metronome {
         this.themeDropdown = document.querySelector('.theme-dropdown');
 
         // Beat info displays at the top
+        this.beatInfo = document.querySelector('.beat-info');
         this.beatStatusTop = document.getElementById('beatStatus');
         this.beatDetectedBpmTop = document.getElementById('beatDetectedBpm');
         this.beatAccuracyTopDisplay = document.getElementById('beatAccuracyTop');
 
-        // Mode dropdown
-        this.modeSelector = document.getElementById('modeSelector');
+        // Beat detection toggle
+        this.beatDetectionToggle = document.getElementById('beatDetectionToggle');
 
         // Auto mode elements
         this.autoModeSettings = document.getElementById('autoModeSettings');
@@ -196,14 +197,14 @@ class Metronome {
         this.startStopBtn.addEventListener('click', () => {
             if (this.isRunning) {
                 this.stop();
-                // Also stop detection if in auto mode
-                if (this.mode === 'auto' && this.isDetecting) {
+                // Also stop detection if enabled
+                if (this.beatDetectionEnabled && this.isDetecting) {
                     this.stopDetection();
                 }
             } else {
                 this.start();
-                // Auto-start detection if in auto mode
-                if (this.mode === 'auto') {
+                // Auto-start detection if beat detection is enabled
+                if (this.beatDetectionEnabled) {
                     this.startDetection();
                 }
             }
@@ -215,9 +216,24 @@ class Metronome {
             this.beatCount = 0; // Reset beat counter when changing sounds
         });
 
-        // Mode dropdown
-        this.modeSelector.addEventListener('change', (e) => {
-            this.setMode(e.target.value);
+        // Beat detection toggle
+        this.beatDetectionToggle.addEventListener('change', (e) => {
+            this.beatDetectionEnabled = e.target.checked;
+            if (this.beatDetectionEnabled) {
+                this.autoModeSettings.style.display = 'block';
+                this.beatInfo.style.display = 'flex';
+                // Auto-start detection if metronome is running
+                if (this.isRunning && !this.isDetecting) {
+                    this.startDetection();
+                }
+            } else {
+                this.autoModeSettings.style.display = 'none';
+                this.beatInfo.style.display = 'none';
+                // Stop detection if currently detecting
+                if (this.isDetecting) {
+                    this.stopDetection();
+                }
+            }
         });
 
         // Sensitivity slider - for beat detection threshold
@@ -283,17 +299,13 @@ class Metronome {
             }
         });
 
-        // Click on acceleration meter to toggle between auto and regular mode
+        // Click on acceleration meter to toggle beat detection
         const toggleMode = (e) => {
             e.preventDefault();
             e.stopPropagation();
-            if (this.mode === 'auto') {
-                this.modeSelector.value = 'regular';
-                this.setMode('regular');
-            } else {
-                this.modeSelector.value = 'auto';
-                this.setMode('auto');
-            }
+            this.beatDetectionToggle.checked = !this.beatDetectionToggle.checked;
+            // Trigger change event
+            this.beatDetectionToggle.dispatchEvent(new Event('change'));
         };
 
         this.accelerationMeter.addEventListener('touchend', toggleMode);
@@ -305,14 +317,14 @@ class Metronome {
             e.stopPropagation();
             if (this.isRunning) {
                 this.stop();
-                // Also stop detection if in auto mode
-                if (this.mode === 'auto' && this.isDetecting) {
+                // Also stop detection if enabled
+                if (this.beatDetectionEnabled && this.isDetecting) {
                     this.stopDetection();
                 }
             } else {
                 this.start();
-                // Auto-start detection if in auto mode
-                if (this.mode === 'auto') {
+                // Auto-start detection if beat detection is enabled
+                if (this.beatDetectionEnabled) {
                     this.startDetection();
                 }
             }
@@ -320,31 +332,7 @@ class Metronome {
 
         this.pulseElement.addEventListener('touchend', toggleMetronome);
         this.pulseElement.addEventListener('click', toggleMetronome);
-    }
-
-    setMode(mode) {
-        const previousMode = this.mode;
-        this.mode = mode;
-
-        if (mode === 'regular') {
-            this.autoModeSettings.style.display = 'none';
-        } else if (mode === 'silent') {
-            this.autoModeSettings.style.display = 'none';
-        } else if (mode === 'auto') {
-            this.autoModeSettings.style.display = 'block';
-            // Auto-start detection when entering auto mode if metronome is running
-            if (this.isRunning && !this.isDetecting) {
-                this.startDetection();
-            }
-        }
-
-        // Stop detection if switching away from auto mode
-        if (previousMode === 'auto' && mode !== 'auto' && this.isDetecting) {
-            this.stopDetection();
-        }
-    }
-
-    start() {
+    } start() {
         if (!this.audioContext) {
             this.audioContext = new (window.AudioContext || window.webkitAudioContext)();
         }
@@ -478,16 +466,21 @@ class Metronome {
         // Increment beat counter for riffs
         this.beatCount++;
 
-        // Sound based on mode
-        if (this.mode === 'regular') {
-            this.playSound(time);
-        } else if (this.mode === 'auto') {
-            // In auto mode, only play beep if user is off-beat
+        // Play sound based on settings
+        if (this.soundType === 'silent') {
+            // Silent mode: no sound
+            return;
+        }
+
+        if (this.beatDetectionEnabled) {
+            // In beat detection mode, only play if user is off-beat
             if (this.offBeatCount >= this.consecutiveOffBeatsThreshold) {
                 this.playSound(time);
             }
+        } else {
+            // Regular mode: always play sound
+            this.playSound(time);
         }
-        // Silent mode: no sound
     }
 
     playSound(time) {
@@ -572,14 +565,14 @@ class Metronome {
             }
 
             this.isDetecting = true;
-            this.autoStatus.textContent = 'Detecting motion...';
+            this.autoStatus.textContent = 'Detecting taps...';
             this.autoStatus.classList.add('listening');
 
             this.detectedBeats = [];
             this.offBeatCount = 0;
 
             // Initialize top displays
-            this.beatStatusTop.textContent = 'Detecting motion...';
+            this.beatStatusTop.textContent = 'Detecting taps...';
             this.beatStatusTop.className = 'beat-info-value status-listening';
             this.beatDetectedBpmTop.textContent = '--';
             this.beatAccuracyTopDisplay.textContent = '--';
