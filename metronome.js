@@ -68,7 +68,7 @@ class Metronome {
 
     setTheme(theme) {
         // Remove all theme classes
-        document.body.classList.remove('theme-light', 'theme-dark', 'theme-warm-light', 'theme-warm-dark', 'theme-red', 'theme-pink', 'theme-black', 'theme-blue', 'theme-blue-dark');
+        document.body.classList.remove('theme-light', 'theme-dark', 'theme-warm-light', 'theme-warm-dark', 'theme-red', 'theme-pink', 'theme-red-dark', 'theme-pink-dark', 'theme-black', 'theme-blue', 'theme-blue-dark');
 
         // Add new theme class (if not default)
         if (theme === 'light') {
@@ -83,6 +83,10 @@ class Metronome {
             document.body.classList.add('theme-red');
         } else if (theme === 'pink') {
             document.body.classList.add('theme-pink');
+        } else if (theme === 'red-dark') {
+            document.body.classList.add('theme-red-dark');
+        } else if (theme === 'pink-dark') {
+            document.body.classList.add('theme-pink-dark');
         } else if (theme === 'black') {
             document.body.classList.add('theme-black');
         } else if (theme === 'blue') {

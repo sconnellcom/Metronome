@@ -116,6 +116,38 @@ body.theme-pink {
     --pulse-shadow: rgba(190, 24, 93, 0.6);
 }
 
+body.theme-red-dark {
+    /* Dark Red Theme */
+    --bg-gradient-start: #7f1d1d;
+    --bg-gradient-end: #450a0a;
+    --primary-color: #ef4444;
+    --primary-hover: #f87171;
+    --container-bg: #1a0505;
+    --text-color: #fecaca;
+    --text-secondary: #fca5a5;
+    --text-tertiary: #f87171;
+    --border-color: #7f1d1d;
+    --surface-bg: #450a0a;
+    --pulse-active: #f87171;
+    --pulse-shadow: rgba(248, 113, 113, 0.6);
+}
+
+body.theme-pink-dark {
+    /* Dark Pink Theme */
+    --bg-gradient-start: #831843;
+    --bg-gradient-end: #500724;
+    --primary-color: #f472b6;
+    --primary-hover: #f9a8d4;
+    --container-bg: #1a050f;
+    --text-color: #fce7f3;
+    --text-secondary: #fbcfe8;
+    --text-tertiary: #f9a8d4;
+    --border-color: #831843;
+    --surface-bg: #500724;
+    --pulse-active: #f9a8d4;
+    --pulse-shadow: rgba(249, 168, 212, 0.6);
+}
+
 body.theme-black {
     /* Black Theme */
     --bg-gradient-start: #1f2937;
@@ -250,6 +282,14 @@ h1 {
     background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
 }
 
+.theme-btn-active.theme-red-dark {
+    background: linear-gradient(135deg, #7f1d1d 0%, #ef4444 100%);
+}
+
+.theme-btn-active.theme-pink-dark {
+    background: linear-gradient(135deg, #831843 0%, #f472b6 100%);
+}
+
 .theme-btn-active.theme-black {
     background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
 }
@@ -322,6 +362,14 @@ h1 {
 
 .theme-btn.theme-pink {
     background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+}
+
+.theme-btn.theme-red-dark {
+    background: linear-gradient(135deg, #7f1d1d 0%, #ef4444 100%);
+}
+
+.theme-btn.theme-pink-dark {
+    background: linear-gradient(135deg, #831843 0%, #f472b6 100%);
 }
 
 .theme-btn.theme-black {
