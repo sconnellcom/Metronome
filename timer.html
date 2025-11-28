@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        body.theme-black .container,
+        body.theme-blue-dark .container,
+        body.theme-dark .container,
+        body.theme-warm-dark .container,
+        body.theme-red-dark .container,
+        body.theme-pink-dark .container {
+            background: rgba(20, 20, 20, 0.95);
+        }
+
+        /* Dark theme text colors */
+        body.theme-black,
+        body.theme-blue-dark,
+        body.theme-dark,
+        body.theme-warm-dark,
+        body.theme-red-dark,
+        body.theme-pink-dark {
+            --text-color: #f3f4f6;
+            --text-secondary: #9ca3af;
+            --border-color: #374151;
+            --input-bg: #1f2937;
+            --item-bg: #1f2937;
+            --preset-bg: #374151;
+            --preset-hover: #4b5563;
+            --lap-bg: #1f2937;
+            --success-bg: #064e3b;
+            --warning-bg: #78350f;
+            --info-bg: #1e3a8a;
+        }
+
+        /* Light theme colors */
+        body.theme-light,
+        body.theme-warm-light,
+        body.theme-red,
+        body.theme-pink,
+        body.theme-blue {
+            --text-color: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --input-bg: white;
+            --item-bg: #f3f4f6;
+            --preset-bg: #f3f4f6;
+            --preset-hover: #e5e7eb;
+            --lap-bg: #f9fafb;
+            --success-bg: #d1fae5;
+            --warning-bg: #fef3c7;
+            --info-bg: #dbeafe;
+        }
+
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--text-color, #333);
+            font-size: 2em;
+            flex: 1;
+            margin: 0;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--border-color, #e0e0e0);
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-secondary, #666);
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab:hover {
+            color: var(--primary-color, #667eea);
+        }
+
+        .tab.active {
+            color: var(--primary-color, #667eea);
+            border-bottom-color: var(--primary-color, #667eea);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .display {
+            font-size: 4em;
+            font-weight: bold;
+            text-align: center;
+            color: var(--text-color, #333);
+            margin: 30px 0;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 2px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .btn-start {
+            background: #10b981;
+            color: white;
+        }
+
+        .btn-start:hover {
+            background: #059669;
+        }
+
+        .btn-stop {
+            background: #ef4444;
+            color: white;
+        }
+
+        .btn-stop:hover {
+            background: #dc2626;
+        }
+
+        .btn-dismiss {
+            background: #dc2626;
+            color: white;
+        }
+
+        .btn-dismiss:hover {
+            background: #b91c1c;
+        }
+
+        .btn-reset {
+            background: #6b7280;
+            color: white;
+        }
+
+        .btn-reset:hover {
+            background: #4b5563;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .input-group input,
+        .input-group select {
+            padding: 10px;
+            font-size: 18px;
+            text-align: center;
+            border: 2px solid var(--border-color, #e0e0e0);
+            border-radius: 8px;
+            transition: border-color 0.3s ease;
+            background: var(--input-bg, white);
+            color: var(--text-color, #333);
+        }
+
+        body.theme-black .input-group input,
+        body.theme-blue-dark .input-group input,
+        body.theme-dark .input-group input,
+        body.theme-warm-dark .input-group input,
+        body.theme-red-dark .input-group input,
+        body.theme-pink-dark .input-group input,
+        body.theme-black .input-group select,
+        body.theme-blue-dark .input-group select,
+        body.theme-dark .input-group select,
+        body.theme-warm-dark .input-group select,
+        body.theme-red-dark .input-group select,
+        body.theme-pink-dark .input-group select {
+            background: var(--input-bg);
+            color: var(--text-color);
+            border-color: var(--border-color);
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color, #667eea);
+        }
+
+        .input-group label {
+            font-weight: 600;
+            color: var(--text-color, #666);
+        }
+
+        .time-input {
+            width: 120px;
+            font-family: monospace;
+            font-size: 20px;
+        }
+
+        .preset-buttons {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 15px 0;
+        }
+
+        .preset-btn {
+            padding: 8px 16px;
+            font-size: 14px;
+            background: var(--preset-bg, #f3f4f6);
+            color: var(--text-color, #333);
+            border: 2px solid var(--border-color, #e5e7eb);
+            cursor: pointer;
+        }
+
+        .preset-btn:hover {
+            background: var(--preset-hover, #e5e7eb);
+            border-color: var(--primary-color, #667eea);
+        }
+
+        .timer-list,
+        .alarm-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-top: 20px;
+        }
+
+        .timer-item,
+        .alarm-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px;
+            background: var(--item-bg, #f3f4f6);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .timer-item.running {
+            background: var(--success-bg, #d1fae5);
+            border-left: 4px solid #10b981;
+        }
+
+        .timer-item.paused {
+            background: var(--warning-bg, #fef3c7);
+            border-left: 4px solid #f59e0b;
+        }
+
+        .timer-item.sounding {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .alarm-item.active {
+            background: var(--info-bg, #dbeafe);
+            border-left: 4px solid #3b82f6;
+        }
+
+        .alarm-item.sounding {
+            background: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .timer-info,
+        .alarm-info {
+            flex: 1;
+        }
+
+        .timer-name,
+        .alarm-time {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: var(--text-color, #333);
+            margin-bottom: 4px;
+        }
+
+        .timer-time {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: var(--primary-color, #667eea);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .alarm-label {
+            color: var(--text-secondary, #666);
+            font-size: 0.9em;
+        }
+
+        .alarm-countdown {
+            color: var(--primary-color, #667eea);
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-top: 4px;
+        }
+
+        .item-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .timer-btn {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 14px;
+            color: var(--text-secondary, #666);
+            min-height: 20px;
+        }
+
+        .status.active {
+            color: #10b981;
+            font-weight: 600;
+        }
+
+        .status.warning {
+            color: #f59e0b;
+            font-weight: 600;
+        }
+
+        .lap-times {
+            max-height: 200px;
+            overflow-y: auto;
+            margin-top: 20px;
+            padding: 10px;
+            background: var(--lap-bg, #f9fafb);
+            border-radius: 8px;
+        }
+
+        .lap-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid var(--border-color, #e5e7eb);
+        }
+
+        .lap-item:last-child {
+            border-bottom: none;
+        }
+
+        .lap-number {
+            font-weight: 600;
+            color: var(--primary-color, #667eea);
+        }
+
+        .lap-time {
+            font-variant-numeric: tabular-nums;
+            color: var(--text-color, #333);
+        }
+
+        .repeat-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .repeat-toggle input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .theme-picker .theme-btn-active {
+            box-sizing: content-box;
+            min-width: 32px !important;
+            max-width: 32px !important;
+            width: 32px !important;
+            min-height: 32px !important;
+            max-height: 32px !important;
+            height: 32px !important;
+            padding: 0 !important;
+        }
+
+        .theme-picker .theme-btn {
+            box-sizing: content-box;
+            min-width: 32px !important;
+            max-width: 32px !important;
+            width: 32px !important;
+            min-height: 32px !important;
+            max-height: 32px !important;
+            height: 32px !important;
+            padding: 0 !important;
+        }
+
+        .alarm-repeat-toggle {
+            cursor: pointer;
+            font-size: 0.9em;
+            color: var(--primary-color, #667eea);
+            text-decoration: underline;
+        }
+
+        .alarm-repeat-toggle:hover {
+            opacity: 0.8;
+        }
+
+        .alert-banner {
+            background: #ef4444;
+            color: white;
+            padding: 12px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
+        }
+
+        .clock-display {
+            font-size: 5em;
+            font-weight: bold;
+            text-align: center;
+            color: var(--text-color, #333);
+            margin: 20px 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .clock-date {
+            font-size: 1.5em;
+            text-align: center;
+            color: var(--text-secondary, #666);
+            margin-bottom: 30px;
+        }
+
+        .active-items-section h3 {
+            color: var(--text-color, #333);
+            margin: 20px 0 10px 0;
+            font-size: 1.2em;
+        }
+
+        .active-items {
+            margin-bottom: 15px;
+        }
+
+        .active-item {
+            padding: 10px;
+            background: var(--item-bg, #f3f4f6);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .active-item span {
+            color: var(--text-color, #333);
+        }
+
+        .active-items-section h3,
+        .active-items h4 {
+            color: var(--text-color, #333);
+        }
+
+        .timer-time-display {
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .timer-time-display:hover {
+            opacity: 0.8;
+        }
+
+        .timer-initial {
+            font-size: 0.8em;
+            color: var(--text-secondary, #999);
+            margin-top: 2px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <div id="alert-banner" class="alert-banner" style="display: none;"></div>
+        <div class="header-row">
+            <div class="theme-picker">
+                <button class="theme-btn-active theme-default" data-theme="default" title="Change Theme"></button>
+                <div class="theme-dropdown" style="display: none;">
+                    <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                    <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                    <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                    <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                    <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                    <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                    <button class="theme-btn theme-warm-light" data-theme="warm-light"
+                        title="Warm Light Theme"></button>
+                    <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                    <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                    <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                    <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                    <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+                </div>
+            </div>
+            <h1>⏱️ Timer</h1>
+            <button id="silence-btn" class="btn-stop timer-btn" style="display: none; margin-left: 10px;"
+                title="Stop alarm sound">🔇 Silence</button>
+            <div style="width: 40px;"></div>
+        </div>
+
+        <div class="tabs">
+            <button class="tab active" data-tab="clock">Clock</button>
+            <button class="tab" data-tab="countdown">Countdown</button>
+            <button class="tab" data-tab="stopwatch">Stopwatch</button>
+            <button class="tab" data-tab="alarm">Alarm</button>
+        </div>
+
+        <!-- Clock View -->
+        <div class="tab-content active" id="clock">
+            <div class="clock-display" id="clock-display">00:00:00</div>
+            <div class="clock-date" id="clock-date"></div>
+            <div class="active-items-section">
+                <h3>Active Items</h3>
+                <div id="active-timers" class="active-items"></div>
+                <div id="active-stopwatches" class="active-items"></div>
+                <div id="active-alarms" class="active-items"></div>
+            </div>
+        </div>
+
+        <!-- Countdown Timer -->
+        <div class="tab-content" id="countdown">
+            <div class="preset-buttons">
+                <button class="preset-btn" data-seconds="120">2 min</button>
+                <button class="preset-btn" data-seconds="300">5 min</button>
+                <button class="preset-btn" data-seconds="600">10 min</button>
+                <button class="preset-btn" data-seconds="900">15 min</button>
+                <button class="preset-btn" data-seconds="1800">30 min</button>
+                <button class="preset-btn" data-seconds="3600">1 hour</button>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="timer-name" placeholder="Timer name (optional)" style="width: 140px;">
+                <input type="text" id="time-input" class="time-input" placeholder="0:0:0" value="0:5:0">
+            </div>
+
+            <div class="controls">
+                <button class="btn-start" id="add-timer">Add Timer</button>
+            </div>
+
+            <div class="timer-list" id="timer-list"></div>
+            <div class="status" id="countdown-status"></div>
+        </div>
+
+        <!-- Stopwatch -->
+        <div class="tab-content" id="stopwatch">
+            <div class="display" id="stopwatch-display">00:00:00.000</div>
+
+            <div class="controls">
+                <button class="btn-start" id="stopwatch-start">Start</button>
+                <button class="btn-stop" id="stopwatch-stop" disabled>Stop</button>
+                <button class="btn-reset" id="stopwatch-reset">Reset</button>
+                <button class="btn-start" id="stopwatch-lap" disabled>Lap</button>
+            </div>
+
+            <div class="lap-times" id="lap-times"></div>
+        </div>
+
+        <!-- Alarm Clock -->
+        <div class="tab-content" id="alarm">
+            <div class="input-group">
+                <input type="time" id="alarm-time" value="12:00" style="width: 150px;">
+                <input type="text" id="alarm-label" placeholder="Alarm label" style="width: 150px;">
+                <div class="repeat-toggle">
+                    <input type="checkbox" id="alarm-repeat" checked>
+                    <label for="alarm-repeat">Repeat</label>
+                </div>
+            </div>
+
+            <div class="controls">
+                <button class="btn-start" id="alarm-add">Add Alarm</button>
+            </div>
+
+            <div class="alarm-list" id="alarm-list"></div>
+            <div class="status" id="alarm-status"></div>
+        </div>
+    </div>
+
+    <script src="timer.js"></script>
+</body>
+
+</html>
