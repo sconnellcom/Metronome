@@ -31,6 +31,7 @@
             </div>
             <h1>Metronome</h1>
             <div class="header-buttons">
+                <button id="statsBtn" class="stats-btn" title="View Statistics">📊</button>
                 <button id="logBtn" class="log-btn" title="View Activity Log">
                     <span class="hamburger-icon">
                         <span></span>
@@ -277,6 +278,70 @@
                 </div>
                 <div class="log-container">
                     <div id="logEntries" class="log-entries"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Modal -->
+        <div id="statsModal" class="info-modal" style="display: none;">
+            <div class="info-modal-content stats-modal-content">
+                <div class="info-modal-header">
+                    <h3>📊 Statistics</h3>
+                    <div class="log-header-buttons">
+                        <button id="clearStatsBtn" class="clear-log-btn" title="Clear All Stats">Clear All</button>
+                        <button id="closeStatsBtn" class="close-btn">&times;</button>
+                    </div>
+                </div>
+                <div class="stats-container">
+                    <!-- Current Session Section -->
+                    <div class="stats-section">
+                        <h4>🎯 Current Session</h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-label">Current Streak</span>
+                                <span id="currentStreak" class="stat-value streak-value">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Best Session Streak</span>
+                                <span id="bestStreak" class="stat-value">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Session Accuracy</span>
+                                <span id="sessionAccuracy" class="stat-value">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BPM Chart Section -->
+                    <div class="stats-section">
+                        <h4>📈 BPM History</h4>
+                        <canvas id="bpmChart" width="340" height="150"></canvas>
+                    </div>
+
+                    <!-- All-Time Stats Section -->
+                    <div class="stats-section">
+                        <h4>🏆 All-Time Records</h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-label">Best Streak Ever</span>
+                                <span id="allTimeBest" class="stat-value highlight">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Total Practice Time</span>
+                                <span id="totalPractice" class="stat-value">0s</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Total Sessions</span>
+                                <span id="totalSessions" class="stat-value">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Achievements Section -->
+                    <div class="stats-section">
+                        <h4>🎖️ Achievements</h4>
+                        <div id="achievementsList" class="achievements-list"></div>
+                    </div>
                 </div>
             </div>
         </div>

@@ -57,6 +57,26 @@ class Metronome {
         this.activityLog = [];
         this.loadActivityLog();
 
+        // Session statistics tracking
+        this.sessionStats = {
+            bpmReadings: [],        // Array of {timestamp, bpm} for charting
+            currentStreak: 0,       // Current consecutive on-beat count
+            bestSessionStreak: 0,   // Best streak in current session
+            totalBeats: 0,          // Total beats detected in session
+            onBeatCount: 0,         // Total on-beat hits
+            sessionStartTime: null  // When current session started
+        };
+        this.allTimeStats = {
+            bestStreak: 0,
+            totalPracticeTime: 0,   // Total practice time in milliseconds
+            totalSessions: 0,
+            totalBeats: 0,
+            totalOnBeats: 0,
+            averageAccuracy: 0,
+            sessions: []            // Historical session data for charts
+        };
+        this.loadAllTimeStats();
+
         this.initializeUI();
         this.setupEventListeners();
         this.initializeTheme();
@@ -162,6 +182,19 @@ class Metronome {
         this.closeLogBtn = document.getElementById('closeLogBtn');
         this.clearLogBtn = document.getElementById('clearLogBtn');
         this.logEntries = document.getElementById('logEntries');
+
+        // Stats modal elements
+        this.statsBtn = document.getElementById('statsBtn');
+        this.statsModal = document.getElementById('statsModal');
+        this.closeStatsBtn = document.getElementById('closeStatsBtn');
+        this.bpmChart = document.getElementById('bpmChart');
+        this.currentStreakDisplay = document.getElementById('currentStreak');
+        this.bestStreakDisplay = document.getElementById('bestStreak');
+        this.sessionAccuracyDisplay = document.getElementById('sessionAccuracy');
+        this.allTimeBestDisplay = document.getElementById('allTimeBest');
+        this.totalPracticeDisplay = document.getElementById('totalPractice');
+        this.totalSessionsDisplay = document.getElementById('totalSessions');
+        this.clearStatsBtn = document.getElementById('clearStatsBtn');
     }
 
     setupEventListeners() {
@@ -311,6 +344,41 @@ class Metronome {
                 this.activityLog = [];
                 this.saveActivityLog();
                 this.displayActivityLog();
+            }
+        });
+
+        // Stats button
+        this.statsBtn.addEventListener('click', () => {
+            this.displayStats();
+            this.statsModal.style.display = 'flex';
+        });
+
+        // Close stats modal
+        this.closeStatsBtn.addEventListener('click', () => {
+            this.statsModal.style.display = 'none';
+        });
+
+        // Close stats modal when clicking outside
+        this.statsModal.addEventListener('click', (e) => {
+            if (e.target === this.statsModal) {
+                this.statsModal.style.display = 'none';
+            }
+        });
+
+        // Clear all stats button
+        this.clearStatsBtn.addEventListener('click', () => {
+            if (confirm('Are you sure you want to delete all statistics? This cannot be undone.')) {
+                this.allTimeStats = {
+                    bestStreak: 0,
+                    totalPracticeTime: 0,
+                    totalSessions: 0,
+                    totalBeats: 0,
+                    totalOnBeats: 0,
+                    averageAccuracy: 0,
+                    sessions: []
+                };
+                this.saveAllTimeStats();
+                this.displayStats();
             }
         });
 
@@ -623,6 +691,16 @@ class Metronome {
             this.detectedBeats = [];
             this.offBeatCount = 0;
 
+            // Initialize session stats
+            this.sessionStats = {
+                bpmReadings: [],
+                currentStreak: 0,
+                bestSessionStreak: 0,
+                totalBeats: 0,
+                onBeatCount: 0,
+                sessionStartTime: Date.now()
+            };
+
             // Initialize top displays
             this.beatStatusTop.textContent = 'Detecting taps...';
             this.beatStatusTop.className = 'beat-info-value status-listening';
@@ -645,6 +723,11 @@ class Metronome {
     }
 
     stopDetection() {
+        // Save session stats before stopping
+        if (this.sessionStats.sessionStartTime && this.sessionStats.totalBeats > 0) {
+            this.saveSessionStats();
+        }
+
         this.isDetecting = false;
         this.autoStatus.textContent = 'Inactive';
         this.autoStatus.classList.remove('listening', 'alert');
@@ -892,6 +975,9 @@ class Metronome {
             this.autoStatus.classList.add('listening');
             this.beatStatusTop.textContent = 'On beat';
             this.beatStatusTop.className = 'beat-info-value status-listening';
+
+            // Track session stats - on beat
+            this.trackBeatStats(true);
         } else {
             this.offBeatCount++;
             const msOff = Math.round(closestDiff);
@@ -906,6 +992,9 @@ class Metronome {
             }
             this.beatAccuracy.textContent = `Off beat (${reason}) - ${msOff}ms, ${bpmDiff.toFixed(1)} BPM off`;
             this.beatAccuracyTopDisplay.textContent = `${msOff}ms`;
+
+            // Track session stats - off beat
+            this.trackBeatStats(false);
 
             if (this.offBeatCount >= this.consecutiveOffBeatsThreshold) {
                 // Cap offBeatCount so it doesn't require too many on-beats to recover
@@ -1156,6 +1245,345 @@ class Metronome {
         this.activityLog = this.activityLog.filter(entry => !timestampsToRemove.has(entry.timestamp));
         this.saveActivityLog();
         this.displayActivityLog();
+    }
+
+    // Statistics Methods
+    trackBeatStats(isOnBeat) {
+        const now = Date.now();
+
+        // Track total beats
+        this.sessionStats.totalBeats++;
+
+        if (isOnBeat) {
+            this.sessionStats.onBeatCount++;
+            this.sessionStats.currentStreak++;
+
+            // Update best session streak
+            if (this.sessionStats.currentStreak > this.sessionStats.bestSessionStreak) {
+                this.sessionStats.bestSessionStreak = this.sessionStats.currentStreak;
+            }
+
+            // Update all-time best streak
+            if (this.sessionStats.currentStreak > this.allTimeStats.bestStreak) {
+                this.allTimeStats.bestStreak = this.sessionStats.currentStreak;
+                this.saveAllTimeStats();
+            }
+        } else {
+            // Reset current streak on off-beat
+            this.sessionStats.currentStreak = 0;
+        }
+
+        // Record BPM reading if we have detected BPM
+        if (this.detectedBPM) {
+            this.sessionStats.bpmReadings.push({
+                timestamp: now,
+                bpm: this.detectedBPM,
+                targetBpm: this.bpm,
+                isOnBeat: isOnBeat
+            });
+
+            // Keep only last 100 readings to prevent memory issues
+            if (this.sessionStats.bpmReadings.length > 100) {
+                this.sessionStats.bpmReadings.shift();
+            }
+        }
+    }
+
+    saveSessionStats() {
+        const sessionEndTime = Date.now();
+        const sessionDuration = sessionEndTime - this.sessionStats.sessionStartTime;
+
+        // Create session summary
+        const sessionSummary = {
+            date: this.sessionStats.sessionStartTime,
+            duration: sessionDuration,
+            targetBpm: this.bpm,
+            totalBeats: this.sessionStats.totalBeats,
+            onBeatCount: this.sessionStats.onBeatCount,
+            accuracy: this.sessionStats.totalBeats > 0 
+                ? Math.round((this.sessionStats.onBeatCount / this.sessionStats.totalBeats) * 100) 
+                : 0,
+            bestStreak: this.sessionStats.bestSessionStreak,
+            bpmReadings: this.sessionStats.bpmReadings.slice(-50) // Store last 50 readings per session
+        };
+
+        // Update all-time stats
+        this.allTimeStats.totalPracticeTime += sessionDuration;
+        this.allTimeStats.totalSessions++;
+        this.allTimeStats.totalBeats += this.sessionStats.totalBeats;
+        this.allTimeStats.totalOnBeats += this.sessionStats.onBeatCount;
+
+        // Calculate average accuracy
+        if (this.allTimeStats.totalBeats > 0) {
+            this.allTimeStats.averageAccuracy = Math.round(
+                (this.allTimeStats.totalOnBeats / this.allTimeStats.totalBeats) * 100
+            );
+        }
+
+        // Add session to history (keep last 30 sessions)
+        this.allTimeStats.sessions.push(sessionSummary);
+        if (this.allTimeStats.sessions.length > 30) {
+            this.allTimeStats.sessions.shift();
+        }
+
+        this.saveAllTimeStats();
+    }
+
+    loadAllTimeStats() {
+        try {
+            const saved = localStorage.getItem('metronomeAllTimeStats');
+            if (saved) {
+                this.allTimeStats = JSON.parse(saved);
+            }
+        } catch (e) {
+            console.error('Failed to load all-time stats:', e);
+            this.allTimeStats = {
+                bestStreak: 0,
+                totalPracticeTime: 0,
+                totalSessions: 0,
+                totalBeats: 0,
+                totalOnBeats: 0,
+                averageAccuracy: 0,
+                sessions: []
+            };
+        }
+    }
+
+    saveAllTimeStats() {
+        try {
+            localStorage.setItem('metronomeAllTimeStats', JSON.stringify(this.allTimeStats));
+        } catch (e) {
+            console.error('Failed to save all-time stats:', e);
+        }
+    }
+
+    displayStats() {
+        // Update current session stats
+        if (this.currentStreakDisplay) {
+            this.currentStreakDisplay.textContent = this.sessionStats.currentStreak || 0;
+        }
+        if (this.bestStreakDisplay) {
+            this.bestStreakDisplay.textContent = this.sessionStats.bestSessionStreak || 0;
+        }
+        if (this.sessionAccuracyDisplay) {
+            const accuracy = this.sessionStats.totalBeats > 0
+                ? Math.round((this.sessionStats.onBeatCount / this.sessionStats.totalBeats) * 100)
+                : 0;
+            this.sessionAccuracyDisplay.textContent = `${accuracy}%`;
+        }
+
+        // Update all-time stats
+        if (this.allTimeBestDisplay) {
+            this.allTimeBestDisplay.textContent = this.allTimeStats.bestStreak || 0;
+        }
+        if (this.totalPracticeDisplay) {
+            this.totalPracticeDisplay.textContent = this.formatDuration(this.allTimeStats.totalPracticeTime || 0);
+        }
+        if (this.totalSessionsDisplay) {
+            this.totalSessionsDisplay.textContent = this.allTimeStats.totalSessions || 0;
+        }
+
+        // Draw BPM chart
+        this.drawBpmChart();
+
+        // Display achievements
+        this.displayAchievements();
+    }
+
+    drawBpmChart() {
+        const canvas = this.bpmChart;
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
+        const width = canvas.width;
+        const height = canvas.height;
+
+        // Clear canvas
+        ctx.clearRect(0, 0, width, height);
+
+        // Get data - combine current session with recent session history
+        let readings = [...this.sessionStats.bpmReadings];
+        
+        // If no current readings, try to use last session's data
+        if (readings.length === 0 && this.allTimeStats.sessions.length > 0) {
+            const lastSession = this.allTimeStats.sessions[this.allTimeStats.sessions.length - 1];
+            readings = lastSession.bpmReadings || [];
+        }
+
+        if (readings.length < 2) {
+            // Show placeholder text
+            ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text-tertiary') || '#666';
+            ctx.font = '14px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Start beat detection to see your BPM chart', width / 2, height / 2);
+            return;
+        }
+
+        // Chart settings
+        const padding = { top: 20, right: 20, bottom: 30, left: 40 };
+        const chartWidth = width - padding.left - padding.right;
+        const chartHeight = height - padding.top - padding.bottom;
+
+        // Find min/max BPM for scaling
+        const bpms = readings.map(r => r.bpm);
+        const targetBpm = readings[0].targetBpm || this.bpm;
+        let minBpm = Math.min(...bpms, targetBpm) - 10;
+        let maxBpm = Math.max(...bpms, targetBpm) + 10;
+
+        // Prevent division by zero when all BPM values are the same
+        if (maxBpm === minBpm) {
+            minBpm -= 10;
+            maxBpm += 10;
+        }
+        const bpmRange = maxBpm - minBpm;
+
+        // Draw grid lines
+        ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--border-color') || '#e0e0e0';
+        ctx.lineWidth = 1;
+
+        // Horizontal grid lines
+        for (let i = 0; i <= 4; i++) {
+            const y = padding.top + (chartHeight / 4) * i;
+            ctx.beginPath();
+            ctx.moveTo(padding.left, y);
+            ctx.lineTo(width - padding.right, y);
+            ctx.stroke();
+        }
+
+        // Draw target BPM line
+        const targetY = padding.top + chartHeight - ((targetBpm - minBpm) / bpmRange) * chartHeight;
+        ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--primary-color') || '#667eea';
+        ctx.setLineDash([5, 5]);
+        ctx.beginPath();
+        ctx.moveTo(padding.left, targetY);
+        ctx.lineTo(width - padding.right, targetY);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Draw BPM line
+        ctx.beginPath();
+        ctx.strokeStyle = '#48bb78'; // Green for on-beat readings
+        ctx.lineWidth = 2;
+
+        // Calculate x step - handle edge case where readings.length could be 1
+        const xDivisor = Math.max(1, readings.length - 1);
+
+        readings.forEach((reading, index) => {
+            const x = padding.left + (index / xDivisor) * chartWidth;
+            const y = padding.top + chartHeight - ((reading.bpm - minBpm) / bpmRange) * chartHeight;
+
+            if (index === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        });
+        ctx.stroke();
+
+        // Draw points with color based on on-beat status
+        readings.forEach((reading, index) => {
+            const x = padding.left + (index / xDivisor) * chartWidth;
+            const y = padding.top + chartHeight - ((reading.bpm - minBpm) / bpmRange) * chartHeight;
+
+            ctx.beginPath();
+            ctx.arc(x, y, 3, 0, Math.PI * 2);
+            ctx.fillStyle = reading.isOnBeat ? '#48bb78' : '#e53e3e';
+            ctx.fill();
+        });
+
+        // Draw labels
+        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--text-secondary') || '#666';
+        ctx.font = '11px sans-serif';
+        ctx.textAlign = 'right';
+
+        // Y-axis labels
+        for (let i = 0; i <= 4; i++) {
+            const bpm = minBpm + (bpmRange / 4) * (4 - i);
+            const y = padding.top + (chartHeight / 4) * i;
+            ctx.fillText(Math.round(bpm).toString(), padding.left - 5, y + 4);
+        }
+
+        // X-axis label
+        ctx.textAlign = 'center';
+        ctx.fillText('Time →', width / 2, height - 5);
+
+        // Target BPM label
+        ctx.fillStyle = getComputedStyle(document.body).getPropertyValue('--primary-color') || '#667eea';
+        ctx.textAlign = 'left';
+        ctx.fillText(`Target: ${targetBpm}`, padding.left + 5, targetY - 5);
+    }
+
+    displayAchievements() {
+        const achievementsContainer = document.getElementById('achievementsList');
+        if (!achievementsContainer) return;
+
+        const achievements = this.calculateAchievements();
+        
+        achievementsContainer.innerHTML = achievements.map(achievement => `
+            <div class="achievement-item ${achievement.unlocked ? 'unlocked' : 'locked'}">
+                <span class="achievement-icon">${achievement.icon}</span>
+                <div class="achievement-info">
+                    <span class="achievement-name">${achievement.name}</span>
+                    <span class="achievement-desc">${achievement.description}</span>
+                </div>
+                ${achievement.unlocked ? '<span class="achievement-check">✓</span>' : ''}
+            </div>
+        `).join('');
+    }
+
+    calculateAchievements() {
+        const stats = this.allTimeStats;
+
+        return [
+            {
+                name: 'First Beat',
+                description: 'Complete your first beat detection session',
+                icon: '🎵',
+                unlocked: stats.totalSessions >= 1
+            },
+            {
+                name: 'Practice Makes Perfect',
+                description: 'Complete 10 practice sessions',
+                icon: '📚',
+                unlocked: stats.totalSessions >= 10
+            },
+            {
+                name: 'Streak Starter',
+                description: 'Get a 10-beat on-beat streak',
+                icon: '🔥',
+                unlocked: stats.bestStreak >= 10
+            },
+            {
+                name: 'Rhythm Master',
+                description: 'Get a 25-beat on-beat streak',
+                icon: '⭐',
+                unlocked: stats.bestStreak >= 25
+            },
+            {
+                name: 'Metronome Pro',
+                description: 'Get a 50-beat on-beat streak',
+                icon: '🏆',
+                unlocked: stats.bestStreak >= 50
+            },
+            {
+                name: 'Dedicated Musician',
+                description: 'Practice for 30 minutes total',
+                icon: '⏰',
+                unlocked: stats.totalPracticeTime >= 30 * 60 * 1000
+            },
+            {
+                name: 'Hour of Power',
+                description: 'Practice for 1 hour total',
+                icon: '💪',
+                unlocked: stats.totalPracticeTime >= 60 * 60 * 1000
+            },
+            {
+                name: 'Beat Machine',
+                description: 'Detect 500 beats total',
+                icon: '🥁',
+                unlocked: stats.totalBeats >= 500
+            }
+        ];
     }
 }
 
