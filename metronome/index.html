@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Metronome</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header-row">
+            <div class="theme-picker">
+                <button class="theme-btn-active theme-default" data-theme="default" title="Change Theme"></button>
+                <div class="theme-dropdown" style="display: none;">
+                    <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                    <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                    <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                    <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                    <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                    <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                    <button class="theme-btn theme-warm-light" data-theme="warm-light"
+                        title="Warm Light Theme"></button>
+                    <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                    <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                    <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                    <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                    <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+                </div>
+            </div>
+            <h1>Metronome</h1>
+            <div class="header-buttons">
+                <button id="statsBtn" class="stats-btn" title="View Statistics">📊</button>
+                <button id="logBtn" class="log-btn" title="View Activity Log">
+                    <span class="hamburger-icon">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </button>
+                <button id="infoBtn" class="info-btn" title="How to Use">ⓘ</button>
+            </div>
+        </div>
+
+        <!-- Visual Pulse Indicator -->
+        <div class="pulse-container">
+            <div class="pulse-wrapper">
+                <div id="pulse" class="pulse"></div>
+                <div class="pulse-label">Metronome</div>
+            </div>
+            <div class="pulse-wrapper">
+                <div class="acceleration-meter">
+                    <div id="accelerationBar" class="acceleration-bar"></div>
+                </div>
+                <div class="pulse-label">Your Beat</div>
+            </div>
+        </div>
+
+        <!-- Beat Detection Info -->
+        <div class="beat-info" style="display: none;">
+            <div class="beat-info-item">
+                <span class="beat-info-label">Status:</span>
+                <span id="beatStatus" class="beat-info-value">--</span>
+            </div>
+            <div class="beat-info-item">
+                <span class="beat-info-label">Detected BPM:</span>
+                <span id="beatDetectedBpm" class="beat-info-value">--</span>
+            </div>
+            <div class="beat-info-item">
+                <span class="beat-info-label">Accuracy:</span>
+                <span id="beatAccuracyTop" class="beat-info-value">--</span>
+            </div>
+        </div>
+
+        <!-- BPM Display -->
+        <div class="bpm-display" id="bpmDisplay" title="Click for presets">
+            <span id="bpmValue">120</span> BPM
+        </div>
+
+        <!-- BPM Preset Menu -->
+        <div id="bpmPresetMenu" class="bpm-preset-menu" style="display: none;">
+            <!-- BPM Slider -->
+            <div class="control-group">
+                <label for="bpmSlider">Tempo:</label>
+                <input type="range" id="bpmSlider" min="40" max="240" value="120" step="1">
+            </div>
+            <div class="bpm-preset-header">Quick Tempo Presets</div>
+            <div class="bpm-preset-grid">
+                <button class="bpm-preset-btn" data-bpm="60">60 - Largo</button>
+                <button class="bpm-preset-btn" data-bpm="72">72 - Adagio</button>
+                <button class="bpm-preset-btn" data-bpm="80">80 - Andante</button>
+                <button class="bpm-preset-btn" data-bpm="92">92 - Moderato</button>
+                <button class="bpm-preset-btn" data-bpm="108">108 - Allegretto</button>
+                <button class="bpm-preset-btn" data-bpm="120">120 - Allegro</button>
+                <button class="bpm-preset-btn" data-bpm="132">132 - Vivace</button>
+                <button class="bpm-preset-btn" data-bpm="144">144 - Presto</button>
+            </div>
+        </div>
+
+        <!-- Auto Mode Settings (sensitivity only, shown when beat detection enabled) -->
+        <div id="autoModeSettings" class="auto-settings" style="display: none;">
+            <div class="control-group sensitivity-group">
+                <label for="sensitivitySlider">Beat Detection:</label>
+                <input type="range" id="sensitivitySlider" min="0" max="100" value="50" step="5">
+                <span id="sensitivityValue">50</span>%
+            </div>
+            <div class="control-group sensitivity-group">
+                <label for="toleranceSlider">Timing Tolerance:</label>
+                <input type="range" id="toleranceSlider" min="5" max="1000" value="100" step="5">
+                <span id="toleranceValue">100</span>ms
+            </div>
+            <div class="control-group sensitivity-group">
+                <label for="bpmToleranceSlider">BPM Tolerance:</label>
+                <input type="range" id="bpmToleranceSlider" min="0" max="20" value="5" step="1">
+                <span id="bpmToleranceValue">5</span> BPM
+            </div>
+        </div>
+
+        <!-- Sound and Beat Detection Row -->
+        <div class="compact-controls">
+            <div class="dropdown-group">
+                <select id="soundSelector" class="dropdown-select">
+                    <option value="beep">Beep</option>
+                    <option value="bass">Bass Drum</option>
+                    <option value="cymbal">Cymbal</option>
+                    <option value="tock">Tock</option>
+                    <option value="riff4">4-Count Riff</option>
+                    <option value="riff8">8-Count Riff</option>
+                    <option value="vibrate">Vibrate</option>
+                    <option value="silent">Silent</option>
+                </select>
+            </div>
+            <div class="dropdown-group" style="padding-top: 8px;">
+                <label for="beatDetectionToggle">
+                    <input type="checkbox" id="beatDetectionToggle" class="toggle-checkbox">
+                    <span class="toggle-label">Beat Detection</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Start/Stop Button -->
+        <button id="startStop" class="btn btn-primary">Start</button>
+
+        <!-- Hidden elements for auto mode (kept for JS compatibility) -->
+        <div style="display: none;">
+            <span id="autoStatus">Inactive</span>
+            <span id="detectedBpm">--</span>
+            <span id="beatAccuracy">--</span>
+        </div>
+
+        <!-- Info Modal -->
+        <div id="infoModal" class="info-modal" style="display: none;">
+            <div class="info-modal-content">
+                <div class="info-modal-header">
+                    <h3>How to Use</h3>
+                    <button id="closeInfoBtn" class="close-btn">&times;</button>
+                </div>
+                <div style="padding: 0 20px 20px;">
+                    <h4>Getting Started</h4>
+                    <ul>
+                        <li><strong>Start/Stop:</strong> Click the "Metronome" pulse or the Start/Stop button</li>
+                        <li><strong>Set Tempo:</strong> Click the BPM number to open the tempo slider and quick presets
+                        </li>
+                        <li><strong>Choose Sound:</strong> Select from the dropdown (Beep, Bass, Cymbal, Tock, Riffs,
+                            Vibrate, or Silent)</li>
+                        <li><strong>Change Theme:</strong> Click the colored circle in the top-left corner</li>
+                    </ul>
+
+                    <h4>Visual Indicators</h4>
+                    <ul>
+                        <li><strong>Metronome (left pulse):</strong> Flashes on each beat to keep you in sync</li>
+                        <li><strong>Your Beat (right meter):</strong> Shows your tapping/movement intensity in real-time
+                        </li>
+                        <li>Tap the "Your Beat" meter to enable/disable beat detection</li>
+                    </ul>
+
+                    <h4>Beat Detection Mode</h4>
+                    <p><strong>What it does:</strong> The metronome monitors your movements and only makes sound when
+                        you drift off tempo. Perfect for practicing independence and staying on beat!</p>
+
+                    <p><strong>How it works:</strong></p>
+                    <ul>
+                        <li>Enable by checking "Beat Detection" or tapping the "Your Beat" meter</li>
+                        <li>The metronome runs silently while you practice</li>
+                        <li>Your device's accelerometer detects taps/movements</li>
+                        <li>The system evaluates <strong>both timing and tempo</strong>:
+                            <ul>
+                                <li><strong>Timing:</strong> Are you within tolerance of the beat? (in milliseconds)
+                                </li>
+                                <li><strong>Tempo:</strong> Is your overall BPM within range?</li>
+                            </ul>
+                        </li>
+                        <li>If you're on beat → Silent (green status)</li>
+                        <li>If you drift off → Metronome beeps to guide you back</li>
+                    </ul>
+
+                    <h4>Beat Detection Settings</h4>
+                    <p>These appear when Beat Detection is enabled:</p>
+                    <ul>
+                        <li><strong>Beat Detection (0-100%):</strong> Motion sensitivity
+                            <ul>
+                                <li>Higher % = detects lighter taps</li>
+                                <li>Lower % = requires harder hits</li>
+                                <li>Default: 50%</li>
+                            </ul>
+                        </li>
+                        <li><strong>Timing Tolerance (5-1000ms):</strong> How precise your timing must be
+                            <ul>
+                                <li>100ms = within 0.1 seconds of the beat</li>
+                                <li>Lower = stricter timing required</li>
+                                <li>Higher = more forgiving</li>
+                            </ul>
+                        </li>
+                        <li><strong>BPM Tolerance (0-20):</strong> How consistent your tempo must be
+                            <ul>
+                                <li>5 BPM = stay within ±5 BPM of target (e.g., 115-125 when target is 120)</li>
+                                <li>0 = must match target exactly</li>
+                                <li>Higher = more tempo drift allowed</li>
+                            </ul>
+                        </li>
+                    </ul>
+
+                    <p><strong>Pro Tip:</strong> Focus on one skill at a time!</p>
+                    <ul>
+                        <li>Practice tempo consistency: Set Timing Tolerance to 1000ms (max)</li>
+                        <li>Practice precise timing: Set BPM Tolerance to 20 (max)</li>
+                    </ul>
+
+                    <h4>Status Display</h4>
+                    <p>When Beat Detection is active, you'll see three indicators at the top:</p>
+                    <ul>
+                        <li><strong>Status:</strong> "On beat" (green) or "Off beat!" (red)</li>
+                        <li><strong>Detected BPM:</strong> Your actual tempo based on your taps</li>
+                        <li><strong>Accuracy:</strong> Milliseconds off from the metronome beat</li>
+                    </ul>
+
+                    <h4>Tempo Control</h4>
+                    <p>Click the large BPM number to open a menu with a tempo slider and quick preset buttons for common
+                        musical tempos:</p>
+                    <ul>
+                        <li>60 - Largo, 72 - Adagio, 80 - Andante, 92 - Moderato</li>
+                        <li>108 - Allegretto, 120 - Allegro, 132 - Vivace, 144 - Presto</li>
+                    </ul>
+
+                    <h4>Sound Options</h4>
+                    <ul>
+                        <li><strong>Beep:</strong> Classic metronome tone</li>
+                        <li><strong>Bass Drum:</strong> Low, punchy drum sound</li>
+                        <li><strong>Cymbal:</strong> Bright, shimmering cymbal</li>
+                        <li><strong>Tock:</strong> Wooden percussion sound</li>
+                        <li><strong>4-Count Riff:</strong> 3 bass hits + cymbal pattern</li>
+                        <li><strong>8-Count Riff:</strong> Full drum groove (bum bum chish de-de bum bum chish)</li>
+                        <li><strong>Vibrate:</strong> Device vibration instead of sound</li>
+                        <li><strong>Silent:</strong> Visual-only practice mode</li>
+                    </ul>
+
+                    <h4>Additional Features</h4>
+                    <ul>
+                        <li><strong>12 Themes:</strong> Choose from various color schemes including light/dark modes
+                        </li>
+                        <li><strong>Screen Wake Lock:</strong> Screen stays on during practice (no interruptions!)</li>
+                        <li><strong>Precise Timing:</strong> Uses Web Audio API for accurate, drift-free timing</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Log Modal -->
+        <div id="logModal" class="info-modal" style="display: none;">
+            <div class="info-modal-content log-modal-content">
+                <div class="info-modal-header">
+                    <h3>Activity Log</h3>
+                    <div class="log-header-buttons">
+                        <button id="clearLogBtn" class="clear-log-btn" title="Clear All Logs">Clear All</button>
+                        <button id="closeLogBtn" class="close-btn">&times;</button>
+                    </div>
+                </div>
+                <div class="log-container">
+                    <div id="logEntries" class="log-entries"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats Modal -->
+        <div id="statsModal" class="info-modal" style="display: none;">
+            <div class="info-modal-content stats-modal-content">
+                <div class="info-modal-header">
+                    <h3>📊 Statistics</h3>
+                    <div class="log-header-buttons">
+                        <button id="clearStatsBtn" class="clear-log-btn" title="Clear All Stats">Clear All</button>
+                        <button id="closeStatsBtn" class="close-btn">&times;</button>
+                    </div>
+                </div>
+                <div class="stats-container">
+                    <!-- Current Session Section -->
+                    <div class="stats-section">
+                        <h4>🎯 Current Session</h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-label">Current Streak</span>
+                                <span id="currentStreak" class="stat-value streak-value">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Best Session Streak</span>
+                                <span id="bestStreak" class="stat-value">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Session Accuracy</span>
+                                <span id="sessionAccuracy" class="stat-value">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- BPM Chart Section -->
+                    <div class="stats-section">
+                        <h4>📈 BPM History</h4>
+                        <canvas id="bpmChart" width="340" height="150"></canvas>
+                    </div>
+
+                    <!-- All-Time Stats Section -->
+                    <div class="stats-section">
+                        <h4>🏆 All-Time Records</h4>
+                        <div class="stats-grid">
+                            <div class="stat-item">
+                                <span class="stat-label">Best Streak Ever</span>
+                                <span id="allTimeBest" class="stat-value highlight">0</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Total Practice Time</span>
+                                <span id="totalPractice" class="stat-value">0s</span>
+                            </div>
+                            <div class="stat-item">
+                                <span class="stat-label">Total Sessions</span>
+                                <span id="totalSessions" class="stat-value">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Achievements Section -->
+                    <div class="stats-section">
+                        <h4>🎖️ Achievements</h4>
+                        <div id="achievementsList" class="achievements-list"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="metronome.js"></script>
+</body>
+
+</html>
