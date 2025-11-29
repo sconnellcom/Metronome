@@ -7,7 +7,6 @@ class DrumPad {
 
     constructor() {
         this.audioContext = null;
-        this.currentSound = 'kick';
         this.modifiers = {
             reverb: false,
             distortion: false,
@@ -15,16 +14,16 @@ class DrumPad {
             pitchDown: false
         };
         
-        // Touch tracking
-        this.lastTouchTime = 0;
-        this.lastTouchX = 0;
-        this.lastTouchY = 0;
-        this.touchDebounceMs = 50;
-        
-        // Canvas for visual feedback
-        this.canvas = null;
-        this.ctx = null;
-        this.trails = [];
+        // Accelerometer data
+        this.accelerometer = {
+            supported: false,
+            x: 0,
+            y: 0,
+            z: 0,
+            magnitude: 0,
+            lastMagnitude: 0,
+            shakeFactor: 1
+        };
         
         // Reverb convolver
         this.convolverNode = null;
@@ -33,7 +32,7 @@ class DrumPad {
         this.initializeUI();
         this.setupEventListeners();
         this.initializeTheme();
-        this.initializeCanvas();
+        this.initializeAccelerometer();
     }
 
     initializeTheme() {
@@ -64,80 +63,84 @@ class DrumPad {
         this.themeBtnActive = document.querySelector('.theme-btn-active');
         this.themeDropdown = document.querySelector('.theme-dropdown');
         
-        // Touch area
-        this.touchArea = document.getElementById('touchArea');
-        this.touchFeedback = document.getElementById('touchFeedback');
-        this.canvas = document.getElementById('touchCanvas');
-        
         // Info modal
         this.infoBtn = document.getElementById('infoBtn');
         this.infoModal = document.getElementById('infoModal');
         this.closeInfoBtn = document.getElementById('closeInfoBtn');
+        
+        // Accelerometer indicator
+        this.accelValue = document.getElementById('accelValue');
     }
 
-    initializeCanvas() {
-        const resizeCanvas = () => {
-            const rect = this.touchArea.getBoundingClientRect();
-            this.canvas.width = rect.width;
-            this.canvas.height = rect.height;
-        };
-        
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-        
-        this.ctx = this.canvas.getContext('2d');
-        this.animateTrails();
+    initializeAccelerometer() {
+        // Check for DeviceMotionEvent support
+        if ('DeviceMotionEvent' in window) {
+            // Check if permission is needed (iOS 13+)
+            if (typeof DeviceMotionEvent.requestPermission === 'function') {
+                // Will request permission when user interacts
+                this.accelerometer.needsPermission = true;
+            } else {
+                // No permission needed, start listening
+                this.startAccelerometer();
+            }
+        } else {
+            this.accelValue.textContent = 'Not supported';
+        }
     }
 
-    animateTrails() {
-        if (!this.ctx) return;
-        
-        // Clear canvas with fade effect
-        this.ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        
-        // Draw and update trails
-        this.trails = this.trails.filter(trail => {
-            trail.opacity -= 0.02;
-            if (trail.opacity <= 0) return false;
-            
-            this.ctx.beginPath();
-            this.ctx.arc(trail.x, trail.y, trail.radius, 0, Math.PI * 2);
-            this.ctx.fillStyle = `rgba(${trail.r}, ${trail.g}, ${trail.b}, ${trail.opacity})`;
-            this.ctx.fill();
-            
-            trail.radius += 0.5;
-            return true;
+    async requestAccelerometerPermission() {
+        if (typeof DeviceMotionEvent.requestPermission === 'function') {
+            try {
+                const permission = await DeviceMotionEvent.requestPermission();
+                if (permission === 'granted') {
+                    this.startAccelerometer();
+                    return true;
+                }
+            } catch (error) {
+                console.log('Accelerometer permission denied:', error);
+            }
+        }
+        return false;
+    }
+
+    startAccelerometer() {
+        window.addEventListener('devicemotion', (event) => {
+            const acc = event.accelerationIncludingGravity;
+            if (acc) {
+                this.accelerometer.supported = true;
+                this.accelerometer.x = acc.x || 0;
+                this.accelerometer.y = acc.y || 0;
+                this.accelerometer.z = acc.z || 0;
+                
+                // Calculate magnitude of acceleration (deviation from gravity)
+                const magnitude = Math.sqrt(
+                    this.accelerometer.x ** 2 + 
+                    this.accelerometer.y ** 2 + 
+                    this.accelerometer.z ** 2
+                );
+                
+                // Calculate shake factor based on how much the acceleration deviates from normal gravity (~9.8)
+                const deviation = Math.abs(magnitude - 9.8);
+                this.accelerometer.lastMagnitude = this.accelerometer.magnitude;
+                this.accelerometer.magnitude = deviation;
+                
+                // Calculate shake factor (1.0 = normal, up to 2.0 for strong shakes)
+                // Use a smoothed value to avoid sudden jumps
+                const targetShakeFactor = Math.min(2.0, 1.0 + (deviation / 10));
+                this.accelerometer.shakeFactor = this.accelerometer.shakeFactor * 0.7 + targetShakeFactor * 0.3;
+                
+                // Update UI indicator
+                if (this.accelerometer.shakeFactor > 1.1) {
+                    this.accelValue.textContent = `+${Math.round((this.accelerometer.shakeFactor - 1) * 100)}%`;
+                    this.accelValue.classList.add('active');
+                } else {
+                    this.accelValue.textContent = 'Ready';
+                    this.accelValue.classList.remove('active');
+                }
+            }
         });
         
-        requestAnimationFrame(() => this.animateTrails());
-    }
-
-    addTrail(x, y, velocity) {
-        // Get theme color
-        const style = getComputedStyle(document.body);
-        const primaryColor = style.getPropertyValue('--primary-color').trim() || '#667eea';
-        
-        // Parse color
-        let r = 102, g = 126, b = 234;
-        if (primaryColor.startsWith('#')) {
-            const hex = primaryColor.slice(1);
-            r = parseInt(hex.slice(0, 2), 16);
-            g = parseInt(hex.slice(2, 4), 16);
-            b = parseInt(hex.slice(4, 6), 16);
-        }
-        
-        // Add multiple particles for better effect
-        const particleCount = Math.min(5, Math.ceil(velocity / 50));
-        for (let i = 0; i < particleCount; i++) {
-            this.trails.push({
-                x: x + (Math.random() - 0.5) * 20,
-                y: y + (Math.random() - 0.5) * 20,
-                radius: 5 + velocity / 20,
-                opacity: 0.8,
-                r, g, b
-            });
-        }
+        this.accelValue.textContent = 'Ready';
     }
 
     setupEventListeners() {
@@ -161,12 +164,31 @@ class DrumPad {
             }
         });
 
-        // Effect buttons
-        document.querySelectorAll('.effect-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.effect-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                this.currentSound = btn.dataset.effect;
+        // Drum pad buttons - each plays its own sound
+        document.querySelectorAll('.drum-pad').forEach(pad => {
+            // Touch events for multi-touch support
+            pad.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                this.handlePadPress(pad);
+            }, { passive: false });
+            
+            pad.addEventListener('touchend', (e) => {
+                e.preventDefault();
+                this.handlePadRelease(pad);
+            }, { passive: false });
+            
+            // Mouse events for desktop
+            pad.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                this.handlePadPress(pad);
+            });
+            
+            pad.addEventListener('mouseup', (e) => {
+                this.handlePadRelease(pad);
+            });
+            
+            pad.addEventListener('mouseleave', (e) => {
+                this.handlePadRelease(pad);
             });
         });
 
@@ -192,17 +214,6 @@ class DrumPad {
             });
         });
 
-        // Touch area events
-        this.touchArea.addEventListener('touchstart', (e) => this.handleTouchStart(e), { passive: false });
-        this.touchArea.addEventListener('touchmove', (e) => this.handleTouchMove(e), { passive: false });
-        this.touchArea.addEventListener('touchend', (e) => this.handleTouchEnd(e), { passive: false });
-        
-        // Mouse events for desktop
-        this.touchArea.addEventListener('mousedown', (e) => this.handleMouseDown(e));
-        this.touchArea.addEventListener('mousemove', (e) => this.handleMouseMove(e));
-        this.touchArea.addEventListener('mouseup', (e) => this.handleMouseUp(e));
-        this.touchArea.addEventListener('mouseleave', (e) => this.handleMouseUp(e));
-
         // Info modal
         this.infoBtn.addEventListener('click', () => {
             this.infoModal.style.display = 'flex';
@@ -217,6 +228,28 @@ class DrumPad {
                 this.infoModal.style.display = 'none';
             }
         });
+    }
+
+    handlePadPress(pad) {
+        this.initAudioContext();
+        
+        // Request accelerometer permission on first interaction if needed
+        if (this.accelerometer.needsPermission) {
+            this.requestAccelerometerPermission();
+            this.accelerometer.needsPermission = false;
+        }
+        
+        const soundType = pad.dataset.sound;
+        
+        // Add active class for visual feedback
+        pad.classList.add('active');
+        
+        // Play the sound for this specific pad
+        this.playSound(soundType);
+    }
+
+    handlePadRelease(pad) {
+        pad.classList.remove('active');
     }
 
     initAudioContext() {
@@ -247,143 +280,36 @@ class DrumPad {
         this.reverbBuffer = impulse;
     }
 
-    handleTouchStart(e) {
-        e.preventDefault();
-        this.initAudioContext();
-        this.isMouseDown = true;
-        
-        const touch = e.touches[0];
-        const rect = this.touchArea.getBoundingClientRect();
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-        
-        this.lastTouchX = x;
-        this.lastTouchY = y;
-        this.lastTouchTime = Date.now();
-        
-        // Play initial sound
-        this.playSound(x, y, rect.width, rect.height, 100);
-        this.showFeedback(touch.clientX - rect.left, touch.clientY - rect.top);
-    }
-
-    handleTouchMove(e) {
-        e.preventDefault();
-        
-        const touch = e.touches[0];
-        const rect = this.touchArea.getBoundingClientRect();
-        const x = touch.clientX - rect.left;
-        const y = touch.clientY - rect.top;
-        
-        const now = Date.now();
-        const timeDiff = now - this.lastTouchTime;
-        
-        if (timeDiff < this.touchDebounceMs) return;
-        
-        // Calculate velocity
-        const dx = x - this.lastTouchX;
-        const dy = y - this.lastTouchY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const velocity = distance / timeDiff * 100;
-        
-        if (velocity > 5) { // Only trigger on meaningful movement
-            this.playSound(x, y, rect.width, rect.height, velocity);
-            this.addTrail(x, y, velocity);
-        }
-        
-        this.lastTouchX = x;
-        this.lastTouchY = y;
-        this.lastTouchTime = now;
-    }
-
-    handleTouchEnd(e) {
-        e.preventDefault();
-        this.isMouseDown = false;
-        this.touchFeedback.classList.remove('active');
-    }
-
-    handleMouseDown(e) {
-        this.initAudioContext();
-        this.isMouseDown = true;
-        
-        const rect = this.touchArea.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        this.lastTouchX = x;
-        this.lastTouchY = y;
-        this.lastTouchTime = Date.now();
-        
-        this.playSound(x, y, rect.width, rect.height, 100);
-        this.showFeedback(x, y);
-    }
-
-    handleMouseMove(e) {
-        if (!this.isMouseDown) return;
-        
-        const rect = this.touchArea.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-        
-        const now = Date.now();
-        const timeDiff = now - this.lastTouchTime;
-        
-        if (timeDiff < this.touchDebounceMs) return;
-        
-        const dx = x - this.lastTouchX;
-        const dy = y - this.lastTouchY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const velocity = distance / timeDiff * 100;
-        
-        if (velocity > 5) {
-            this.playSound(x, y, rect.width, rect.height, velocity);
-            this.addTrail(x, y, velocity);
-        }
-        
-        this.lastTouchX = x;
-        this.lastTouchY = y;
-        this.lastTouchTime = now;
-    }
-
-    handleMouseUp() {
-        this.isMouseDown = false;
-        this.touchFeedback.classList.remove('active');
-    }
-
-    showFeedback(x, y) {
-        this.touchFeedback.style.left = `${x}px`;
-        this.touchFeedback.style.top = `${y}px`;
-        this.touchFeedback.classList.remove('active');
-        void this.touchFeedback.offsetWidth; // Trigger reflow
-        this.touchFeedback.classList.add('active');
-    }
-
-    playSound(x, y, width, height, velocity) {
+    playSound(soundType) {
         if (!this.audioContext) return;
         
         const time = this.audioContext.currentTime;
         
-        // Calculate volume based on distance from center
-        const centerX = width / 2;
-        const centerY = height / 2;
-        const distFromCenter = Math.sqrt(Math.pow(x - centerX, 2) + Math.pow(y - centerY, 2));
-        const maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
-        const volume = 0.3 + 0.7 * (1 - distFromCenter / maxDist);
-        
-        // Calculate pitch modifier based on velocity and y position
+        // Calculate pitch modifier based on settings
         let pitchMod = 1;
         if (this.modifiers.pitchUp) pitchMod = 1.5;
         if (this.modifiers.pitchDown) pitchMod = 0.7;
         
-        // Velocity affects pitch slightly
-        pitchMod *= 0.8 + (velocity / 500);
+        // Get accelerometer shake factor for volume boost
+        const shakeFactor = this.accelerometer.shakeFactor || 1;
         
-        // Create the sound based on current selection
-        const soundNode = this.createSound(this.currentSound, time, pitchMod);
+        // Base volume adjusted by shake factor
+        const baseVolume = 0.5;
+        const volume = Math.min(1.0, baseVolume * shakeFactor);
+        
+        // Apply slight pitch variation based on accelerometer
+        if (this.accelerometer.supported && shakeFactor > 1.05) {
+            // Slight pitch increase for harder hits
+            pitchMod *= (0.95 + shakeFactor * 0.05);
+        }
+        
+        // Create the sound based on sound type
+        const soundNode = this.createSound(soundType, time, pitchMod);
         if (!soundNode) return;
         
         // Create gain node for volume control
         const gainNode = this.audioContext.createGain();
-        gainNode.gain.setValueAtTime(volume * 0.5, time);
+        gainNode.gain.setValueAtTime(volume, time);
         
         // Apply effects chain
         let currentNode = soundNode;
