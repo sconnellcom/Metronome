@@ -323,6 +323,7 @@
                 // Configuration constants
                 this.MAX_HISTORY = 20;
                 this.COLOR_TOLERANCE = 10; // Tolerance for flood fill color matching
+                this.SAVE_RESOLUTION_SCALE = 2; // Multiplier for saved image resolution
 
                 // Quick colors palette
                 this.quickColors = [
@@ -686,13 +687,10 @@
             }
 
             saveDrawing() {
-                // Higher resolution multiplier for saved images (2x for better quality)
-                const saveScale = 2;
-                
                 // Create a temporary canvas for saving at higher resolution
                 const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = this.displayWidth * saveScale;
-                tempCanvas.height = this.displayHeight * saveScale;
+                tempCanvas.width = this.displayWidth * this.SAVE_RESOLUTION_SCALE;
+                tempCanvas.height = this.displayHeight * this.SAVE_RESOLUTION_SCALE;
                 const tempCtx = tempCanvas.getContext('2d');
 
                 // Enable image smoothing for better quality

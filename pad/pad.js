@@ -4,6 +4,7 @@ class DrumPad {
     static REVERB_DURATION = 2; // seconds
     static DISTORTION_AMOUNT = 50;
     static WAVE_SHAPER_SAMPLES = 44100;
+    static GRAVITY = 9.8; // Standard gravity in m/s²
 
     constructor() {
         this.audioContext = null;
@@ -119,8 +120,8 @@ class DrumPad {
                     this.accelerometer.z ** 2
                 );
                 
-                // Calculate shake factor based on how much the acceleration deviates from normal gravity (~9.8)
-                const deviation = Math.abs(magnitude - 9.8);
+                // Calculate shake factor based on how much the acceleration deviates from normal gravity
+                const deviation = Math.abs(magnitude - DrumPad.GRAVITY);
                 this.accelerometer.lastMagnitude = this.accelerometer.magnitude;
                 this.accelerometer.magnitude = deviation;
                 
