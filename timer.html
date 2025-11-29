@@ -546,6 +546,205 @@
             color: var(--text-secondary, #999);
             margin-top: 2px;
         }
+
+        /* Mobile Responsive Styles */
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+                border-radius: 15px;
+            }
+
+            .header-row {
+                margin-bottom: 15px;
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .tabs {
+                margin-bottom: 20px;
+                gap: 5px;
+            }
+
+            .tab {
+                padding: 10px 8px;
+                font-size: 13px;
+            }
+
+            .display {
+                font-size: 2.5em;
+                margin: 20px 0;
+                letter-spacing: 1px;
+            }
+
+            .clock-display {
+                font-size: 2.8em;
+                margin: 15px 0;
+            }
+
+            .clock-date {
+                font-size: 1em;
+                margin-bottom: 20px;
+            }
+
+            .controls {
+                gap: 10px;
+                margin: 15px 0;
+            }
+
+            button {
+                padding: 12px 20px;
+                font-size: 14px;
+                min-height: 44px;
+            }
+
+            .timer-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+                min-height: 36px;
+            }
+
+            .input-group {
+                flex-direction: column;
+                gap: 12px;
+                margin: 15px 0;
+            }
+
+            .input-group input,
+            .input-group select {
+                width: 100% !important;
+                padding: 12px;
+                font-size: 16px;
+                min-height: 44px;
+            }
+
+            .time-input {
+                width: 100% !important;
+                font-size: 18px !important;
+            }
+
+            .preset-buttons {
+                gap: 6px;
+                margin: 12px 0;
+            }
+
+            .preset-btn {
+                padding: 10px 12px;
+                font-size: 13px;
+                min-height: 40px;
+            }
+
+            .timer-item,
+            .alarm-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 15px;
+            }
+
+            .timer-info,
+            .alarm-info {
+                width: 100%;
+            }
+
+            .item-controls {
+                width: 100%;
+                justify-content: flex-start;
+            }
+
+            .timer-name,
+            .alarm-time {
+                font-size: 1em;
+            }
+
+            .timer-time {
+                font-size: 1.1em;
+            }
+
+            .repeat-toggle {
+                margin-top: 5px;
+            }
+
+            .lap-times {
+                max-height: 150px;
+            }
+
+            .lap-item {
+                padding: 10px;
+            }
+
+            .active-items-section h3 {
+                font-size: 1em;
+            }
+
+            .active-item {
+                padding: 12px;
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+
+            .status {
+                font-size: 13px;
+            }
+
+            .alert-banner {
+                padding: 10px;
+                font-size: 14px;
+            }
+
+            #silence-btn {
+                padding: 6px 10px;
+                font-size: 12px;
+            }
+
+            .theme-picker .theme-btn-active,
+            .theme-picker .theme-btn {
+                min-width: 28px !important;
+                max-width: 28px !important;
+                width: 28px !important;
+                min-height: 28px !important;
+                max-height: 28px !important;
+                height: 28px !important;
+            }
+        }
+
+        /* Extra small screens */
+        @media (max-width: 360px) {
+            .container {
+                padding: 12px;
+            }
+
+            h1 {
+                font-size: 1.3em;
+            }
+
+            .tab {
+                padding: 8px 6px;
+                font-size: 12px;
+            }
+
+            .display {
+                font-size: 2em;
+            }
+
+            .clock-display {
+                font-size: 2.2em;
+            }
+
+            .preset-btn {
+                padding: 8px 10px;
+                font-size: 12px;
+            }
+
+            .timer-btn {
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+        }
     </style>
 </head>
 
