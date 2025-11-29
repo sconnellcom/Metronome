@@ -501,7 +501,6 @@ class TimerApp {
                 const tabText = tab.textContent.trim();
                 document.title = tabText;
                 const h1 = document.querySelector('h1');
-                console.log(h1);
                 if (h1) {
                     h1.textContent = `⏱️ ${tabText}`;
                 }
