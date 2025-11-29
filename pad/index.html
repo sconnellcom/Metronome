@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Drum Pad</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header-row">
+            <div class="theme-picker">
+                <button class="theme-btn-active theme-default" data-theme="default" title="Change Theme"></button>
+                <div class="theme-dropdown">
+                    <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                    <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                    <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                    <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                    <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                    <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                    <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
+                    <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                    <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                    <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                    <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                    <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+                </div>
+            </div>
+            <h1>🥁 Drum Pad</h1>
+            <button id="infoBtn" class="info-btn" title="How to Use">ⓘ</button>
+        </div>
+
+        <!-- Effect Buttons (Top Half) -->
+        <div class="effects-panel">
+            <div class="effects-row">
+                <button class="effect-btn active" data-effect="kick" title="Kick Drum">
+                    <span class="effect-icon">🥁</span>
+                    <span class="effect-label">Kick</span>
+                </button>
+                <button class="effect-btn" data-effect="snare" title="Snare Drum">
+                    <span class="effect-icon">🪘</span>
+                    <span class="effect-label">Snare</span>
+                </button>
+                <button class="effect-btn" data-effect="hihat" title="Hi-Hat">
+                    <span class="effect-icon">🔔</span>
+                    <span class="effect-label">Hi-Hat</span>
+                </button>
+                <button class="effect-btn" data-effect="tom" title="Tom Drum">
+                    <span class="effect-icon">🎵</span>
+                    <span class="effect-label">Tom</span>
+                </button>
+            </div>
+            <div class="effects-row">
+                <button class="effect-btn" data-effect="cymbal" title="Cymbal">
+                    <span class="effect-icon">💿</span>
+                    <span class="effect-label">Cymbal</span>
+                </button>
+                <button class="effect-btn" data-effect="clap" title="Hand Clap">
+                    <span class="effect-icon">👏</span>
+                    <span class="effect-label">Clap</span>
+                </button>
+                <button class="effect-btn" data-effect="cowbell" title="Cowbell">
+                    <span class="effect-icon">🔔</span>
+                    <span class="effect-label">Cowbell</span>
+                </button>
+                <button class="effect-btn" data-effect="rim" title="Rim Shot">
+                    <span class="effect-icon">🎯</span>
+                    <span class="effect-label">Rim</span>
+                </button>
+            </div>
+            <div class="effects-row modifiers">
+                <button class="modifier-btn" data-modifier="reverb" title="Toggle Reverb">
+                    <span class="modifier-label">Reverb</span>
+                </button>
+                <button class="modifier-btn" data-modifier="distortion" title="Toggle Distortion">
+                    <span class="modifier-label">Distort</span>
+                </button>
+                <button class="modifier-btn" data-modifier="pitch-up" title="Pitch Up">
+                    <span class="modifier-label">Pitch ↑</span>
+                </button>
+                <button class="modifier-btn" data-modifier="pitch-down" title="Pitch Down">
+                    <span class="modifier-label">Pitch ↓</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Touch Area (Bottom Half) -->
+        <div class="touch-area" id="touchArea">
+            <div class="touch-instructions">
+                <p>Drag your finger to play sounds</p>
+                <p class="touch-hint">Speed controls pitch • Position controls volume</p>
+            </div>
+            <div class="touch-feedback" id="touchFeedback"></div>
+            <canvas id="touchCanvas"></canvas>
+        </div>
+
+        <!-- Info Modal -->
+        <div id="infoModal" class="info-modal" style="display: none;">
+            <div class="info-modal-content">
+                <div class="info-modal-header">
+                    <h3>How to Use</h3>
+                    <button id="closeInfoBtn" class="close-btn">&times;</button>
+                </div>
+                <div style="padding: 0 20px 20px;">
+                    <h4>Touch Area</h4>
+                    <ul>
+                        <li><strong>Drag your finger:</strong> Creates sound as you move across the touch area</li>
+                        <li><strong>Speed:</strong> Moving faster creates higher pitched sounds</li>
+                        <li><strong>Position:</strong> Touch position affects volume (louder towards center)</li>
+                    </ul>
+
+                    <h4>Sound Selection</h4>
+                    <ul>
+                        <li><strong>Kick:</strong> Deep bass drum sound</li>
+                        <li><strong>Snare:</strong> Snappy snare drum</li>
+                        <li><strong>Hi-Hat:</strong> Metallic hi-hat cymbal</li>
+                        <li><strong>Tom:</strong> Mid-range tom drum</li>
+                        <li><strong>Cymbal:</strong> Crash cymbal</li>
+                        <li><strong>Clap:</strong> Hand clap sound</li>
+                        <li><strong>Cowbell:</strong> Classic cowbell</li>
+                        <li><strong>Rim:</strong> Rim shot</li>
+                    </ul>
+
+                    <h4>Effects Modifiers</h4>
+                    <ul>
+                        <li><strong>Reverb:</strong> Adds echo/room effect to sounds</li>
+                        <li><strong>Distort:</strong> Adds gritty distortion</li>
+                        <li><strong>Pitch ↑:</strong> Raises the pitch of sounds</li>
+                        <li><strong>Pitch ↓:</strong> Lowers the pitch of sounds</li>
+                    </ul>
+
+                    <h4>Tips</h4>
+                    <ul>
+                        <li>Select a sound type first, then drag in the touch area</li>
+                        <li>Combine multiple modifiers for unique sounds</li>
+                        <li>Try quick swipes for rapid-fire sounds</li>
+                        <li>Change themes using the colored circle in the corner</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="pad.js"></script>
+</body>
+
+</html>
