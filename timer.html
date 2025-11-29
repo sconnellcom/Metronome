@@ -494,6 +494,17 @@
             color: var(--text-color, #333);
             margin: 20px 0;
             font-variant-numeric: tabular-nums;
+            cursor: pointer;
+            user-select: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .clock-display:hover {
+            opacity: 0.8;
+        }
+
+        .clock-display:active {
+            opacity: 0.6;
         }
 
         .clock-date {
@@ -785,7 +796,7 @@
 
         <!-- Clock View -->
         <div class="tab-content active" id="clock">
-            <div class="clock-display" id="clock-display">00:00:00</div>
+            <div class="clock-display" id="clock-display" title="Tap to show/hide seconds">00:00:00</div>
             <div class="clock-date" id="clock-date"></div>
             <div class="active-items-section">
                 <h3>Active Items</h3>

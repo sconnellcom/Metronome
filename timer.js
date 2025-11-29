@@ -21,6 +21,7 @@ class TimerApp {
         this.activeAlerts = [];
 
         this.clockUpdateInterval = null;
+        this.showClockSeconds = this.loadClockSecondsPreference();
 
         this.initializeTheme();
         this.loadFromLocalStorage();
@@ -57,6 +58,23 @@ class TimerApp {
         });
 
         localStorage.setItem('timerTheme', theme);
+    }
+
+    // Clock seconds preference
+    loadClockSecondsPreference() {
+        const saved = localStorage.getItem('timerShowClockSeconds');
+        // Default to showing seconds if no preference is saved
+        return saved === null ? true : saved === 'true';
+    }
+
+    saveClockSecondsPreference() {
+        localStorage.setItem('timerShowClockSeconds', this.showClockSeconds.toString());
+    }
+
+    toggleClockSeconds() {
+        this.showClockSeconds = !this.showClockSeconds;
+        this.saveClockSecondsPreference();
+        this.updateClock();
     }
 
     saveToLocalStorage() {
@@ -466,6 +484,9 @@ class TimerApp {
                 }
             });
         });
+
+        // Clock display click to toggle seconds
+        this.clockDisplay.addEventListener('click', () => this.toggleClockSeconds());
 
         // Alert banner click
         this.alertBanner.addEventListener('click', () => {
@@ -1319,7 +1340,12 @@ class TimerApp {
         const period = hours24 >= 12 ? 'PM' : 'AM';
         const hours12 = hours24 % 12 || 12;
 
-        this.clockDisplay.textContent = `${this.formatTime(hours12, minutes, seconds)} ${period}`;
+        // Show or hide seconds based on user preference
+        if (this.showClockSeconds) {
+            this.clockDisplay.textContent = `${this.formatTime(hours12, minutes, seconds)} ${period}`;
+        } else {
+            this.clockDisplay.textContent = this.formatTime12Hour(hours24, minutes);
+        }
 
         const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         this.clockDate.textContent = now.toLocaleDateString('en-US', options);
