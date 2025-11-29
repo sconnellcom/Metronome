@@ -36,7 +36,7 @@
             --text-color: #2d3748;
             --text-secondary: #4a5568;
             --text-tertiary: #718096;
-            --border-color: #d2cc54;
+            --border-color: #E3DE81;
             --surface-bg: #f1ff72;
             --success-bg: #d4f5a6;
             --warning-bg: #f9e79f;
@@ -767,28 +767,60 @@
         // Initialize history display
         renderHistory();
 
-        // URL detection regex
-        const urlRegex = /https?:\/\/[^\s<>"{}|\\^`\[\]]+/gi;
+        // Status message timeout duration
+        const STATUS_TIMEOUT_MS = 1500;
 
         function isValidUrl(string) {
             try {
-                new URL(string);
-                return true;
+                const url = new URL(string);
+                // Only allow http and https protocols to prevent XSS via javascript: or data: URLs
+                return url.protocol === 'http:' || url.protocol === 'https:';
             } catch (_) {
                 return false;
             }
         }
 
+        function sanitizeUrl(url) {
+            // Additional URL sanitization to prevent XSS
+            try {
+                const parsed = new URL(url);
+                // Only allow http and https protocols
+                if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+                    return null;
+                }
+                // Return the sanitized URL (reconstructed from parsed components)
+                return parsed.href;
+            } catch (_) {
+                return null;
+            }
+        }
+
         function formatResultWithLinks(text) {
+            const escapedText = escapeHtml(text);
+            
             // Check if the entire text is a URL
             if (isValidUrl(text)) {
-                return `<a href="${escapeHtml(text)}" target="_blank" rel="noopener noreferrer" class="result-link">${escapeHtml(text)}</a>`;
+                const safeUrl = sanitizeUrl(text);
+                if (safeUrl) {
+                    return `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" class="result-link">${escapedText}</a>`;
+                }
+                return escapedText;
             }
             
-            // Otherwise, find and replace URLs within the text
-            return escapeHtml(text).replace(urlRegex, (url) => {
-                return `<a href="${url}" target="_blank" rel="noopener noreferrer" class="result-link">${url}</a>`;
-            });
+            // Otherwise, find URLs within the text using word boundary detection
+            const words = escapedText.split(/(\s+)/);
+            return words.map(word => {
+                // Try to parse as URL if it looks like one
+                // Decode escaped entities first for URL validation
+                const decodedWord = word.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"');
+                if (decodedWord.match(/^https?:\/\//i) && isValidUrl(decodedWord)) {
+                    const safeUrl = sanitizeUrl(decodedWord);
+                    if (safeUrl) {
+                        return `<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noopener noreferrer" class="result-link">${word}</a>`;
+                    }
+                }
+                return word;
+            }).join('');
         }
 
         function escapeHtml(text) {
@@ -833,7 +865,7 @@
                         <div class="history-content">${displayText}</div>
                         <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 5px;">
                             <span class="history-time">${dateStr} ${timeStr}</span>
-                            <button class="copy-btn" onclick="copyToClipboard('${escapeHtml(entry.text).replace(/'/g, "\\'")}')">📋</button>
+                            <button class="copy-btn" data-copy-index="${index}">📋</button>
                         </div>
                     </div>
                 `;
@@ -849,14 +881,22 @@
                     } else {
                         showStatus('Click "Start Scanner" to begin scanning QR codes', 'info');
                     }
-                }, 1500);
+                }, STATUS_TIMEOUT_MS);
             }).catch(() => {
                 showStatus('Failed to copy to clipboard', 'error');
             });
         }
 
-        // Make copyToClipboard available globally for onclick handlers
-        window.copyToClipboard = copyToClipboard;
+        // Use event delegation for copy buttons in history list
+        historyList.addEventListener('click', (e) => {
+            const copyBtn = e.target.closest('.copy-btn[data-copy-index]');
+            if (copyBtn) {
+                const index = parseInt(copyBtn.dataset.copyIndex, 10);
+                if (scanHistory[index]) {
+                    copyToClipboard(scanHistory[index].text);
+                }
+            }
+        });
 
         clearHistoryBtn.addEventListener('click', () => {
             if (confirm('Clear all scan history?')) {
