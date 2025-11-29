@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Bubble Level</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-gradient-start: #2c3e50;
+            --bg-gradient-end: #1a252f;
+            --container-bg: #1a1a1a;
+            --level-bg: #0d0d0d;
+            --bubble-color: #7fff00;
+            --bubble-glow: rgba(127, 255, 0, 0.4);
+            --center-marker: rgba(255, 255, 255, 0.3);
+            --text-color: #ffffff;
+            --text-secondary: #aaaaaa;
+            --border-color: #333333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        .container {
+            background: var(--container-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--text-color);
+            font-size: 1.8em;
+            margin-bottom: 10px;
+        }
+
+        .mode-indicator {
+            color: var(--text-secondary);
+            font-size: 0.9em;
+            margin-bottom: 20px;
+            padding: 8px 16px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            display: inline-block;
+        }
+
+        .level-container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin: 0 auto 20px;
+            cursor: pointer;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Circular level (omnidirectional mode) */
+        .level-circle {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--level-bg);
+            border-radius: 50%;
+            border: 4px solid var(--border-color);
+            box-shadow: 
+                inset 0 0 30px rgba(0, 0, 0, 0.8),
+                0 4px 15px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        /* Center crosshair markers */
+        .center-marker-h,
+        .center-marker-v {
+            position: absolute;
+            background: var(--center-marker);
+        }
+
+        .center-marker-h {
+            width: 60%;
+            height: 2px;
+            top: 50%;
+            left: 20%;
+            transform: translateY(-50%);
+        }
+
+        .center-marker-v {
+            width: 2px;
+            height: 60%;
+            left: 50%;
+            top: 20%;
+            transform: translateX(-50%);
+        }
+
+        /* Center circle marker */
+        .center-circle {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border: 2px solid var(--center-marker);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .center-circle-inner {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: var(--center-marker);
+            border-radius: 50%;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* The bubble */
+        .bubble {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            background: radial-gradient(circle at 30% 30%, 
+                rgba(255, 255, 255, 0.8) 0%,
+                var(--bubble-color) 30%,
+                rgba(100, 200, 0, 0.9) 100%);
+            border-radius: 50%;
+            box-shadow: 
+                0 0 20px var(--bubble-glow),
+                inset 0 -5px 15px rgba(0, 0, 0, 0.3),
+                inset 0 5px 10px rgba(255, 255, 255, 0.3);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: all 0.1s ease-out;
+        }
+
+        .bubble.centered {
+            box-shadow: 
+                0 0 30px var(--bubble-glow),
+                0 0 60px var(--bubble-glow),
+                inset 0 -5px 15px rgba(0, 0, 0, 0.3),
+                inset 0 5px 10px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Single axis mode - tube level */
+        .level-tube {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 260px;
+            height: 60px;
+            background: var(--level-bg);
+            border-radius: 30px;
+            border: 4px solid var(--border-color);
+            box-shadow: 
+                inset 0 0 20px rgba(0, 0, 0, 0.8),
+                0 4px 15px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .level-tube .center-marker-v {
+            width: 2px;
+            height: 100%;
+            left: 50%;
+            top: 0;
+            transform: translateX(-50%);
+        }
+
+        .level-tube .tube-markers {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+        }
+
+        .level-tube .tube-marker {
+            position: absolute;
+            width: 2px;
+            height: 40%;
+            background: var(--center-marker);
+            top: 30%;
+        }
+
+        .level-tube .tube-marker.left {
+            left: 30%;
+        }
+
+        .level-tube .tube-marker.right {
+            right: 30%;
+        }
+
+        .level-tube .bubble-tube {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: radial-gradient(circle at 30% 30%, 
+                rgba(255, 255, 255, 0.8) 0%,
+                var(--bubble-color) 30%,
+                rgba(100, 200, 0, 0.9) 100%);
+            border-radius: 50%;
+            box-shadow: 
+                0 0 15px var(--bubble-glow),
+                inset 0 -5px 15px rgba(0, 0, 0, 0.3),
+                inset 0 5px 10px rgba(255, 255, 255, 0.3);
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            transition: left 0.1s ease-out;
+        }
+
+        .level-tube .bubble-tube.centered {
+            box-shadow: 
+                0 0 25px var(--bubble-glow),
+                0 0 50px var(--bubble-glow),
+                inset 0 -5px 15px rgba(0, 0, 0, 0.3),
+                inset 0 5px 10px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Single axis mode active */
+        .level-container.single-axis .level-circle {
+            display: none;
+        }
+
+        .level-container.single-axis .level-tube {
+            display: block;
+        }
+
+        /* Readings display */
+        .readings {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .reading-item {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .reading-label {
+            color: var(--text-secondary);
+            font-size: 0.8em;
+            margin-bottom: 5px;
+        }
+
+        .reading-value {
+            color: var(--text-color);
+            font-size: 1.5em;
+            font-weight: bold;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .reading-value.level {
+            color: var(--bubble-color);
+        }
+
+        /* Instructions */
+        .instructions {
+            color: var(--text-secondary);
+            font-size: 0.85em;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            line-height: 1.5;
+        }
+
+        .instructions strong {
+            color: var(--text-color);
+        }
+
+        /* Permission request */
+        .permission-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .permission-dialog {
+            background: var(--container-bg);
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 350px;
+        }
+
+        .permission-dialog h2 {
+            color: var(--text-color);
+            margin-bottom: 15px;
+        }
+
+        .permission-dialog p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .permission-btn {
+            background: var(--bubble-color);
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1em;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .permission-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(127, 255, 0, 0.4);
+        }
+
+        .permission-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Error state */
+        .error-message {
+            color: #ff6b6b;
+            padding: 20px;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 10px;
+            margin-top: 20px;
+            display: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 400px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.5em;
+            }
+
+            .level-container {
+                width: 240px;
+                height: 240px;
+            }
+
+            .level-tube {
+                width: 220px;
+                height: 50px;
+            }
+
+            .bubble {
+                width: 40px;
+                height: 40px;
+            }
+
+            .center-circle {
+                width: 50px;
+                height: 50px;
+            }
+
+            .bubble-tube {
+                width: 35px;
+                height: 35px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Permission overlay for iOS -->
+    <div class="permission-overlay" id="permissionOverlay" style="display: none;">
+        <div class="permission-dialog">
+            <h2>📱 Enable Motion</h2>
+            <p>This bubble level app needs access to your device's motion sensors to work properly.</p>
+            <button class="permission-btn" id="permissionBtn">Enable Motion Sensors</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>🔵 Bubble Level</h1>
+        <div class="mode-indicator" id="modeIndicator">All Directions</div>
+
+        <div class="level-container" id="levelContainer">
+            <!-- Circular level (omnidirectional) -->
+            <div class="level-circle" id="levelCircle">
+                <div class="center-marker-h"></div>
+                <div class="center-marker-v"></div>
+                <div class="center-circle"></div>
+                <div class="center-circle-inner"></div>
+                <div class="bubble" id="bubble"></div>
+            </div>
+
+            <!-- Tube level (single axis) -->
+            <div class="level-tube" id="levelTube">
+                <div class="tube-markers">
+                    <div class="center-marker-v"></div>
+                    <div class="tube-marker left"></div>
+                    <div class="tube-marker right"></div>
+                </div>
+                <div class="bubble-tube" id="bubbleTube"></div>
+            </div>
+        </div>
+
+        <div class="readings">
+            <div class="reading-item">
+                <div class="reading-label">Pitch (X)</div>
+                <div class="reading-value" id="pitchValue">0.0°</div>
+            </div>
+            <div class="reading-item">
+                <div class="reading-label">Roll (Y)</div>
+                <div class="reading-value" id="rollValue">0.0°</div>
+            </div>
+        </div>
+
+        <div class="instructions">
+            <strong>Tap the level</strong> to switch between all-direction mode and single-axis mode.<br>
+            The bubble glows brighter when level!
+        </div>
+
+        <div class="error-message" id="errorMessage">
+            Unable to access motion sensors. Please ensure you're using a device with an accelerometer and have granted permission.
+        </div>
+    </div>
+
+    <script>
+        class BubbleLevel {
+            constructor() {
+                this.isSingleAxis = false;
+                this.beta = 0;  // Front-to-back tilt (pitch)
+                this.gamma = 0; // Left-to-right tilt (roll)
+                this.hasMotionSupport = false;
+                this.levelThreshold = 2; // Degrees threshold for "level"
+
+                this.initElements();
+                this.initEventListeners();
+                this.checkMotionSupport();
+            }
+
+            initElements() {
+                this.levelContainer = document.getElementById('levelContainer');
+                this.bubble = document.getElementById('bubble');
+                this.bubbleTube = document.getElementById('bubbleTube');
+                this.modeIndicator = document.getElementById('modeIndicator');
+                this.pitchValue = document.getElementById('pitchValue');
+                this.rollValue = document.getElementById('rollValue');
+                this.permissionOverlay = document.getElementById('permissionOverlay');
+                this.permissionBtn = document.getElementById('permissionBtn');
+                this.errorMessage = document.getElementById('errorMessage');
+            }
+
+            initEventListeners() {
+                // Tap to toggle mode
+                this.levelContainer.addEventListener('click', () => this.toggleMode());
+                this.levelContainer.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.toggleMode();
+                });
+
+                // Permission button for iOS
+                this.permissionBtn.addEventListener('click', () => this.requestPermission());
+            }
+
+            async checkMotionSupport() {
+                // Check if DeviceOrientationEvent is supported
+                if (!window.DeviceOrientationEvent) {
+                    this.showError('Device orientation is not supported on this device.');
+                    return;
+                }
+
+                // Check if we need to request permission (iOS 13+)
+                if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    this.permissionOverlay.style.display = 'flex';
+                } else {
+                    // Android or older iOS - just start listening
+                    this.startListening();
+                }
+            }
+
+            async requestPermission() {
+                try {
+                    const permission = await DeviceOrientationEvent.requestPermission();
+                    if (permission === 'granted') {
+                        this.permissionOverlay.style.display = 'none';
+                        this.startListening();
+                    } else {
+                        this.showError('Permission denied. Please enable motion sensors in your device settings.');
+                    }
+                } catch (error) {
+                    console.error('Permission error:', error);
+                    this.showError('Error requesting motion permission: ' + error.message);
+                }
+            }
+
+            startListening() {
+                window.addEventListener('deviceorientation', (event) => {
+                    this.handleOrientation(event);
+                });
+
+                // Also try devicemotion as a fallback
+                window.addEventListener('devicemotion', (event) => {
+                    if (!this.hasMotionSupport && event.accelerationIncludingGravity) {
+                        this.hasMotionSupport = true;
+                    }
+                });
+
+                // Check after a delay if we're getting data
+                setTimeout(() => {
+                    if (!this.hasMotionSupport) {
+                        // Try to detect if device supports orientation but hasn't triggered yet
+                        // This can happen on desktop browsers
+                        this.simulateDesktopMode();
+                    }
+                }, 1000);
+            }
+
+            simulateDesktopMode() {
+                // For desktop browsers without motion sensors, show a message
+                // but keep the UI functional with static values
+                console.log('No motion data detected - device may not have motion sensors');
+                this.updateDisplay(0, 0);
+            }
+
+            handleOrientation(event) {
+                this.hasMotionSupport = true;
+
+                // beta: front-to-back tilt (-180 to 180)
+                // gamma: left-to-right tilt (-90 to 90)
+                this.beta = event.beta || 0;
+                this.gamma = event.gamma || 0;
+
+                // Clamp values for smoother display
+                this.beta = Math.max(-90, Math.min(90, this.beta));
+                this.gamma = Math.max(-90, Math.min(90, this.gamma));
+
+                this.updateDisplay(this.beta, this.gamma);
+            }
+
+            updateDisplay(beta, gamma) {
+                // Update numeric readings
+                this.pitchValue.textContent = beta.toFixed(1) + '°';
+                this.rollValue.textContent = gamma.toFixed(1) + '°';
+
+                // Check if level
+                const isLevelPitch = Math.abs(beta) < this.levelThreshold;
+                const isLevelRoll = Math.abs(gamma) < this.levelThreshold;
+
+                // Update pitch/roll value colors
+                this.pitchValue.classList.toggle('level', isLevelPitch);
+                this.rollValue.classList.toggle('level', isLevelRoll);
+
+                if (this.isSingleAxis) {
+                    this.updateTubeBubble(gamma, isLevelRoll);
+                } else {
+                    this.updateCircleBubble(beta, gamma, isLevelPitch && isLevelRoll);
+                }
+            }
+
+            updateCircleBubble(beta, gamma, isLevel) {
+                // Calculate bubble position
+                // The bubble moves in the opposite direction of the tilt
+                // Max movement is constrained to stay within the circle
+                const maxOffset = 90; // Maximum pixel offset from center
+                const TILT_SCALE_FACTOR = 45; // Degrees of tilt for full bubble movement
+
+                // Convert tilt angles to bubble position
+                // Positive gamma = tilted right = bubble goes right
+                // Positive beta = tilted forward = bubble goes down
+                const xOffset = (gamma / TILT_SCALE_FACTOR) * maxOffset;
+                const yOffset = (beta / TILT_SCALE_FACTOR) * maxOffset;
+
+                // Constrain bubble to stay within the circle
+                const distance = Math.sqrt(xOffset * xOffset + yOffset * yOffset);
+                let finalX = xOffset;
+                let finalY = yOffset;
+
+                if (distance > maxOffset) {
+                    const ratio = maxOffset / distance;
+                    finalX = xOffset * ratio;
+                    finalY = yOffset * ratio;
+                }
+
+                // Apply position (transform is already translate(-50%, -50%) in CSS)
+                this.bubble.style.left = `calc(50% + ${finalX}px)`;
+                this.bubble.style.top = `calc(50% + ${finalY}px)`;
+
+                // Add glow effect when level
+                this.bubble.classList.toggle('centered', isLevel);
+            }
+
+            updateTubeBubble(gamma, isLevel) {
+                // For tube level, only horizontal movement
+                const maxOffset = 85; // Maximum pixel offset from center
+                const TILT_SCALE_FACTOR = 45; // Degrees of tilt for full bubble movement
+                const xOffset = (gamma / TILT_SCALE_FACTOR) * maxOffset;
+
+                // Constrain to tube bounds
+                const finalX = Math.max(-maxOffset, Math.min(maxOffset, xOffset));
+
+                this.bubbleTube.style.left = `calc(50% + ${finalX}px)`;
+
+                // Add glow effect when level
+                this.bubbleTube.classList.toggle('centered', isLevel);
+            }
+
+            toggleMode() {
+                this.isSingleAxis = !this.isSingleAxis;
+                this.levelContainer.classList.toggle('single-axis', this.isSingleAxis);
+                this.modeIndicator.textContent = this.isSingleAxis ? 'Single Axis (Roll)' : 'All Directions';
+
+                // Update display immediately with current values
+                this.updateDisplay(this.beta, this.gamma);
+            }
+
+            showError(message) {
+                this.errorMessage.textContent = message;
+                this.errorMessage.style.display = 'block';
+                this.permissionOverlay.style.display = 'none';
+            }
+        }
+
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', () => {
+            new BubbleLevel();
+        });
+    </script>
+</body>
+
+</html>
