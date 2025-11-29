@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Group Chat</title>
+    <link rel="stylesheet" href="chat.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header-row">
+            <div class="theme-picker">
+                <button class="theme-btn-active theme-default" data-theme="default" title="Change Theme"></button>
+                <div class="theme-dropdown" style="display: none;">
+                    <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                    <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                    <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                    <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                    <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                    <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                    <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
+                    <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                    <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                    <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                    <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                    <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+                </div>
+            </div>
+            <h1>💬 Group Chat</h1>
+            <div class="header-buttons">
+                <span id="connectionStatus" class="connection-status disconnected" title="Connection Status">●</span>
+                <span id="userCount" class="user-count" title="Users Online">0 online</span>
+            </div>
+        </div>
+
+        <!-- Chat Messages Area -->
+        <div class="chat-container">
+            <div id="messages" class="messages-area">
+                <div class="system-message">Welcome to Group Chat! Messages are shared with everyone connected.</div>
+            </div>
+        </div>
+
+        <!-- Message Input -->
+        <div class="input-container">
+            <input type="text" id="messageInput" class="message-input" placeholder="Type a message..." maxlength="500"
+                autocomplete="off">
+            <button id="sendBtn" class="btn btn-primary send-btn">Send</button>
+        </div>
+
+        <!-- Username Modal -->
+        <div id="usernameModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Welcome to Group Chat</h3>
+                </div>
+                <div class="modal-body">
+                    <p>Enter a nickname to join the chat:</p>
+                    <input type="text" id="usernameInput" class="username-input" placeholder="Your nickname..."
+                        maxlength="20" autocomplete="off">
+                    <button id="joinBtn" class="btn btn-primary join-btn">Join Chat</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Server Config Modal (shown if can't connect) -->
+        <div id="serverModal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Server Configuration</h3>
+                </div>
+                <div class="modal-body">
+                    <p>Enter the WebSocket server address:</p>
+                    <input type="text" id="serverInput" class="server-input" placeholder="ws://localhost:3000"
+                        autocomplete="off">
+                    <button id="connectBtn" class="btn btn-primary connect-btn">Connect</button>
+                    <p class="server-hint">Run the chat server: <code>node server.js</code></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="chat.js"></script>
+</body>
+
+</html>
