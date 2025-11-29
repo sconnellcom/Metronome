@@ -1280,9 +1280,6 @@ input[type="range"]::-moz-range-thumb:hover {
 
 /* BPM Chart */
 #bpmChart {
-    width: 100%;
-    max-width: 340px;
-    height: 150px;
     background: var(--surface-bg);
     border-radius: 8px;
     display: block;
@@ -1435,9 +1432,5 @@ input[type="range"]::-moz-range-thumb:hover {
 
     .stat-label {
         margin-bottom: 0;
-    }
-
-    #bpmChart {
-        height: 120px;
     }
 }

@@ -1427,8 +1427,15 @@ class Metronome {
         // Find min/max BPM for scaling
         const bpms = readings.map(r => r.bpm);
         const targetBpm = readings[0].targetBpm || this.bpm;
-        const minBpm = Math.min(...bpms, targetBpm) - 10;
-        const maxBpm = Math.max(...bpms, targetBpm) + 10;
+        let minBpm = Math.min(...bpms, targetBpm) - 10;
+        let maxBpm = Math.max(...bpms, targetBpm) + 10;
+
+        // Prevent division by zero when all BPM values are the same
+        if (maxBpm === minBpm) {
+            minBpm -= 10;
+            maxBpm += 10;
+        }
+        const bpmRange = maxBpm - minBpm;
 
         // Draw grid lines
         ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--border-color') || '#e0e0e0';
@@ -1444,7 +1451,7 @@ class Metronome {
         }
 
         // Draw target BPM line
-        const targetY = padding.top + chartHeight - ((targetBpm - minBpm) / (maxBpm - minBpm)) * chartHeight;
+        const targetY = padding.top + chartHeight - ((targetBpm - minBpm) / bpmRange) * chartHeight;
         ctx.strokeStyle = getComputedStyle(document.body).getPropertyValue('--primary-color') || '#667eea';
         ctx.setLineDash([5, 5]);
         ctx.beginPath();
@@ -1458,9 +1465,12 @@ class Metronome {
         ctx.strokeStyle = '#48bb78'; // Green for on-beat readings
         ctx.lineWidth = 2;
 
+        // Calculate x step - handle edge case where readings.length could be 1
+        const xDivisor = Math.max(1, readings.length - 1);
+
         readings.forEach((reading, index) => {
-            const x = padding.left + (index / (readings.length - 1)) * chartWidth;
-            const y = padding.top + chartHeight - ((reading.bpm - minBpm) / (maxBpm - minBpm)) * chartHeight;
+            const x = padding.left + (index / xDivisor) * chartWidth;
+            const y = padding.top + chartHeight - ((reading.bpm - minBpm) / bpmRange) * chartHeight;
 
             if (index === 0) {
                 ctx.moveTo(x, y);
@@ -1472,8 +1482,8 @@ class Metronome {
 
         // Draw points with color based on on-beat status
         readings.forEach((reading, index) => {
-            const x = padding.left + (index / (readings.length - 1)) * chartWidth;
-            const y = padding.top + chartHeight - ((reading.bpm - minBpm) / (maxBpm - minBpm)) * chartHeight;
+            const x = padding.left + (index / xDivisor) * chartWidth;
+            const y = padding.top + chartHeight - ((reading.bpm - minBpm) / bpmRange) * chartHeight;
 
             ctx.beginPath();
             ctx.arc(x, y, 3, 0, Math.PI * 2);
@@ -1488,7 +1498,7 @@ class Metronome {
 
         // Y-axis labels
         for (let i = 0; i <= 4; i++) {
-            const bpm = minBpm + ((maxBpm - minBpm) / 4) * (4 - i);
+            const bpm = minBpm + (bpmRange / 4) * (4 - i);
             const y = padding.top + (chartHeight / 4) * i;
             ctx.fillText(Math.round(bpm).toString(), padding.left - 5, y + 4);
         }
