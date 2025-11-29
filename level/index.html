@@ -588,13 +588,13 @@
                 // The bubble moves in the opposite direction of the tilt
                 // Max movement is constrained to stay within the circle
                 const maxOffset = 90; // Maximum pixel offset from center
-                const sensitivity = 2; // How sensitive the bubble is to tilt
+                const TILT_SCALE_FACTOR = 45; // Degrees of tilt for full bubble movement
 
                 // Convert tilt angles to bubble position
                 // Positive gamma = tilted right = bubble goes right
                 // Positive beta = tilted forward = bubble goes down
-                const xOffset = (gamma / 45) * maxOffset;
-                const yOffset = (beta / 45) * maxOffset;
+                const xOffset = (gamma / TILT_SCALE_FACTOR) * maxOffset;
+                const yOffset = (beta / TILT_SCALE_FACTOR) * maxOffset;
 
                 // Constrain bubble to stay within the circle
                 const distance = Math.sqrt(xOffset * xOffset + yOffset * yOffset);
@@ -618,7 +618,8 @@
             updateTubeBubble(gamma, isLevel) {
                 // For tube level, only horizontal movement
                 const maxOffset = 85; // Maximum pixel offset from center
-                const xOffset = (gamma / 45) * maxOffset;
+                const TILT_SCALE_FACTOR = 45; // Degrees of tilt for full bubble movement
+                const xOffset = (gamma / TILT_SCALE_FACTOR) * maxOffset;
 
                 // Constrain to tube bounds
                 const finalX = Math.max(-maxOffset, Math.min(maxOffset, xOffset));
