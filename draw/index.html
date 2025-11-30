@@ -24,50 +24,37 @@
             --surface-bg: #f7fafc;
         }
 
+        html, body {
+            height: 100%;
+            overflow: hidden;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
-            min-height: 100vh;
+            background: var(--container-bg);
             display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 10px;
+            flex-direction: column;
         }
 
         .container {
-            background: var(--container-bg);
-            border-radius: 20px;
-            padding: 20px;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
             width: 100%;
         }
 
-        .header-row {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 15px;
-        }
-
-        h1 {
-            text-align: center;
-            color: var(--text-color);
-            font-size: 1.8em;
-        }
-
         .canvas-container {
+            flex: 1;
             background: #ffffff;
-            border: 2px solid var(--border-color);
-            border-radius: 12px;
-            overflow: hidden;
-            margin-bottom: 15px;
             touch-action: none;
+            position: relative;
+            overflow: hidden;
         }
 
         #drawingCanvas {
             display: block;
             width: 100%;
+            height: 100%;
             cursor: crosshair;
             background: #ffffff;
         }
@@ -75,37 +62,32 @@
         .toolbar {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            margin-bottom: 15px;
-            padding: 12px;
+            gap: 8px;
+            padding: 10px;
             background: var(--surface-bg);
-            border-radius: 10px;
+            border-top: 1px solid var(--border-color);
+            align-items: center;
+            justify-content: center;
         }
 
         .tool-group {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 6px;
         }
 
         .tool-group label {
             font-weight: 600;
             color: var(--text-secondary);
-            font-size: 0.9em;
+            font-size: 0.85em;
             white-space: nowrap;
         }
 
-        .color-picker-wrapper {
-            position: relative;
-            width: 40px;
-            height: 40px;
-        }
-
         #colorPicker {
-            width: 40px;
-            height: 40px;
+            width: 36px;
+            height: 36px;
             border: 2px solid var(--border-color);
-            border-radius: 8px;
+            border-radius: 6px;
             cursor: pointer;
             padding: 0;
             background: none;
@@ -116,20 +98,20 @@
         }
 
         #colorPicker::-webkit-color-swatch {
-            border-radius: 4px;
+            border-radius: 3px;
             border: none;
         }
 
         #colorPicker::-moz-color-swatch {
-            border-radius: 4px;
+            border-radius: 3px;
             border: none;
         }
 
         .tool-select {
-            padding: 8px 12px;
-            font-size: 0.95em;
+            padding: 6px 10px;
+            font-size: 0.9em;
             border: 2px solid var(--primary-color);
-            border-radius: 8px;
+            border-radius: 6px;
             background: var(--container-bg);
             color: var(--text-color);
             cursor: pointer;
@@ -148,8 +130,8 @@
         }
 
         .size-slider {
-            width: 80px;
-            height: 8px;
+            width: 70px;
+            height: 6px;
             border-radius: 5px;
             background: var(--border-color);
             outline: none;
@@ -160,8 +142,8 @@
         .size-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             background: var(--primary-color);
             cursor: pointer;
@@ -173,8 +155,8 @@
         }
 
         .size-slider::-moz-range-thumb {
-            width: 18px;
-            height: 18px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             background: var(--primary-color);
             cursor: pointer;
@@ -184,37 +166,19 @@
         .size-value {
             font-weight: 600;
             color: var(--primary-color);
-            min-width: 30px;
+            min-width: 24px;
             text-align: center;
-        }
-
-        .button-row {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
+            font-size: 0.85em;
         }
 
         .btn {
-            flex: 1;
-            min-width: 100px;
-            padding: 12px 20px;
-            font-size: 1em;
+            padding: 8px 14px;
+            font-size: 0.9em;
             font-weight: 600;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
             cursor: pointer;
             transition: all 0.2s ease;
-        }
-
-        .btn-primary {
-            background: var(--primary-color);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
         .btn-secondary {
@@ -224,8 +188,7 @@
 
         .btn-secondary:hover {
             background: #4b5563;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(107, 114, 128, 0.4);
+            transform: translateY(-1px);
         }
 
         .btn-success {
@@ -235,21 +198,20 @@
 
         .btn-success:hover {
             background: #059669;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(16, 185, 129, 0.4);
+            transform: translateY(-1px);
         }
 
         /* Quick color palette */
         .color-palette {
             display: flex;
-            gap: 6px;
+            gap: 4px;
             flex-wrap: wrap;
         }
 
         .color-swatch {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
             cursor: pointer;
             border: 2px solid transparent;
             transition: all 0.2s ease;
@@ -261,33 +223,43 @@
 
         .color-swatch.active {
             border-color: var(--text-color);
-            box-shadow: 0 0 0 2px var(--container-bg), 0 0 8px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 0 0 2px var(--container-bg), 0 0 6px rgba(0, 0, 0, 0.3);
         }
 
         /* Responsive */
-        @media (max-width: 480px) {
-            .container {
-                padding: 15px;
-            }
-
-            h1 {
-                font-size: 1.5em;
-            }
-
+        @media (max-width: 600px) {
             .toolbar {
-                flex-direction: column;
-                gap: 12px;
+                padding: 8px;
+                gap: 6px;
             }
 
-            .tool-group {
-                width: 100%;
-                justify-content: space-between;
+            .tool-group label {
+                display: none;
             }
 
             .btn {
-                min-width: 80px;
-                padding: 10px 15px;
-                font-size: 0.9em;
+                padding: 6px 10px;
+                font-size: 0.8em;
+            }
+
+            .color-swatch {
+                width: 20px;
+                height: 20px;
+            }
+
+            #colorPicker {
+                width: 30px;
+                height: 30px;
+            }
+
+            .size-slider {
+                width: 50px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .color-palette {
+                display: none;
             }
         }
     </style>
@@ -295,12 +267,8 @@
 
 <body>
     <div class="container">
-        <div class="header-row">
-            <h1>🎨 Draw</h1>
-        </div>
-
         <div class="canvas-container">
-            <canvas id="drawingCanvas" width="560" height="400"></canvas>
+            <canvas id="drawingCanvas"></canvas>
         </div>
 
         <div class="toolbar">
@@ -328,9 +296,7 @@
                 <input type="range" id="sizeSlider" class="size-slider" min="1" max="50" value="5">
                 <span id="sizeValue" class="size-value">5</span>
             </div>
-        </div>
 
-        <div class="button-row">
             <button id="clearBtn" class="btn btn-secondary">Clear</button>
             <button id="undoBtn" class="btn btn-secondary">Undo</button>
             <button id="saveBtn" class="btn btn-success">💾 Save</button>
@@ -357,6 +323,7 @@
                 // Configuration constants
                 this.MAX_HISTORY = 20;
                 this.COLOR_TOLERANCE = 10; // Tolerance for flood fill color matching
+                this.SAVE_RESOLUTION_SCALE = 2; // Multiplier for saved image resolution
 
                 // Quick colors palette
                 this.quickColors = [
@@ -388,9 +355,9 @@
                 // Save current canvas content
                 const imageData = this.ctx.getImageData(0, 0, this.canvas.width, this.canvas.height);
 
-                // Set display size
-                const displayWidth = Math.min(rect.width - 4, 560);
-                const displayHeight = Math.min(400, displayWidth * 0.7);
+                // Set display size to fill the container (100% width and height)
+                const displayWidth = rect.width;
+                const displayHeight = rect.height;
 
                 this.canvas.style.width = displayWidth + 'px';
                 this.canvas.style.height = displayHeight + 'px';
@@ -720,14 +687,18 @@
             }
 
             saveDrawing() {
-                // Create a temporary canvas for saving without retina scaling issues
+                // Create a temporary canvas for saving at higher resolution
                 const tempCanvas = document.createElement('canvas');
-                tempCanvas.width = this.displayWidth;
-                tempCanvas.height = this.displayHeight;
+                tempCanvas.width = this.displayWidth * this.SAVE_RESOLUTION_SCALE;
+                tempCanvas.height = this.displayHeight * this.SAVE_RESOLUTION_SCALE;
                 const tempCtx = tempCanvas.getContext('2d');
 
-                // Draw current canvas content to temp canvas with proper scaling
-                tempCtx.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height, 0, 0, this.displayWidth, this.displayHeight);
+                // Enable image smoothing for better quality
+                tempCtx.imageSmoothingEnabled = true;
+                tempCtx.imageSmoothingQuality = 'high';
+
+                // Draw current canvas content to temp canvas at higher resolution
+                tempCtx.drawImage(this.canvas, 0, 0, this.canvas.width, this.canvas.height, 0, 0, tempCanvas.width, tempCanvas.height);
 
                 // Create download link
                 const link = document.createElement('a');
