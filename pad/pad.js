@@ -4,7 +4,6 @@ class DrumPad {
     static REVERB_DURATION = 2; // seconds
     static DISTORTION_AMOUNT = 50;
     static WAVE_SHAPER_SAMPLES = 44100;
-    static GRAVITY = 9.8; // Standard gravity in m/s²
     static STORAGE_KEY = 'drumPadBeats';
     static RECORDING_BUFFER_MS = 200; // Buffer added to raw recordings for looping
 
@@ -15,17 +14,6 @@ class DrumPad {
             distortion: false,
             pitchUp: false,
             pitchDown: false
-        };
-
-        // Accelerometer data
-        this.accelerometer = {
-            supported: false,
-            x: 0,
-            y: 0,
-            z: 0,
-            magnitude: 0,
-            lastMagnitude: 0,
-            shakeFactor: 1
         };
 
         // Reverb convolver
@@ -53,7 +41,6 @@ class DrumPad {
         this.initializeUI();
         this.setupEventListeners();
         this.initializeTheme();
-        this.initializeAccelerometer();
         this.renderBeatList();
     }
 
@@ -92,9 +79,6 @@ class DrumPad {
         this.infoModal = document.getElementById('infoModal');
         this.closeInfoBtn = document.getElementById('closeInfoBtn');
 
-        // Accelerometer indicator
-        this.accelValue = document.getElementById('accelValue');
-
         // Recording controls
         this.recordBtn = document.getElementById('recordBtn');
         this.saveBtn = document.getElementById('saveBtn');
@@ -106,77 +90,6 @@ class DrumPad {
         // Beat list
         this.beatList = document.getElementById('beatList');
         this.beatListItems = document.getElementById('beatListItems');
-    }
-
-    initializeAccelerometer() {
-        // Check for DeviceMotionEvent support
-        if ('DeviceMotionEvent' in window) {
-            // Check if permission is needed (iOS 13+)
-            if (typeof DeviceMotionEvent.requestPermission === 'function') {
-                // Will request permission when user interacts
-                this.accelerometer.needsPermission = true;
-            } else {
-                // No permission needed, start listening
-                this.startAccelerometer();
-            }
-        } else {
-            this.accelValue.textContent = 'Not supported';
-        }
-    }
-
-    async requestAccelerometerPermission() {
-        if (typeof DeviceMotionEvent.requestPermission === 'function') {
-            try {
-                const permission = await DeviceMotionEvent.requestPermission();
-                if (permission === 'granted') {
-                    this.startAccelerometer();
-                    return true;
-                }
-            } catch (error) {
-                console.log('Accelerometer permission denied:', error);
-            }
-        }
-        return false;
-    }
-
-    startAccelerometer() {
-        window.addEventListener('devicemotion', (event) => {
-            const acc = event.accelerationIncludingGravity;
-            if (acc) {
-                this.accelerometer.supported = true;
-                this.accelerometer.x = acc.x || 0;
-                this.accelerometer.y = acc.y || 0;
-                this.accelerometer.z = acc.z || 0;
-
-                // Calculate magnitude of acceleration (deviation from gravity)
-                const magnitude = Math.sqrt(
-                    this.accelerometer.x ** 2 +
-                    this.accelerometer.y ** 2 +
-                    this.accelerometer.z ** 2
-                );
-
-                // Calculate shake factor based on how much the acceleration deviates from normal gravity
-                const deviation = Math.abs(magnitude - DrumPad.GRAVITY);
-                this.accelerometer.lastMagnitude = this.accelerometer.magnitude;
-                this.accelerometer.magnitude = deviation;
-
-                // Calculate shake factor (1.0 = normal, up to 2.0 for strong shakes)
-                // Use a smoothed value to avoid sudden jumps
-                const targetShakeFactor = Math.min(2.0, 1.0 + (deviation / 10));
-                this.accelerometer.shakeFactor = this.accelerometer.shakeFactor * 0.7 + targetShakeFactor * 0.3;
-
-                // Update UI indicator
-                if (this.accelerometer.shakeFactor > 1.1) {
-                    this.accelValue.textContent = `+${Math.round((this.accelerometer.shakeFactor - 1) * 100)}%`;
-                    this.accelValue.classList.add('active');
-                } else {
-                    this.accelValue.textContent = 'Ready';
-                    this.accelValue.classList.remove('active');
-                }
-            }
-        });
-
-        this.accelValue.textContent = 'Ready';
     }
 
     setupEventListeners() {
@@ -744,12 +657,6 @@ class DrumPad {
     handlePadPress(pad) {
         this.initAudioContext();
 
-        // Request accelerometer permission on first interaction if needed
-        if (this.accelerometer.needsPermission) {
-            this.requestAccelerometerPermission();
-            this.accelerometer.needsPermission = false;
-        }
-
         const soundType = pad.dataset.sound;
 
         // Add active class for visual feedback
@@ -804,19 +711,8 @@ class DrumPad {
         if (this.modifiers.pitchUp) pitchMod = 1.5;
         if (this.modifiers.pitchDown) pitchMod = 0.7;
 
-        // Get accelerometer shake factor for volume boost
-        const shakeFactor = this.accelerometer.shakeFactor || 1;
-
-        // Base volume adjusted by shake factor
-        // Lower base volume (0.3) with wider range to 1.0 makes shake more noticeable
-        const baseVolume = 0.3;
-        const volume = Math.min(1.0, baseVolume + (shakeFactor - 1) * 0.7);
-
-        // Apply slight pitch variation based on accelerometer
-        if (this.accelerometer.supported && shakeFactor > 1.05) {
-            // Slight pitch increase for harder hits
-            pitchMod *= (0.95 + shakeFactor * 0.05);
-        }
+        // Set volume
+        const volume = 0.8;
 
         // Create the sound based on sound type
         const soundNode = this.createSound(soundType, time, pitchMod);
