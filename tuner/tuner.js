@@ -13,7 +13,7 @@ class Tuner {
         this.animationId = null;
         
         // Volume/gain settings
-        this.inputGain = 1.0;    // Default gain (1.0 = no amplification)
+        this.inputGain = 80;    // Default gain (80 = moderate amplification)
 
         // Tuning settings
         this.referencePitch = 440; // A4 reference frequency
@@ -212,8 +212,8 @@ class Tuner {
         
         // Input gain/volume slider
         this.inputGainSlider.addEventListener('input', (e) => {
-            this.inputGain = parseFloat(e.target.value);
-            this.inputGainValue.textContent = this.inputGain.toFixed(1);
+            this.inputGain = parseInt(e.target.value);
+            this.inputGainValue.textContent = this.inputGain;
             // Update gain node if it exists, using setValueAtTime for smooth transitions
             if (this.gainNode && this.audioContext) {
                 this.gainNode.gain.setValueAtTime(this.inputGain, this.audioContext.currentTime);
