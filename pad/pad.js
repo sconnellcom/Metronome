@@ -251,11 +251,16 @@ class DrumPad {
 
         // Global touchmove handler for dragging across pads
         document.addEventListener('touchmove', (e) => {
-            e.preventDefault();
             for (const touch of e.changedTouches) {
                 const element = document.elementFromPoint(touch.clientX, touch.clientY);
                 const pad = element?.closest('.drum-pad');
                 const previousPad = this.touchPadMap.get(touch.identifier);
+                const drumPadsArea = element?.closest('.drum-pads');
+                
+                // Prevent default if touch is on a pad, was on a pad, or is in the drum-pads area
+                if (pad || previousPad || drumPadsArea) {
+                    e.preventDefault();
+                }
                 
                 // If touch moved to a different pad (or no pad)
                 if (pad !== previousPad) {

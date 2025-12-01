@@ -1,4 +1,4 @@
-const CACHE_NAME = 'ad-free-apps-v3';
+const CACHE_NAME = 'ad-free-apps-v4';
 const urlsToCache = [
     '/',
     '/index.html',
@@ -52,11 +52,11 @@ self.addEventListener('fetch', (event) => {
                 // Always fetch from network to update cache in background
                 const fetchPromise = fetch(event.request).then((networkResponse) => {
                     // Only cache successful GET requests for same-origin resources
-                    const shouldCache = networkResponse && 
-                        networkResponse.status === 200 && 
-                        networkResponse.type === 'basic' && 
+                    const shouldCache = networkResponse &&
+                        networkResponse.status === 200 &&
+                        networkResponse.type === 'basic' &&
                         event.request.method === 'GET';
-                    
+
                     if (shouldCache) {
                         cache.put(event.request, networkResponse.clone());
                     }
@@ -70,10 +70,10 @@ self.addEventListener('fetch', (event) => {
                 // The fetchPromise will update the cache in the background
                 if (cachedResponse) {
                     // Trigger background fetch but don't wait for it
-                    fetchPromise.catch(() => {}); // Suppress unhandled promise rejection
+                    fetchPromise.catch(() => { }); // Suppress unhandled promise rejection
                     return cachedResponse;
                 }
-                
+
                 // No cached response, wait for network
                 return fetchPromise.then((networkResponse) => {
                     if (networkResponse) {
@@ -83,9 +83,9 @@ self.addEventListener('fetch', (event) => {
                     if (event.request.mode === 'navigate') {
                         return cache.match('/index.html');
                     }
-                    return new Response('Content unavailable offline. Please check your connection and try again.', { 
-                        status: 503, 
-                        statusText: 'Service Unavailable' 
+                    return new Response('Content unavailable offline. Please check your connection and try again.', {
+                        status: 503,
+                        statusText: 'Service Unavailable'
                     });
                 });
             });
