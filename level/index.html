@@ -4,6 +4,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="../manifest.json">
+    <link rel="apple-touch-icon" href="../icons/icon-152x152.png">
     <title>Bubble Level</title>
     <style>
         * {
@@ -47,10 +51,31 @@
             text-align: center;
         }
 
+        .header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .home-btn {
+            text-decoration: none;
+            font-size: 1.5em;
+            padding: 5px;
+            transition: transform 0.2s ease, opacity 0.2s ease;
+            opacity: 0.8;
+        }
+
+        .home-btn:hover {
+            transform: scale(1.1);
+            opacity: 1;
+        }
+
         h1 {
             color: var(--text-color);
             font-size: 1.8em;
-            margin-bottom: 10px;
+            margin: 0;
+            flex: 1;
         }
 
         .mode-indicator {
@@ -405,7 +430,11 @@
     </div>
 
     <div class="container">
-        <h1>🔵 Bubble Level</h1>
+        <div class="header-row">
+            <a href="../" class="home-btn" title="Back to Home">🏠</a>
+            <h1>🔵 Bubble Level</h1>
+            <div style="width: 40px;"></div>
+        </div>
         <div class="mode-indicator" id="modeIndicator">All Directions</div>
 
         <div class="level-container" id="levelContainer">
