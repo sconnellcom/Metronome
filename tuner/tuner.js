@@ -6,10 +6,14 @@ class Tuner {
         this.analyser = null;
         this.mediaStream = null;
         this.sourceNode = null;  // Store source node to prevent garbage collection
+        this.gainNode = null;    // Gain node for volume control
         this.dataArray = null;
         this.bufferLength = 0;
         this.isRunning = false;
         this.animationId = null;
+        
+        // Volume/gain settings
+        this.inputGain = 1.0;    // Default gain (1.0 = no amplification)
 
         // Tuning settings
         this.referencePitch = 440; // A4 reference frequency
@@ -168,6 +172,10 @@ class Tuner {
         this.errorMessage = document.getElementById('errorMessage');
         this.audioLevelBar = document.getElementById('audioLevelBar');
         this.audioLevelStatus = document.getElementById('audioLevelStatus');
+        
+        // Volume/gain control elements
+        this.inputGainSlider = document.getElementById('inputGain');
+        this.inputGainValue = document.getElementById('inputGainValue');
 
         // Theme elements
         this.themeBtnActive = document.querySelector('.theme-btn-active');
@@ -200,6 +208,16 @@ class Tuner {
         this.referencePitchSlider.addEventListener('input', (e) => {
             this.referencePitch = parseInt(e.target.value);
             this.referencePitchValue.textContent = this.referencePitch;
+        });
+        
+        // Input gain/volume slider
+        this.inputGainSlider.addEventListener('input', (e) => {
+            this.inputGain = parseFloat(e.target.value);
+            this.inputGainValue.textContent = this.inputGain.toFixed(1);
+            // Update gain node if it exists, using setValueAtTime for smooth transitions
+            if (this.gainNode && this.audioContext) {
+                this.gainNode.gain.setValueAtTime(this.inputGain, this.audioContext.currentTime);
+            }
         });
 
         // Permission button
@@ -299,10 +317,15 @@ class Tuner {
             this.bufferLength = this.analyser.fftSize;
             this.dataArray = new Float32Array(this.bufferLength);
 
-            // Connect microphone to analyser
+            // Set up gain node for volume control
+            this.gainNode = this.audioContext.createGain();
+            this.gainNode.gain.setValueAtTime(this.inputGain, this.audioContext.currentTime);
+
+            // Connect microphone -> gain -> analyser
             // Store source node as instance variable to prevent garbage collection
             this.sourceNode = this.audioContext.createMediaStreamSource(this.mediaStream);
-            this.sourceNode.connect(this.analyser);
+            this.sourceNode.connect(this.gainNode);
+            this.gainNode.connect(this.analyser);
 
             this.isRunning = true;
             this.startStopBtn.textContent = 'Stop Tuner';
@@ -344,7 +367,11 @@ class Tuner {
             this.animationId = null;
         }
 
-        // Disconnect source node to clean up resources
+        // Disconnect audio nodes to clean up resources
+        if (this.gainNode) {
+            this.gainNode.disconnect();
+            this.gainNode = null;
+        }
         if (this.sourceNode) {
             this.sourceNode.disconnect();
             this.sourceNode = null;

@@ -143,6 +143,13 @@
             <div class="audio-level-status" id="audioLevelStatus">No signal</div>
         </div>
 
+        <!-- Input Gain/Volume Control -->
+        <div class="input-gain-control">
+            <label for="inputGain">Input Volume:</label>
+            <input type="range" id="inputGain" min="1.0" max="5.0" value="1.0" step="0.1">
+            <span id="inputGainValue">1.0</span>x
+        </div>
+
         <!-- Start/Stop Button -->
         <button id="startStop" class="btn btn-primary">Start Tuner</button>
 
@@ -200,6 +207,7 @@
                         <li>Tune in a quiet environment</li>
                         <li>Hold your instrument close to your device's microphone</li>
                         <li>Pluck strings clearly and let them ring</li>
+                        <li>If the audio level shows "Too quiet", increase the Input Volume slider</li>
                         <li>Adjust the A4 reference pitch if needed (default: 440 Hz)</li>
                     </ul>
                 </div>
