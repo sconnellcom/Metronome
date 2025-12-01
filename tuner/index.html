@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Instrument Tuner</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- Permission overlay for microphone -->
+    <div class="permission-overlay" id="permissionOverlay" style="display: none;">
+        <div class="permission-dialog">
+            <h2>🎤 Enable Microphone</h2>
+            <p>This tuner app needs access to your microphone to detect pitch and help you tune your instrument.</p>
+            <button class="permission-btn" id="permissionBtn">Enable Microphone</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="header-row">
+            <div class="theme-picker">
+                <button class="theme-btn-active theme-default" data-theme="default" title="Change Theme"></button>
+                <div class="theme-dropdown" style="display: none;">
+                    <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                    <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                    <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                    <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                    <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                    <button class="theme-btn theme-dark" data-theme="dark" title="Olive Dark Theme"></button>
+                    <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
+                    <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                    <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                    <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                    <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                    <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+                </div>
+            </div>
+            <h1>🎸 Tuner</h1>
+            <div class="header-buttons">
+                <button id="infoBtn" class="info-btn" title="How to Use">ⓘ</button>
+            </div>
+        </div>
+
+        <!-- Instrument Selection -->
+        <div class="instrument-selector">
+            <select id="instrumentSelect" class="dropdown-select">
+                <option value="guitar">Guitar (Standard)</option>
+                <option value="guitar-dropd">Guitar (Drop D)</option>
+                <option value="bass">Bass (4-string)</option>
+                <option value="bass5">Bass (5-string)</option>
+                <option value="ukulele">Ukulele</option>
+                <option value="violin">Violin</option>
+                <option value="viola">Viola</option>
+                <option value="cello">Cello</option>
+                <option value="chromatic">Chromatic</option>
+            </select>
+        </div>
+
+        <!-- String Buttons -->
+        <div class="string-buttons" id="stringButtons">
+            <!-- Dynamically populated -->
+        </div>
+
+        <!-- Note Display -->
+        <div class="note-display">
+            <div class="detected-note" id="detectedNote">--</div>
+            <div class="octave-display" id="octaveDisplay"></div>
+        </div>
+
+        <!-- Tuner Gauge (Needle Style) -->
+        <div class="tuner-gauge">
+            <div class="gauge-container">
+                <div class="gauge-scale">
+                    <div class="gauge-mark flat-mark" style="left: 0%;">
+                        <span class="mark-label">-50</span>
+                    </div>
+                    <div class="gauge-mark" style="left: 12.5%;">
+                        <span class="mark-label">-40</span>
+                    </div>
+                    <div class="gauge-mark" style="left: 25%;">
+                        <span class="mark-label">-30</span>
+                    </div>
+                    <div class="gauge-mark" style="left: 37.5%;">
+                        <span class="mark-label">-20</span>
+                    </div>
+                    <div class="gauge-mark" style="left: 50%;">
+                        <span class="mark-label center-label">0</span>
+                    </div>
+                    <div class="gauge-mark" style="left: 62.5%;">
+                        <span class="mark-label">+20</span>
+                    </div>
+                    <div class="gauge-mark" style="left: 75%;">
+                        <span class="mark-label">+30</span>
+                    </div>
+                    <div class="gauge-mark" style="left: 87.5%;">
+                        <span class="mark-label">+40</span>
+                    </div>
+                    <div class="gauge-mark sharp-mark" style="left: 100%;">
+                        <span class="mark-label">+50</span>
+                    </div>
+                </div>
+                <div class="gauge-indicator-area">
+                    <div class="gauge-center-zone"></div>
+                    <div class="gauge-needle" id="gaugeNeedle"></div>
+                </div>
+                <div class="gauge-labels">
+                    <span class="gauge-label flat">♭ Flat</span>
+                    <span class="gauge-label sharp">Sharp ♯</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cents Display -->
+        <div class="cents-display">
+            <span class="cents-value" id="centsValue">--</span>
+            <span class="cents-label">cents</span>
+        </div>
+
+        <!-- Frequency Display -->
+        <div class="frequency-display">
+            <span class="frequency-value" id="frequencyValue">--</span>
+            <span class="frequency-label">Hz</span>
+        </div>
+
+        <!-- Tuning Status -->
+        <div class="tuning-status" id="tuningStatus">
+            <span class="status-text">Ready to tune</span>
+        </div>
+
+        <!-- Start/Stop Button -->
+        <button id="startStop" class="btn btn-primary">Start Tuner</button>
+
+        <!-- Reference Pitch Control -->
+        <div class="reference-pitch">
+            <label for="referencePitch">A4 Reference:</label>
+            <input type="range" id="referencePitch" min="430" max="450" value="440" step="1">
+            <span id="referencePitchValue">440</span> Hz
+        </div>
+
+        <!-- Info Modal -->
+        <div id="infoModal" class="info-modal" style="display: none;">
+            <div class="info-modal-content">
+                <div class="info-modal-header">
+                    <h3>How to Use</h3>
+                    <button id="closeInfoBtn" class="close-btn">&times;</button>
+                </div>
+                <div style="padding: 0 20px 20px;">
+                    <h4>Getting Started</h4>
+                    <ul>
+                        <li><strong>Start/Stop:</strong> Click "Start Tuner" to begin listening</li>
+                        <li><strong>Select Instrument:</strong> Choose your instrument from the dropdown</li>
+                        <li><strong>Play a Note:</strong> Play a string on your instrument near your device</li>
+                        <li><strong>Watch the Needle:</strong> Tune until the needle is centered</li>
+                    </ul>
+
+                    <h4>Understanding the Display</h4>
+                    <ul>
+                        <li><strong>Note Name:</strong> Shows the closest detected note (e.g., E, A, D)</li>
+                        <li><strong>Needle Gauge:</strong> Shows if you're flat (left) or sharp (right)</li>
+                        <li><strong>Cents:</strong> Shows how many cents off from perfect pitch (-50 to +50)</li>
+                        <li><strong>Frequency:</strong> Shows the exact frequency being detected</li>
+                    </ul>
+
+                    <h4>Color Indicators</h4>
+                    <ul>
+                        <li><strong class="color-green">Green:</strong> In tune! (within ±5 cents)</li>
+                        <li><strong class="color-yellow">Yellow:</strong> Close (within ±15 cents)</li>
+                        <li><strong class="color-red">Red:</strong> Out of tune (more than 15 cents off)</li>
+                    </ul>
+
+                    <h4>Supported Instruments</h4>
+                    <ul>
+                        <li><strong>Guitar:</strong> Standard (EADGBE), Drop D (DADGBE)</li>
+                        <li><strong>Bass:</strong> 4-string (EADG), 5-string (BEADG)</li>
+                        <li><strong>Ukulele:</strong> Standard (GCEA)</li>
+                        <li><strong>Violin:</strong> GDAE</li>
+                        <li><strong>Viola:</strong> CGDA</li>
+                        <li><strong>Cello:</strong> CGDA (octave lower than viola)</li>
+                        <li><strong>Chromatic:</strong> All notes, no specific tuning</li>
+                    </ul>
+
+                    <h4>Tips for Best Results</h4>
+                    <ul>
+                        <li>Tune in a quiet environment</li>
+                        <li>Hold your instrument close to your device's microphone</li>
+                        <li>Pluck strings clearly and let them ring</li>
+                        <li>Adjust the A4 reference pitch if needed (default: 440 Hz)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message" id="errorMessage" style="display: none;">
+            Unable to access microphone. Please ensure you've granted microphone permissions.
+        </div>
+    </div>
+
+    <script src="tuner.js"></script>
+</body>
+
+</html>
