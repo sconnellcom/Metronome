@@ -71,6 +71,10 @@ class Metronome {
         this.AUDIO_MIN_PEAK_ENERGY = 0.01; // Minimum energy to consider as a beat
         this.AUDIO_BEAT_DEBOUNCE_MS = 150; // Minimum time between audio beats
         this.AUDIO_HISTORY_SIZE = 30; // Number of energy samples to track for averaging
+        this.AUDIO_MIN_INTERVAL_MS = 200; // Minimum interval between beats (300 BPM max)
+        this.AUDIO_MAX_INTERVAL_MS = 1500; // Maximum interval between beats (40 BPM min)
+        this.AUDIO_INTERVAL_BIN_SIZE_MS = 10; // Bin size for interval histogram
+        this.MS_PER_MINUTE = 60000; // Milliseconds per minute for BPM calculation
 
         // Activity log
         this.activityLog = [];
@@ -799,7 +803,7 @@ class Metronome {
         try {
             // Check if getUserMedia is supported
             if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-                alert('Audio input is not supported in this browser. Please try a modern browser like Chrome, Firefox, or Safari.');
+                alert('Audio input is not supported in this browser. Please use a modern browser with microphone support.');
                 return;
             }
 
@@ -1010,12 +1014,12 @@ class Metronome {
     estimateBPMFromIntervals(intervals) {
         if (intervals.length < 2) return null;
 
-        // Create histogram of intervals (quantized to 10ms bins)
+        // Create histogram of intervals (quantized to bin size)
         const histogram = {};
         intervals.forEach(interval => {
-            // Only consider reasonable intervals (200ms to 1500ms = 40-300 BPM)
-            if (interval >= 200 && interval <= 1500) {
-                const bin = Math.round(interval / 10) * 10;
+            // Only consider reasonable intervals (based on configured BPM range)
+            if (interval >= this.AUDIO_MIN_INTERVAL_MS && interval <= this.AUDIO_MAX_INTERVAL_MS) {
+                const bin = Math.round(interval / this.AUDIO_INTERVAL_BIN_SIZE_MS) * this.AUDIO_INTERVAL_BIN_SIZE_MS;
                 histogram[bin] = (histogram[bin] || 0) + 1;
             }
         });
@@ -1033,10 +1037,10 @@ class Metronome {
         if (mostCommonInterval === null) {
             // Fall back to average if no clear winner
             const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
-            return Math.round(60000 / avgInterval);
+            return Math.round(this.MS_PER_MINUTE / avgInterval);
         }
 
-        return Math.round(60000 / mostCommonInterval);
+        return Math.round(this.MS_PER_MINUTE / mostCommonInterval);
     }
 
     playBassDrum(time) {
