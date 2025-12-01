@@ -1,11 +1,11 @@
-const CACHE_NAME = 'ad-free-apps-v2';
+const CACHE_NAME = 'ad-free-apps-v3';
 const urlsToCache = [
     '/',
     '/index.html',
     '/metronome/',
     '/metronome/index.html',
-    '/metronome/style.css',
-    '/metronome/metronome.js',
+    '/metronome/style.css?v=2',
+    '/metronome/metronome.js?v=2',
     '/timer/',
     '/timer/index.html',
     '/timer/timer.js',
@@ -17,12 +17,12 @@ const urlsToCache = [
     '/scanner/index.html',
     '/pad/',
     '/pad/index.html',
-    '/pad/style.css',
-    '/pad/pad.js',
+    '/pad/style.css?v=2',
+    '/pad/pad.js?v=2',
     '/tuner/',
     '/tuner/index.html',
-    '/tuner/style.css',
-    '/tuner/tuner.js',
+    '/tuner/style.css?v=2',
+    '/tuner/tuner.js?v=2',
     '/icons/icon-192x192.png',
     '/icons/icon-512x512.png'
 ];
