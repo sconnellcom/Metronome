@@ -473,12 +473,16 @@ class Tuner {
         // Autocorrelation using normalized difference function
         const SIZE = buffer.length;
         const MAX_SAMPLES = Math.floor(SIZE / 2);
+        // Minimum offset to skip trivial self-correlation at offset 0
+        // This corresponds to the maximum detectable frequency
+        // At 44100 Hz sample rate: offset 20 = 2205 Hz, offset 30 = 1470 Hz
+        const MIN_OFFSET = 20;
         let bestOffset = -1;
         let bestCorrelation = 0;
         let foundGoodCorrelation = false;
         const correlations = new Array(MAX_SAMPLES);
 
-        for (let offset = 0; offset < MAX_SAMPLES; offset++) {
+        for (let offset = MIN_OFFSET; offset < MAX_SAMPLES; offset++) {
             let correlation = 0;
             let denominator = 0;
             const loopLimit = MAX_SAMPLES - offset;
@@ -500,8 +504,9 @@ class Tuner {
                 foundGoodCorrelation = true;
             } else if (foundGoodCorrelation) {
                 // Short-circuit once we've found a good correlation and it starts decreasing
-                // Add bounds checking and division by zero protection
-                if (bestOffset > 0 && bestOffset < MAX_SAMPLES - 1 && correlations[bestOffset] !== 0) {
+                // At this point, bestOffset >= MIN_OFFSET since we only set foundGoodCorrelation
+                // when we also set bestOffset = offset (where offset >= MIN_OFFSET)
+                if (bestOffset >= MIN_OFFSET && bestOffset < MAX_SAMPLES - 1 && correlations[bestOffset] !== 0) {
                     // Parabolic interpolation to refine the peak position
                     // The factor 8 is an empirical refinement constant for pitch detection accuracy
                     const shift = (correlations[bestOffset + 1] - correlations[bestOffset - 1]) / correlations[bestOffset];
@@ -511,7 +516,7 @@ class Tuner {
             }
         }
 
-        if (bestCorrelation > 0.01) {
+        if (bestCorrelation > 0.01 && bestOffset >= MIN_OFFSET) {
             return sampleRate / bestOffset;
         }
 
