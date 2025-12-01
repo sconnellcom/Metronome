@@ -125,26 +125,53 @@
             }
         }
 
-        /* Mobile - 1 column */
+        /* Mobile - compact grid to fit all apps without scrolling */
         @media (max-width: 480px) {
-            .apps-grid {
-                grid-template-columns: 1fr;
+            body {
+                padding: 10px;
+            }
+
+            header {
+                margin-bottom: 15px;
+                padding-top: 10px;
             }
 
             h1 {
-                font-size: 1.8em;
+                font-size: 1.4em;
+                margin-bottom: 5px;
+            }
+
+            .tagline {
+                font-size: 0.85em;
+            }
+
+            .apps-grid {
+                grid-template-columns: repeat(3, 1fr);
+                gap: 10px;
+                padding: 5px;
             }
 
             .app-card {
-                padding: 20px;
+                padding: 12px 8px;
             }
 
             .app-icon {
-                font-size: 2.8em;
+                font-size: 2em;
+                margin-bottom: 8px;
             }
 
             .app-name {
-                font-size: 1.2em;
+                font-size: 0.9em;
+                margin-bottom: 0;
+            }
+
+            .app-description {
+                display: none;
+            }
+
+            footer {
+                margin-top: 15px;
+                padding-bottom: 10px;
             }
         }
 
