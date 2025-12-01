@@ -695,14 +695,14 @@
         </div>
 
         <div id="status-message" class="status-message info">
-            Click "Start Scanner" to begin scanning QR codes
+            Starting scanner...
         </div>
 
         <div id="reader"></div>
 
         <div class="scanner-controls">
-            <button id="startBtn" class="scanner-btn">Start Scanner</button>
-            <button id="stopBtn" class="scanner-btn stop" disabled>Stop Scanner</button>
+            <button id="startBtn" class="scanner-btn" style="display: none;">Start Scanner</button>
+            <button id="stopBtn" class="scanner-btn stop">Stop Scanner</button>
         </div>
 
         <div class="result-container">
@@ -897,7 +897,7 @@
                     if (html5QrCode && html5QrCode.isScanning) {
                         showStatus('Scanning for QR codes...', 'info');
                     } else {
-                        showStatus('Click "Start Scanner" to begin scanning QR codes', 'info');
+                        showStatus('Scanner stopped. Click "Start Scanner" to scan again.', 'info');
                     }
                 }, STATUS_TIMEOUT_MS);
             }).catch(() => {
@@ -991,14 +991,17 @@
                     onScanFailure
                 );
 
-                startBtn.disabled = true;
-                stopBtn.disabled = false;
+                startBtn.style.display = 'none';
+                stopBtn.style.display = 'block';
                 showStatus('Scanning for QR codes...', 'info');
                 lastScannedText = ''; // Reset to allow rescanning same code
                 
             } catch (err) {
                 console.error('Error starting scanner:', err);
                 showStatus(`Error: ${err.message || 'Could not access camera. Please ensure camera permissions are granted.'}`, 'error');
+                // Show start button on error so user can retry
+                startBtn.style.display = 'block';
+                stopBtn.style.display = 'none';
             }
         }
 
@@ -1007,8 +1010,8 @@
                 if (html5QrCode && html5QrCode.isScanning) {
                     await html5QrCode.stop();
                 }
-                startBtn.disabled = false;
-                stopBtn.disabled = true;
+                startBtn.style.display = 'block';
+                stopBtn.style.display = 'none';
                 showStatus('Scanner stopped. Click "Start Scanner" to scan again.', 'info');
             } catch (err) {
                 console.error('Error stopping scanner:', err);
@@ -1017,6 +1020,13 @@
 
         startBtn.addEventListener('click', startScanner);
         stopBtn.addEventListener('click', stopScanner);
+        
+        // Auto-start scanner when page loads
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', startScanner);
+        } else {
+            startScanner();
+        }
 
         // Cleanup on page unload
         window.addEventListener('beforeunload', () => {
