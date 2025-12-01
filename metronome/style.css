@@ -227,6 +227,19 @@ body {
     margin-bottom: 15px;
 }
 
+.home-btn {
+    text-decoration: none;
+    font-size: 1.5em;
+    padding: 5px;
+    transition: transform 0.2s ease, opacity 0.2s ease;
+    opacity: 0.8;
+}
+
+.home-btn:hover {
+    transform: scale(1.1);
+    opacity: 1;
+}
+
 h1 {
     text-align: center;
     color: var(--text-color);
