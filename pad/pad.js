@@ -30,6 +30,9 @@ class DrumPad {
         this.convolverNode = null;
         this.reverbBuffer = null;
         
+        // Track mouse button state for drag support
+        this.isMouseDown = false;
+        
         this.initializeUI();
         this.setupEventListeners();
         this.initializeTheme();
@@ -181,17 +184,50 @@ class DrumPad {
             // Mouse events for desktop
             pad.addEventListener('mousedown', (e) => {
                 e.preventDefault();
+                this.isMouseDown = true;
                 this.handlePadPress(pad);
             });
             
             pad.addEventListener('mouseup', (e) => {
+                this.isMouseDown = false;
                 this.handlePadRelease(pad);
             });
             
             pad.addEventListener('mouseleave', (e) => {
                 this.handlePadRelease(pad);
             });
+            
+            // Mouse enter for dragging across pads
+            pad.addEventListener('mouseenter', (e) => {
+                if (this.isMouseDown) {
+                    this.handlePadPress(pad);
+                }
+            });
         });
+
+        // Global mouseup to reset mouse state when released outside pads
+        document.addEventListener('mouseup', () => {
+            this.isMouseDown = false;
+        });
+
+        // Global touchmove handler for dragging across pads
+        document.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            for (const touch of e.changedTouches) {
+                const element = document.elementFromPoint(touch.clientX, touch.clientY);
+                const pad = element?.closest('.drum-pad');
+                if (pad && !pad.classList.contains('active')) {
+                    // Release all other pads for this touch
+                    document.querySelectorAll('.drum-pad.active').forEach(activePad => {
+                        if (activePad !== pad) {
+                            this.handlePadRelease(activePad);
+                        }
+                    });
+                    // Press the new pad
+                    this.handlePadPress(pad);
+                }
+            }
+        }, { passive: false });
 
         // Modifier buttons
         document.querySelectorAll('.modifier-btn').forEach(btn => {
@@ -385,6 +421,7 @@ class DrumPad {
         gain.gain.exponentialRampToValueAtTime(0.01, time + 0.3);
         
         osc.connect(gain);
+        osc.start(time);
         osc.stop(time + 0.3);
         
         return gain;
@@ -480,6 +517,7 @@ class DrumPad {
         gain.gain.exponentialRampToValueAtTime(0.01, time + 0.25);
         
         osc.connect(gain);
+        osc.start(time);
         osc.stop(time + 0.25);
         
         return gain;
@@ -594,6 +632,7 @@ class DrumPad {
         gain.gain.exponentialRampToValueAtTime(0.01, time + 0.03);
         
         osc.connect(gain);
+        osc.start(time);
         osc.stop(time + 0.03);
         
         return gain;
