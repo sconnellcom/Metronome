@@ -1,6 +1,6 @@
 {
     "name": "Ad Free Apps",
-    "short_name": "AdFreeApps",
+    "short_name": "Ad Free Apps",
     "description": "Simple, free tools with no ads or trackers",
     "start_url": "/",
     "display": "standalone",
@@ -57,28 +57,47 @@
             "purpose": "any maskable"
         }
     ],
-    "categories": ["utilities", "productivity", "music"],
+    "categories": [
+        "utilities",
+        "productivity",
+        "music"
+    ],
     "shortcuts": [
         {
             "name": "Metronome",
             "short_name": "Metronome",
             "description": "Practice your timing with beat detection",
             "url": "/metronome/",
-            "icons": [{"src": "icons/icon-96x96.png", "sizes": "96x96"}]
-        },
-        {
-            "name": "Timer",
-            "short_name": "Timer",
-            "description": "Countdown timers and stopwatch",
-            "url": "/timer/",
-            "icons": [{"src": "icons/icon-96x96.png", "sizes": "96x96"}]
+            "icons": [
+                {
+                    "src": "icons/icon-96x96.png",
+                    "sizes": "96x96"
+                }
+            ]
         },
         {
             "name": "Tuner",
             "short_name": "Tuner",
             "description": "Tune your instruments",
             "url": "/tuner/",
-            "icons": [{"src": "icons/icon-96x96.png", "sizes": "96x96"}]
+            "icons": [
+                {
+                    "src": "icons/icon-96x96.png",
+                    "sizes": "96x96"
+                }
+            ]
+        },
+        {
+            "name": "Timer",
+            "short_name": "Timer",
+            "description": "Countdown timers and stopwatch",
+            "url": "/timer/",
+            "icons": [
+                {
+                    "src": "icons/icon-96x96.png",
+                    "sizes": "96x96"
+                }
+            ]
         }
     ]
 }
