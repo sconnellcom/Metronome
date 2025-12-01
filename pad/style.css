@@ -229,7 +229,6 @@ body {
     align-items: center;
     padding: 10px;
     transition: background 0.3s ease;
-    touch-action: none;
     overflow: hidden;
 }
 
@@ -480,7 +479,7 @@ h1 {
     border: 2px solid rgba(255, 255, 255, 0.1);
     user-select: none;
     -webkit-user-select: none;
-    touch-action: manipulation;
+    touch-action: none;
 }
 
 .drum-pad:hover {
@@ -976,6 +975,8 @@ h1 {
     max-height: 150px;
     overflow-y: auto;
     flex-shrink: 0;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
 }
 
 .beat-list.has-beats {

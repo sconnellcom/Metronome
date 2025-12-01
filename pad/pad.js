@@ -6,7 +6,7 @@ class DrumPad {
     static WAVE_SHAPER_SAMPLES = 44100;
     static GRAVITY = 9.8; // Standard gravity in m/s²
     static STORAGE_KEY = 'drumPadBeats';
-    static LOOP_GAP_MS = 100; // Gap between loop iterations in milliseconds
+    static RECORDING_BUFFER_MS = 200; // Buffer added to raw recordings for looping
 
     constructor() {
         this.audioContext = null;
@@ -47,9 +47,8 @@ class DrumPad {
         this.savedBeats = [];
         this.loadBeats();
         
-        // Playback state
-        this.playingBeatIndex = -1;
-        this.playbackTimeouts = [];
+        // Playback state - Map of beatIndex -> timeoutIds array for multi-beat playback
+        this.playingBeats = new Map();
         
         this.initializeUI();
         this.setupEventListeners();
@@ -213,13 +212,12 @@ class DrumPad {
                 this.handlePadPress(pad);
             }, { passive: false });
             
+            // Touch end is handled by the global document touchend handler (below)
+            // which properly tracks the actual current pad from touchPadMap.
+            // We keep this handler to prevent default browser behavior and ensure
+            // the touch event doesn't trigger unwanted actions like text selection.
             pad.addEventListener('touchend', (e) => {
                 e.preventDefault();
-                // Clean up touch tracking
-                for (const touch of e.changedTouches) {
-                    this.touchPadMap.delete(touch.identifier);
-                }
-                this.handlePadRelease(pad);
             }, { passive: false });
             
             // Mouse events for desktop
@@ -274,6 +272,28 @@ class DrumPad {
                         // Moved off all pads
                         this.touchPadMap.delete(touch.identifier);
                     }
+                }
+            }
+        }, { passive: false });
+
+        // Global touchend handler to properly release pads when touch ends
+        document.addEventListener('touchend', (e) => {
+            for (const touch of e.changedTouches) {
+                const currentPad = this.touchPadMap.get(touch.identifier);
+                if (currentPad) {
+                    this.handlePadRelease(currentPad);
+                    this.touchPadMap.delete(touch.identifier);
+                }
+            }
+        }, { passive: false });
+
+        // Global touchcancel handler to properly release pads when touch is cancelled
+        document.addEventListener('touchcancel', (e) => {
+            for (const touch of e.changedTouches) {
+                const currentPad = this.touchPadMap.get(touch.identifier);
+                if (currentPad) {
+                    this.handlePadRelease(currentPad);
+                    this.touchPadMap.delete(touch.identifier);
                 }
             }
         }, { passive: false });
@@ -388,8 +408,10 @@ class DrumPad {
             return;
         }
 
-        // Calculate duration
-        const duration = this.recordedEvents[this.recordedEvents.length - 1].time;
+        // Calculate duration - add a small buffer for looping raw recordings.
+        // Use cleanupTempo() from the menu to recalculate proper beat-aligned duration.
+        const lastEventTime = this.recordedEvents[this.recordedEvents.length - 1].time;
+        const duration = lastEventTime + DrumPad.RECORDING_BUFFER_MS;
         
         const beat = {
             id: Date.now(),
@@ -447,6 +469,7 @@ class DrumPad {
         this.beatListItems.innerHTML = '';
 
         this.savedBeats.forEach((beat, index) => {
+            const isPlaying = this.playingBeats.has(index);
             const beatItem = document.createElement('div');
             beatItem.className = 'beat-item';
             beatItem.innerHTML = `
@@ -455,8 +478,8 @@ class DrumPad {
                 <button class="beat-btn beat-repeat-btn ${beat.repeat ? '' : 'off'}" data-index="${index}" title="Toggle Repeat">
                     🔁
                 </button>
-                <button class="beat-btn beat-play-btn ${this.playingBeatIndex === index ? 'playing' : ''}" data-index="${index}" title="${this.playingBeatIndex === index ? 'Pause' : 'Play'}">
-                    ${this.playingBeatIndex === index ? '⏸' : '▶'}
+                <button class="beat-btn beat-play-btn ${isPlaying ? 'playing' : ''}" data-index="${index}" title="${isPlaying ? 'Pause' : 'Play'}">
+                    ${isPlaying ? '⏸' : '▶'}
                 </button>
                 <button class="beat-btn beat-delete-btn" data-index="${index}" title="Delete">
                     🗑
@@ -470,8 +493,8 @@ class DrumPad {
             });
 
             beatItem.querySelector('.beat-play-btn').addEventListener('click', (e) => {
-                if (this.playingBeatIndex === index) {
-                    this.stopPlayback();
+                if (this.playingBeats.has(index)) {
+                    this.stopBeat(index);
                 } else {
                     this.playBeat(index);
                 }
@@ -504,16 +527,22 @@ class DrumPad {
     playBeat(index) {
         this.initAudioContext();
         
-        // Stop any current playback
-        this.stopPlayback();
+        // Stop this specific beat if it's already playing
+        if (this.playingBeats.has(index)) {
+            this.stopBeat(index);
+        }
 
         const beat = this.savedBeats[index];
         if (!beat || beat.events.length === 0) return;
 
-        this.playingBeatIndex = index;
+        // Initialize timeout array for this beat
+        this.playingBeats.set(index, []);
         this.renderBeatList();
 
         const playEvents = () => {
+            const timeouts = this.playingBeats.get(index);
+            if (!timeouts) return; // Beat was stopped
+            
             beat.events.forEach(event => {
                 const timeout = setTimeout(() => {
                     // Save current modifiers
@@ -528,44 +557,67 @@ class DrumPad {
                     // Restore modifiers
                     this.modifiers = savedModifiers;
                 }, event.time);
-                this.playbackTimeouts.push(timeout);
+                timeouts.push(timeout);
             });
 
             // Schedule next loop if repeat is enabled
-            if (beat.repeat && this.playingBeatIndex === index) {
+            if (beat.repeat && this.playingBeats.has(index)) {
                 const loopTimeout = setTimeout(() => {
-                    if (this.playingBeatIndex === index) {
-                        this.playbackTimeouts = [];
+                    if (this.playingBeats.has(index)) {
+                        // Clear old timeouts and start fresh
+                        this.playingBeats.set(index, []);
                         playEvents();
                     }
-                }, beat.duration + DrumPad.LOOP_GAP_MS);
-                this.playbackTimeouts.push(loopTimeout);
+                }, beat.duration);
+                timeouts.push(loopTimeout);
             } else {
                 // Stop after playback completes
                 const stopTimeout = setTimeout(() => {
-                    if (this.playingBeatIndex === index) {
-                        this.stopPlayback();
+                    if (this.playingBeats.has(index)) {
+                        this.stopBeat(index);
                     }
-                }, beat.duration + DrumPad.LOOP_GAP_MS);
-                this.playbackTimeouts.push(stopTimeout);
+                }, beat.duration);
+                timeouts.push(stopTimeout);
             }
         };
 
         playEvents();
     }
 
+    stopBeat(index) {
+        const timeouts = this.playingBeats.get(index);
+        if (timeouts) {
+            timeouts.forEach(timeout => clearTimeout(timeout));
+        }
+        this.playingBeats.delete(index);
+        this.renderBeatList();
+    }
+
     stopPlayback() {
-        this.playbackTimeouts.forEach(timeout => clearTimeout(timeout));
-        this.playbackTimeouts = [];
-        this.playingBeatIndex = -1;
+        // Stop all playing beats
+        for (const [index, timeouts] of this.playingBeats) {
+            timeouts.forEach(timeout => clearTimeout(timeout));
+        }
+        this.playingBeats.clear();
         this.renderBeatList();
     }
 
     deleteBeat(index) {
-        if (this.playingBeatIndex === index) {
-            this.stopPlayback();
+        if (this.playingBeats.has(index)) {
+            this.stopBeat(index);
         }
         this.savedBeats.splice(index, 1);
+        // Update playingBeats indices for beats after the deleted one
+        const newPlayingBeats = new Map();
+        for (const [beatIndex, timeouts] of this.playingBeats) {
+            if (beatIndex > index) {
+                newPlayingBeats.set(beatIndex - 1, timeouts);
+            } else if (beatIndex < index) {
+                newPlayingBeats.set(beatIndex, timeouts);
+            }
+            // beatIndex === index is already stopped and removed, skip it
+        }
+        this.playingBeats = newPlayingBeats;
         this.saveBeatsToStorage();
         this.renderBeatList();
     }
@@ -658,7 +710,7 @@ class DrumPad {
         const endTime = startTime + idealDuration;
         
         const trimmedEvents = events
-            .filter(e => e.time >= startTime && e.time <= endTime)
+            .filter(e => e.time >= startTime && e.time < endTime)
             .map(e => ({
                 ...e,
                 time: e.time - startTime // Normalize to start at 0
@@ -668,12 +720,17 @@ class DrumPad {
             return;
         }
 
+        // Set the loop duration to idealDuration so that when the loop repeats,
+        // the gap from the last beat to the first beat of the next loop equals avgInterval.
+        // This ensures seamless looping where listeners can't detect the loop point.
+        const loopDuration = idealDuration;
+
         // Update the events
         if (this.recordedEvents.length > 0) {
             this.recordedEvents = trimmedEvents;
         } else {
             this.savedBeats[targetBeatIndex].events = trimmedEvents;
-            this.savedBeats[targetBeatIndex].duration = trimmedEvents[trimmedEvents.length - 1].time;
+            this.savedBeats[targetBeatIndex].duration = loopDuration;
             this.saveBeatsToStorage();
             this.renderBeatList();
         }
