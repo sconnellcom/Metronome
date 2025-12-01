@@ -1,14 +1,14 @@
-const CACHE_NAME = 'ad-free-apps-v1';
+const CACHE_NAME = 'ad-free-apps-v3';
 const urlsToCache = [
     '/',
     '/index.html',
     '/metronome/',
     '/metronome/index.html',
-    '/metronome/style.css',
-    '/metronome/metronome.js',
+    '/metronome/style.css?v=2',
+    '/metronome/metronome.js?v=2',
     '/timer/',
     '/timer/index.html',
-    '/timer/timer.js',
+    '/timer/timer.js?v=2',
     '/draw/',
     '/draw/index.html',
     '/level/',
@@ -17,12 +17,12 @@ const urlsToCache = [
     '/scanner/index.html',
     '/pad/',
     '/pad/index.html',
-    '/pad/style.css',
-    '/pad/pad.js',
+    '/pad/style.css?v=2',
+    '/pad/pad.js?v=2',
     '/tuner/',
     '/tuner/index.html',
-    '/tuner/style.css',
-    '/tuner/tuner.js',
+    '/tuner/style.css?v=2',
+    '/tuner/tuner.js?v=2',
     '/icons/icon-192x192.png',
     '/icons/icon-512x512.png'
 ];
@@ -43,38 +43,53 @@ self.addEventListener('install', (event) => {
     self.skipWaiting();
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - stale-while-revalidate strategy
+// Serve from cache immediately, then update cache in background
 self.addEventListener('fetch', (event) => {
     event.respondWith(
-        caches.match(event.request)
-            .then((response) => {
-                // Return cached version or fetch from network
-                if (response) {
-                    return response;
-                }
-                return fetch(event.request).then((response) => {
-                    // Don't cache non-successful responses or non-GET requests
-                    if (!response || response.status !== 200 || response.type !== 'basic' || event.request.method !== 'GET') {
-                        return response;
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.match(event.request).then((cachedResponse) => {
+                // Always fetch from network to update cache in background
+                const fetchPromise = fetch(event.request).then((networkResponse) => {
+                    // Only cache successful GET requests for same-origin resources
+                    const shouldCache = networkResponse && 
+                        networkResponse.status === 200 && 
+                        networkResponse.type === 'basic' && 
+                        event.request.method === 'GET';
+                    
+                    if (shouldCache) {
+                        cache.put(event.request, networkResponse.clone());
                     }
-
-                    // Clone the response
-                    const responseToCache = response.clone();
-
-                    caches.open(CACHE_NAME)
-                        .then((cache) => {
-                            cache.put(event.request, responseToCache);
-                        });
-
-                    return response;
+                    return networkResponse;
+                }).catch(() => {
+                    // Network failed, return null (we'll use cached response or fallback)
+                    return null;
                 });
-            })
-            .catch(() => {
-                // Return offline page for navigation requests
-                if (event.request.mode === 'navigate') {
-                    return caches.match('/index.html');
+
+                // If we have a cached response, return it immediately
+                // The fetchPromise will update the cache in the background
+                if (cachedResponse) {
+                    // Trigger background fetch but don't wait for it
+                    fetchPromise.catch(() => {}); // Suppress unhandled promise rejection
+                    return cachedResponse;
                 }
-            })
+                
+                // No cached response, wait for network
+                return fetchPromise.then((networkResponse) => {
+                    if (networkResponse) {
+                        return networkResponse;
+                    }
+                    // Both cache and network failed for navigation, return offline page
+                    if (event.request.mode === 'navigate') {
+                        return cache.match('/index.html');
+                    }
+                    return new Response('Content unavailable offline. Please check your connection and try again.', { 
+                        status: 503, 
+                        statusText: 'Service Unavailable' 
+                    });
+                });
+            });
+        })
     );
 });
 
@@ -94,4 +109,11 @@ self.addEventListener('activate', (event) => {
     );
     // Take control of all pages immediately
     self.clients.claim();
+});
+
+// Listen for messages from clients
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
 });
