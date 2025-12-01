@@ -5,6 +5,7 @@ class Tuner {
         this.audioContext = null;
         this.analyser = null;
         this.mediaStream = null;
+        this.sourceNode = null;  // Store source node to prevent garbage collection
         this.dataArray = null;
         this.bufferLength = 0;
         this.isRunning = false;
@@ -298,8 +299,9 @@ class Tuner {
             this.dataArray = new Float32Array(this.bufferLength);
 
             // Connect microphone to analyser
-            const source = this.audioContext.createMediaStreamSource(this.mediaStream);
-            source.connect(this.analyser);
+            // Store source node as instance variable to prevent garbage collection
+            this.sourceNode = this.audioContext.createMediaStreamSource(this.mediaStream);
+            this.sourceNode.connect(this.analyser);
 
             this.isRunning = true;
             this.startStopBtn.textContent = 'Stop Tuner';
@@ -339,6 +341,12 @@ class Tuner {
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
+        }
+
+        // Disconnect source node to clean up resources
+        if (this.sourceNode) {
+            this.sourceNode.disconnect();
+            this.sourceNode = null;
         }
 
         this.startStopBtn.textContent = 'Start Tuner';
@@ -430,7 +438,8 @@ class Tuner {
         rms = Math.sqrt(rms / buffer.length);
 
         // If too quiet, return -1
-        if (rms < 0.01) return -1;
+        // Use a lower threshold (0.005) to match the audio level meter's NO_SIGNAL_THRESHOLD
+        if (rms < 0.005) return -1;
 
         // Autocorrelation using normalized difference function
         const SIZE = buffer.length;
@@ -455,8 +464,8 @@ class Tuner {
             correlation = denominator > 0 ? 1 - (correlation / denominator) : 0;
             correlations[offset] = correlation;
 
-            // Use a lower threshold (0.5) for initial detection, which is more realistic for real-world audio
-            if ((correlation > 0.5) && (correlation > bestCorrelation)) {
+            // Use a lower threshold (0.3) for initial detection to handle real-world audio with noise
+            if ((correlation > 0.3) && (correlation > bestCorrelation)) {
                 bestCorrelation = correlation;
                 bestOffset = offset;
                 foundGoodCorrelation = true;
