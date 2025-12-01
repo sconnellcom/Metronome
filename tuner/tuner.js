@@ -473,12 +473,16 @@ class Tuner {
         // Autocorrelation using normalized difference function
         const SIZE = buffer.length;
         const MAX_SAMPLES = Math.floor(SIZE / 2);
+        // Minimum offset to skip trivial self-correlation at offset 0
+        // This corresponds to the maximum detectable frequency
+        // At 44100 Hz sample rate: offset 20 = 2205 Hz, offset 30 = 1470 Hz
+        const MIN_OFFSET = 20;
         let bestOffset = -1;
         let bestCorrelation = 0;
         let foundGoodCorrelation = false;
         const correlations = new Array(MAX_SAMPLES);
 
-        for (let offset = 0; offset < MAX_SAMPLES; offset++) {
+        for (let offset = MIN_OFFSET; offset < MAX_SAMPLES; offset++) {
             let correlation = 0;
             let denominator = 0;
             const loopLimit = MAX_SAMPLES - offset;
@@ -507,11 +511,15 @@ class Tuner {
                     const shift = (correlations[bestOffset + 1] - correlations[bestOffset - 1]) / correlations[bestOffset];
                     return sampleRate / (bestOffset + (8 * shift));
                 }
-                return sampleRate / bestOffset;
+                // Safety check: ensure we don't divide by zero
+                if (bestOffset > 0) {
+                    return sampleRate / bestOffset;
+                }
+                return -1;
             }
         }
 
-        if (bestCorrelation > 0.01) {
+        if (bestCorrelation > 0.01 && bestOffset > 0) {
             return sampleRate / bestOffset;
         }
 
