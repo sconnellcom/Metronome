@@ -378,7 +378,7 @@ class Tuner {
         // If too quiet, return -1
         if (rms < 0.01) return -1;
 
-        // Autocorrelation
+        // Autocorrelation using normalized difference function
         const SIZE = buffer.length;
         const MAX_SAMPLES = Math.floor(SIZE / 2);
         let bestOffset = -1;
@@ -388,16 +388,21 @@ class Tuner {
 
         for (let offset = 0; offset < MAX_SAMPLES; offset++) {
             let correlation = 0;
+            let denominator = 0;
             const loopLimit = MAX_SAMPLES - offset;
 
             for (let i = 0; i < loopLimit; i++) {
-                correlation += Math.abs((buffer[i]) - (buffer[i + offset]));
+                const diff = buffer[i] - buffer[i + offset];
+                correlation += diff * diff;
+                denominator += buffer[i] * buffer[i] + buffer[i + offset] * buffer[i + offset];
             }
 
-            correlation = 1 - (correlation / loopLimit);
+            // Normalize correlation: 1 when perfectly correlated, 0 when uncorrelated
+            correlation = denominator > 0 ? 1 - (correlation / denominator) : 0;
             correlations[offset] = correlation;
 
-            if ((correlation > 0.9) && (correlation > bestCorrelation)) {
+            // Use a lower threshold (0.5) for initial detection, which is more realistic for real-world audio
+            if ((correlation > 0.5) && (correlation > bestCorrelation)) {
                 bestCorrelation = correlation;
                 bestOffset = offset;
                 foundGoodCorrelation = true;
