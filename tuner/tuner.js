@@ -438,7 +438,8 @@ class Tuner {
         rms = Math.sqrt(rms / buffer.length);
 
         // If too quiet, return -1
-        // Use a lower threshold (0.005) to match the audio level meter's NO_SIGNAL_THRESHOLD
+        // Threshold of 0.005 RMS corresponds to 1% audio level (0.005 × 200 = 1)
+        // This matches the audio level meter's NO_SIGNAL_THRESHOLD percentage
         if (rms < 0.005) return -1;
 
         // Autocorrelation using normalized difference function
