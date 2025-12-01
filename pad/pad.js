@@ -6,6 +6,7 @@ class DrumPad {
     static WAVE_SHAPER_SAMPLES = 44100;
     static GRAVITY = 9.8; // Standard gravity in m/s²
     static STORAGE_KEY = 'drumPadBeats';
+    static LOOP_GAP_MS = 100; // Gap between loop iterations in milliseconds
 
     constructor() {
         this.audioContext = null;
@@ -537,7 +538,7 @@ class DrumPad {
                         this.playbackTimeouts = [];
                         playEvents();
                     }
-                }, beat.duration + 100); // Small gap between loops
+                }, beat.duration + DrumPad.LOOP_GAP_MS);
                 this.playbackTimeouts.push(loopTimeout);
             } else {
                 // Stop after playback completes
@@ -545,7 +546,7 @@ class DrumPad {
                     if (this.playingBeatIndex === index) {
                         this.stopPlayback();
                     }
-                }, beat.duration + 100);
+                }, beat.duration + DrumPad.LOOP_GAP_MS);
                 this.playbackTimeouts.push(stopTimeout);
             }
         };
@@ -617,7 +618,9 @@ class DrumPad {
         const totalDuration = events[events.length - 1].time - events[0].time;
         let beatCount = Math.round(totalDuration / avgInterval);
         
-        // Round to multiples of 4 for cleaner loops
+        // Round to multiples of 4 for cleaner loops (assumes 4/4 time signature,
+        // which is the most common in popular music. Future enhancement could
+        // detect or allow user to select other time signatures like 3/4 or 6/8)
         beatCount = Math.round(beatCount / 4) * 4;
         if (beatCount < 4) beatCount = 4;
         
