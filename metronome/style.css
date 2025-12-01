@@ -1131,9 +1131,21 @@ input[type="range"]::-moz-range-thumb:hover {
     font-size: 1em;
 }
 
+.log-session-durations {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    align-items: flex-end;
+}
+
 .log-session-duration {
-    font-size: 0.9em;
+    font-size: 0.85em;
     opacity: 0.9;
+}
+
+.log-session-total {
+    font-size: 0.75em;
+    opacity: 0.7;
 }
 
 .delete-session-btn {
@@ -1419,6 +1431,10 @@ input[type="range"]::-moz-range-thumb:hover {
         align-items: flex-start;
         gap: 5px;
         width: 100%;
+    }
+
+    .log-session-durations {
+        align-items: flex-start;
     }
 
     .log-session-duration {

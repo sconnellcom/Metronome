@@ -1372,12 +1372,24 @@ class Metronome {
             dateSpan.className = 'log-session-date';
             dateSpan.textContent = this.formatDate(session.date);
 
-            const durationSpan = document.createElement('span');
-            durationSpan.className = 'log-session-duration';
-            durationSpan.textContent = session.duration;
+            const durationContainer = document.createElement('div');
+            durationContainer.className = 'log-session-durations';
+
+            const usageDurationSpan = document.createElement('span');
+            usageDurationSpan.className = 'log-session-duration';
+            usageDurationSpan.textContent = `Usage: ${session.duration}`;
+            usageDurationSpan.title = 'Total time metronome was running';
+
+            const totalDurationSpan = document.createElement('span');
+            totalDurationSpan.className = 'log-session-duration log-session-total';
+            totalDurationSpan.textContent = `Total: ${session.totalDuration}`;
+            totalDurationSpan.title = 'Time from first start to last stop';
+
+            durationContainer.appendChild(usageDurationSpan);
+            durationContainer.appendChild(totalDurationSpan);
 
             sessionInfo.appendChild(dateSpan);
-            sessionInfo.appendChild(durationSpan);
+            sessionInfo.appendChild(durationContainer);
 
             const deleteBtn = document.createElement('button');
             deleteBtn.className = 'delete-session-btn';
@@ -1442,20 +1454,20 @@ class Metronome {
                     dateKey: dateKey,
                     date: entry.timestamp,
                     entries: [],
-                    startTime: null,
-                    endTime: null
+                    firstStartTime: null,  // Earliest start time (for total session time)
+                    lastEndTime: null,     // Latest end time (for total session time)
+                    startTimes: [],        // All start times
+                    stopTimes: []          // All stop times
                 };
             }
 
             currentSession.entries.push(entry);
 
-            // Track start and end times for duration calculation
+            // Collect all start and stop times for duration calculation
             if (entry.action === 'Started') {
-                if (!currentSession.startTime) {
-                    currentSession.startTime = entry.timestamp;
-                }
+                currentSession.startTimes.push(entry.timestamp);
             } else if (entry.action === 'Stopped') {
-                currentSession.endTime = entry.timestamp;
+                currentSession.stopTimes.push(entry.timestamp);
             }
         });
 
@@ -1463,12 +1475,47 @@ class Metronome {
             sessions.push(currentSession);
         }
 
-        // Calculate durations
+        // Calculate durations for each session
         sessions.forEach(session => {
-            if (session.startTime && session.endTime) {
-                const durationMs = session.endTime - session.startTime;
-                session.duration = this.formatDuration(durationMs);
-            } else if (session.startTime) {
+            // Find earliest start and latest end for total session time
+            if (session.startTimes.length > 0) {
+                session.firstStartTime = Math.min(...session.startTimes);
+            }
+            if (session.stopTimes.length > 0) {
+                session.lastEndTime = Math.max(...session.stopTimes);
+            }
+
+            // Calculate total session time (wall clock time from first start to last end)
+            if (session.firstStartTime && session.lastEndTime) {
+                const totalSessionMs = session.lastEndTime - session.firstStartTime;
+                session.totalDuration = this.formatDuration(totalSessionMs);
+            } else if (session.firstStartTime) {
+                session.totalDuration = 'In progress';
+            } else {
+                session.totalDuration = '--';
+            }
+
+            // Calculate metronome usage time (sum of all start-to-stop periods)
+            // Sort times to pair them correctly
+            const sortedStarts = [...session.startTimes].sort((a, b) => a - b);
+            const sortedStops = [...session.stopTimes].sort((a, b) => a - b);
+            
+            let usageMs = 0;
+            // Pair each start with its corresponding stop
+            for (let i = 0; i < sortedStarts.length; i++) {
+                const startTime = sortedStarts[i];
+                // Find the first stop that comes after this start
+                const stopIndex = sortedStops.findIndex(stop => stop > startTime);
+                if (stopIndex !== -1) {
+                    usageMs += sortedStops[stopIndex] - startTime;
+                    // Remove this stop so it's not used again
+                    sortedStops.splice(stopIndex, 1);
+                }
+            }
+
+            if (usageMs > 0) {
+                session.duration = this.formatDuration(usageMs);
+            } else if (session.firstStartTime && !session.lastEndTime) {
                 session.duration = 'In progress';
             } else {
                 session.duration = '--';
