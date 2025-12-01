@@ -5,6 +5,7 @@ class Tuner {
         this.audioContext = null;
         this.analyser = null;
         this.mediaStream = null;
+        this.sourceNode = null;  // Store source node to prevent garbage collection
         this.dataArray = null;
         this.bufferLength = 0;
         this.isRunning = false;
@@ -16,8 +17,9 @@ class Tuner {
         this.maxFrequency = 1500;  // Maximum detectable frequency
 
         // Audio level meter thresholds (percentage values)
-        // RMS values typically range from 0 to ~0.5 for loud sounds
-        this.RMS_TO_PERCENTAGE_MULTIPLIER = 200;
+        // RMS values from microphones are typically very low (0.01-0.1 range)
+        // Multiplier of 500 provides good sensitivity for typical microphone input
+        this.RMS_TO_PERCENTAGE_MULTIPLIER = 500;
         this.NO_SIGNAL_THRESHOLD = 1;    // Below this: "No signal"
         this.QUIET_THRESHOLD = 10;       // Below this: "Too quiet"
         this.LOW_THRESHOLD = 30;         // Below this: "Low", above: "Good"
@@ -298,8 +300,9 @@ class Tuner {
             this.dataArray = new Float32Array(this.bufferLength);
 
             // Connect microphone to analyser
-            const source = this.audioContext.createMediaStreamSource(this.mediaStream);
-            source.connect(this.analyser);
+            // Store source node as instance variable to prevent garbage collection
+            this.sourceNode = this.audioContext.createMediaStreamSource(this.mediaStream);
+            this.sourceNode.connect(this.analyser);
 
             this.isRunning = true;
             this.startStopBtn.textContent = 'Stop Tuner';
@@ -339,6 +342,12 @@ class Tuner {
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
             this.animationId = null;
+        }
+
+        // Disconnect source node to clean up resources
+        if (this.sourceNode) {
+            this.sourceNode.disconnect();
+            this.sourceNode = null;
         }
 
         this.startStopBtn.textContent = 'Start Tuner';
@@ -430,7 +439,9 @@ class Tuner {
         rms = Math.sqrt(rms / buffer.length);
 
         // If too quiet, return -1
-        if (rms < 0.01) return -1;
+        // Threshold of 0.002 RMS corresponds to 1% audio level (0.002 × 500 = 1)
+        // This matches the audio level meter's NO_SIGNAL_THRESHOLD percentage
+        if (rms < 0.002) return -1;
 
         // Autocorrelation using normalized difference function
         const SIZE = buffer.length;
@@ -455,8 +466,8 @@ class Tuner {
             correlation = denominator > 0 ? 1 - (correlation / denominator) : 0;
             correlations[offset] = correlation;
 
-            // Use a lower threshold (0.5) for initial detection, which is more realistic for real-world audio
-            if ((correlation > 0.5) && (correlation > bestCorrelation)) {
+            // Use a lower threshold (0.3) for initial detection to handle real-world audio with noise
+            if ((correlation > 0.3) && (correlation > bestCorrelation)) {
                 bestCorrelation = correlation;
                 bestOffset = offset;
                 foundGoodCorrelation = true;
