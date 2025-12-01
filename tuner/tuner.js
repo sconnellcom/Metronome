@@ -504,22 +504,19 @@ class Tuner {
                 foundGoodCorrelation = true;
             } else if (foundGoodCorrelation) {
                 // Short-circuit once we've found a good correlation and it starts decreasing
-                // Add bounds checking and division by zero protection
-                if (bestOffset > 0 && bestOffset < MAX_SAMPLES - 1 && correlations[bestOffset] !== 0) {
+                // At this point, bestOffset >= MIN_OFFSET since we only set foundGoodCorrelation
+                // when we also set bestOffset = offset (where offset >= MIN_OFFSET)
+                if (bestOffset >= MIN_OFFSET && bestOffset < MAX_SAMPLES - 1 && correlations[bestOffset] !== 0) {
                     // Parabolic interpolation to refine the peak position
                     // The factor 8 is an empirical refinement constant for pitch detection accuracy
                     const shift = (correlations[bestOffset + 1] - correlations[bestOffset - 1]) / correlations[bestOffset];
                     return sampleRate / (bestOffset + (8 * shift));
                 }
-                // Safety check: ensure we don't divide by zero
-                if (bestOffset > 0) {
-                    return sampleRate / bestOffset;
-                }
-                return -1;
+                return sampleRate / bestOffset;
             }
         }
 
-        if (bestCorrelation > 0.01 && bestOffset > 0) {
+        if (bestCorrelation > 0.01 && bestOffset >= MIN_OFFSET) {
             return sampleRate / bestOffset;
         }
 
