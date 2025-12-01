@@ -27,6 +27,49 @@
             --text-color: #ffffff;
             --text-secondary: #aaaaaa;
             --border-color: #333333;
+            --primary-color: #7fff00;
+        }
+
+        /* Theme variations - bubble colors change based on theme */
+        body.theme-light,
+        body.theme-dark {
+            --bubble-color: #97B22D;
+            --bubble-glow: rgba(151, 178, 45, 0.4);
+            --primary-color: #97B22D;
+        }
+
+        body.theme-warm-light,
+        body.theme-warm-dark {
+            --bubble-color: #E49A32;
+            --bubble-glow: rgba(228, 154, 50, 0.4);
+            --primary-color: #E49A32;
+        }
+
+        body.theme-red,
+        body.theme-red-dark {
+            --bubble-color: #ef4444;
+            --bubble-glow: rgba(239, 68, 68, 0.4);
+            --primary-color: #ef4444;
+        }
+
+        body.theme-pink,
+        body.theme-pink-dark {
+            --bubble-color: #f472b6;
+            --bubble-glow: rgba(244, 114, 182, 0.4);
+            --primary-color: #f472b6;
+        }
+
+        body.theme-blue,
+        body.theme-blue-dark {
+            --bubble-color: #3b82f6;
+            --bubble-glow: rgba(59, 130, 246, 0.4);
+            --primary-color: #3b82f6;
+        }
+
+        body.theme-black {
+            --bubble-color: #9ca3af;
+            --bubble-glow: rgba(156, 163, 175, 0.4);
+            --primary-color: #9ca3af;
         }
 
         body {
@@ -416,6 +459,122 @@
                 height: 35px;
             }
         }
+
+        /* Theme picker styles */
+        .theme-picker {
+            position: relative;
+        }
+
+        .theme-btn-active {
+            width: 32px;
+            height: 32px;
+            min-width: 32px;
+            min-height: 32px;
+            padding: 0;
+            border-radius: 50%;
+            border: 2px solid var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-btn-active:hover {
+            transform: scale(1.1);
+        }
+
+        .theme-dropdown {
+            position: absolute;
+            top: 40px;
+            left: 0;
+            background: var(--container-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px;
+            display: none;
+            grid-template-columns: 32px 32px;
+            gap: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+        }
+
+        .theme-dropdown.visible {
+            display: grid;
+        }
+
+        .theme-btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.1);
+            border-color: var(--primary-color);
+        }
+
+        .theme-btn-active.theme-default,
+        .theme-btn.theme-default {
+            background: linear-gradient(135deg, #7fff00 0%, #32cd32 100%);
+        }
+
+        .theme-btn-active.theme-black,
+        .theme-btn.theme-black {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        }
+
+        .theme-btn-active.theme-blue,
+        .theme-btn.theme-blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        }
+
+        .theme-btn-active.theme-blue-dark,
+        .theme-btn.theme-blue-dark {
+            background: linear-gradient(135deg, #0c4a6e 0%, #38bdf8 100%);
+        }
+
+        .theme-btn-active.theme-light,
+        .theme-btn.theme-light {
+            background: linear-gradient(135deg, #97B22D 0%, #E3DE81 100%);
+        }
+
+        .theme-btn-active.theme-dark,
+        .theme-btn.theme-dark {
+            background: linear-gradient(135deg, #2d3d0f 0%, #97B22D 100%);
+        }
+
+        .theme-btn-active.theme-warm-light,
+        .theme-btn.theme-warm-light {
+            background: linear-gradient(135deg, #E49A32 0%, #FEFCAD 100%);
+        }
+
+        .theme-btn-active.theme-warm-dark,
+        .theme-btn.theme-warm-dark {
+            background: linear-gradient(135deg, #2a2510 0%, #E49A32 100%);
+        }
+
+        .theme-btn-active.theme-red,
+        .theme-btn.theme-red {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        }
+
+        .theme-btn-active.theme-red-dark,
+        .theme-btn.theme-red-dark {
+            background: linear-gradient(135deg, #7f1d1d 0%, #ef4444 100%);
+        }
+
+        .theme-btn-active.theme-pink,
+        .theme-btn.theme-pink {
+            background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+        }
+
+        .theme-btn-active.theme-pink-dark,
+        .theme-btn.theme-pink-dark {
+            background: linear-gradient(135deg, #831843 0%, #f472b6 100%);
+        }
     </style>
 </head>
 
@@ -432,6 +591,23 @@
     <div class="container">
         <div class="header-row">
             <a href="../" class="home-btn" title="Back to Home">🏠</a>
+            <div class="theme-picker">
+                <button class="theme-btn-active theme-default" data-theme="default" title="Change Theme"></button>
+                <div class="theme-dropdown">
+                    <button class="theme-btn theme-default" data-theme="default" title="Green Theme"></button>
+                    <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                    <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                    <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                    <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                    <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                    <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
+                    <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                    <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                    <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                    <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                    <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+                </div>
+            </div>
             <h1>🔵 Bubble Level</h1>
             <div style="width: 40px;"></div>
         </div>
@@ -675,8 +851,56 @@
             }
         }
 
+        // Theme Management
+        function initializeTheme() {
+            const themeBtnActive = document.querySelector('.theme-btn-active');
+            const themeDropdown = document.querySelector('.theme-dropdown');
+            const themeButtons = document.querySelectorAll('.theme-btn');
+
+            // Load saved theme - use shared 'appTheme' key for consistency across all apps
+            const savedTheme = localStorage.getItem('appTheme') || 'default';
+            if (savedTheme !== 'default') {
+                document.body.classList.add(`theme-${savedTheme}`);
+                themeBtnActive.className = `theme-btn-active theme-${savedTheme}`;
+            }
+
+            themeBtnActive.addEventListener('click', (e) => {
+                e.stopPropagation();
+                themeDropdown.classList.toggle('visible');
+            });
+
+            themeButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const theme = btn.dataset.theme;
+
+                    // Remove all theme classes
+                    document.body.className = '';
+                    themeBtnActive.className = 'theme-btn-active';
+
+                    // Apply new theme
+                    if (theme !== 'default') {
+                        document.body.classList.add(`theme-${theme}`);
+                    }
+                    themeBtnActive.classList.add(`theme-${theme}`);
+
+                    // Save theme using shared key for all apps
+                    localStorage.setItem('appTheme', theme);
+                    themeDropdown.classList.remove('visible');
+                });
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!themeBtnActive.contains(e.target) && !themeDropdown.contains(e.target)) {
+                    themeDropdown.classList.remove('visible');
+                }
+            });
+        }
+
         // Initialize when DOM is ready
         document.addEventListener('DOMContentLoaded', () => {
+            initializeTheme();
             new BubbleLevel();
         });
     </script>

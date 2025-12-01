@@ -51,7 +51,8 @@ class TimerApp {
 
     // Theme Management
     initializeTheme() {
-        const savedTheme = localStorage.getItem('timerTheme') || 'default';
+        // Use shared 'appTheme' key for consistency across all apps
+        const savedTheme = localStorage.getItem('appTheme') || 'default';
         this.setTheme(savedTheme);
     }
 
@@ -67,7 +68,8 @@ class TimerApp {
             btn.className = `theme-btn-active theme-${theme}`;
         });
 
-        localStorage.setItem('timerTheme', theme);
+        // Save to localStorage using shared key for all apps
+        localStorage.setItem('appTheme', theme);
     }
 
     // Clock seconds preference

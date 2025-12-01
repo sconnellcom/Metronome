@@ -105,7 +105,8 @@ class Metronome {
 
     initializeTheme() {
         // Load saved theme from localStorage or default to 'default'
-        const savedTheme = localStorage.getItem('metronomeTheme') || 'default';
+        // Use shared 'appTheme' key for consistency across all apps
+        const savedTheme = localStorage.getItem('appTheme') || 'default';
         this.setTheme(savedTheme);
     }
 
@@ -149,8 +150,8 @@ class Metronome {
         // Update the main theme button to reflect current theme
         this.themeBtnActive.className = `theme-btn-active theme-${theme}`;
 
-        // Save to localStorage
-        localStorage.setItem('metronomeTheme', theme);
+        // Save to localStorage using shared key for all apps
+        localStorage.setItem('appTheme', theme);
     }
 
     initializeUI() {
