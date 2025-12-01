@@ -28,6 +28,139 @@
             --surface-bg: #f7fafc;
         }
 
+        /* Theme definitions */
+        body.theme-light {
+            --bg-gradient-start: #97B22D;
+            --bg-gradient-end: #89751B;
+            --primary-color: #97B22D;
+            --primary-hover: #89751B;
+            --container-bg: #FEFCAD;
+            --text-color: #2d3748;
+            --text-secondary: #4a5568;
+            --border-color: #d2cc54;
+            --surface-bg: #f1ff72;
+        }
+
+        body.theme-dark {
+            --bg-gradient-start: #2d3d0f;
+            --bg-gradient-end: #1a2208;
+            --primary-color: #97B22D;
+            --primary-hover: #d2cc54;
+            --container-bg: #1f2d0a;
+            --text-color: #E3DAB2;
+            --text-secondary: #d2cc54;
+            --border-color: #3d4d1f;
+            --surface-bg: #2a3a12;
+        }
+
+        body.theme-warm-light {
+            --bg-gradient-start: #C6BE28;
+            --bg-gradient-end: #97B22D;
+            --primary-color: #E49A32;
+            --primary-hover: #C6BE28;
+            --container-bg: #FEFCAD;
+            --text-color: #3d3d1f;
+            --text-secondary: #5d5d3f;
+            --border-color: #E3DAB2;
+            --surface-bg: #faedb6;
+        }
+
+        body.theme-warm-dark {
+            --bg-gradient-start: #2a2510;
+            --bg-gradient-end: #1a1808;
+            --primary-color: #E49A32;
+            --primary-hover: #C6BE28;
+            --container-bg: #2d2815;
+            --text-color: #FEFCAD;
+            --text-secondary: #E3DAB2;
+            --border-color: #4a3f1a;
+            --surface-bg: #3a3220;
+        }
+
+        body.theme-red {
+            --bg-gradient-start: #dc2626;
+            --bg-gradient-end: #991b1b;
+            --primary-color: #ef4444;
+            --primary-hover: #dc2626;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --border-color: #fecaca;
+            --surface-bg: #fef2f2;
+        }
+
+        body.theme-pink {
+            --bg-gradient-start: #ec4899;
+            --bg-gradient-end: #be185d;
+            --primary-color: #f472b6;
+            --primary-hover: #ec4899;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --border-color: #fbcfe8;
+            --surface-bg: #fdf2f8;
+        }
+
+        body.theme-red-dark {
+            --bg-gradient-start: #7f1d1d;
+            --bg-gradient-end: #450a0a;
+            --primary-color: #ef4444;
+            --primary-hover: #f87171;
+            --container-bg: #1a0505;
+            --text-color: #fecaca;
+            --text-secondary: #fca5a5;
+            --border-color: #7f1d1d;
+            --surface-bg: #450a0a;
+        }
+
+        body.theme-pink-dark {
+            --bg-gradient-start: #831843;
+            --bg-gradient-end: #500724;
+            --primary-color: #f472b6;
+            --primary-hover: #f9a8d4;
+            --container-bg: #1a050f;
+            --text-color: #fce7f3;
+            --text-secondary: #fbcfe8;
+            --border-color: #831843;
+            --surface-bg: #500724;
+        }
+
+        body.theme-black {
+            --bg-gradient-start: #1f2937;
+            --bg-gradient-end: #111827;
+            --primary-color: #6b7280;
+            --primary-hover: #9ca3af;
+            --container-bg: #0f172a;
+            --text-color: #f3f4f6;
+            --text-secondary: #d1d5db;
+            --border-color: #374151;
+            --surface-bg: #1e293b;
+        }
+
+        body.theme-blue {
+            --bg-gradient-start: #3b82f6;
+            --bg-gradient-end: #1e40af;
+            --primary-color: #60a5fa;
+            --primary-hover: #3b82f6;
+            --container-bg: #ffffff;
+            --text-color: #1f2937;
+            --text-secondary: #374151;
+            --border-color: #bfdbfe;
+            --surface-bg: #eff6ff;
+        }
+
+        body.theme-blue-dark {
+            --bg-gradient-start: #0c4a6e;
+            --bg-gradient-end: #082f49;
+            --primary-color: #38bdf8;
+            --primary-hover: #0ea5e9;
+            --container-bg: #0a1929;
+            --text-color: #e0f2fe;
+            --text-secondary: #7dd3fc;
+            --border-color: #0e7490;
+            --surface-bg: #164e63;
+        }
+
         html, body {
             height: 100%;
             overflow: hidden;
@@ -243,6 +376,122 @@
             box-shadow: 0 0 0 2px var(--container-bg), 0 0 6px rgba(0, 0, 0, 0.3);
         }
 
+        /* Theme picker styles */
+        .theme-picker {
+            position: relative;
+        }
+
+        .theme-btn-active {
+            width: 28px;
+            height: 28px;
+            min-width: 28px;
+            min-height: 28px;
+            padding: 0;
+            border-radius: 50%;
+            border: 2px solid var(--text-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+        }
+
+        .theme-btn-active:hover {
+            transform: scale(1.1);
+        }
+
+        .theme-dropdown {
+            position: absolute;
+            bottom: 40px;
+            left: 0;
+            background: var(--container-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px;
+            display: none;
+            grid-template-columns: 28px 28px;
+            gap: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+        }
+
+        .theme-dropdown.visible {
+            display: grid;
+        }
+
+        .theme-btn {
+            width: 28px;
+            height: 28px;
+            padding: 0;
+            border-radius: 50%;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .theme-btn:hover {
+            transform: scale(1.1);
+            border-color: var(--primary-color);
+        }
+
+        .theme-btn-active.theme-default,
+        .theme-btn.theme-default {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .theme-btn-active.theme-black,
+        .theme-btn.theme-black {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+        }
+
+        .theme-btn-active.theme-blue,
+        .theme-btn.theme-blue {
+            background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        }
+
+        .theme-btn-active.theme-blue-dark,
+        .theme-btn.theme-blue-dark {
+            background: linear-gradient(135deg, #0c4a6e 0%, #38bdf8 100%);
+        }
+
+        .theme-btn-active.theme-light,
+        .theme-btn.theme-light {
+            background: linear-gradient(135deg, #97B22D 0%, #E3DE81 100%);
+        }
+
+        .theme-btn-active.theme-dark,
+        .theme-btn.theme-dark {
+            background: linear-gradient(135deg, #2d3d0f 0%, #97B22D 100%);
+        }
+
+        .theme-btn-active.theme-warm-light,
+        .theme-btn.theme-warm-light {
+            background: linear-gradient(135deg, #E49A32 0%, #FEFCAD 100%);
+        }
+
+        .theme-btn-active.theme-warm-dark,
+        .theme-btn.theme-warm-dark {
+            background: linear-gradient(135deg, #2a2510 0%, #E49A32 100%);
+        }
+
+        .theme-btn-active.theme-red,
+        .theme-btn.theme-red {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        }
+
+        .theme-btn-active.theme-red-dark,
+        .theme-btn.theme-red-dark {
+            background: linear-gradient(135deg, #7f1d1d 0%, #ef4444 100%);
+        }
+
+        .theme-btn-active.theme-pink,
+        .theme-btn.theme-pink {
+            background: linear-gradient(135deg, #ec4899 0%, #be185d 100%);
+        }
+
+        .theme-btn-active.theme-pink-dark,
+        .theme-btn.theme-pink-dark {
+            background: linear-gradient(135deg, #831843 0%, #f472b6 100%);
+        }
+
         /* Responsive */
         @media (max-width: 600px) {
             .toolbar {
@@ -290,6 +539,23 @@
 
         <div class="toolbar">
             <a href="../" class="home-btn" title="Back to Home">🏠</a>
+            <div class="theme-picker">
+                <button class="theme-btn-active theme-default" data-theme="default" title="Change Theme"></button>
+                <div class="theme-dropdown">
+                    <button class="theme-btn theme-default" data-theme="default" title="Purple Theme"></button>
+                    <button class="theme-btn theme-black" data-theme="black" title="Black Theme"></button>
+                    <button class="theme-btn theme-blue" data-theme="blue" title="Blue Theme"></button>
+                    <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
+                    <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
+                    <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
+                    <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
+                    <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
+                    <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
+                    <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
+                    <button class="theme-btn theme-pink" data-theme="pink" title="Pink Theme"></button>
+                    <button class="theme-btn theme-pink-dark" data-theme="pink-dark" title="Dark Pink Theme"></button>
+                </div>
+            </div>
             <div class="tool-group">
                 <label>Color:</label>
                 <input type="color" id="colorPicker" value="#333333" title="Pick a color">
@@ -731,8 +997,56 @@
             }
         }
 
+        // Theme Management
+        function initializeTheme() {
+            const themeBtnActive = document.querySelector('.theme-btn-active');
+            const themeDropdown = document.querySelector('.theme-dropdown');
+            const themeButtons = document.querySelectorAll('.theme-btn');
+
+            // Load saved theme - use shared 'appTheme' key for consistency across all apps
+            const savedTheme = localStorage.getItem('appTheme') || 'default';
+            if (savedTheme !== 'default') {
+                document.body.classList.add(`theme-${savedTheme}`);
+                themeBtnActive.className = `theme-btn-active theme-${savedTheme}`;
+            }
+
+            themeBtnActive.addEventListener('click', (e) => {
+                e.stopPropagation();
+                themeDropdown.classList.toggle('visible');
+            });
+
+            themeButtons.forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const theme = btn.dataset.theme;
+
+                    // Remove all theme classes
+                    document.body.className = '';
+                    themeBtnActive.className = 'theme-btn-active';
+
+                    // Apply new theme
+                    if (theme !== 'default') {
+                        document.body.classList.add(`theme-${theme}`);
+                    }
+                    themeBtnActive.classList.add(`theme-${theme}`);
+
+                    // Save theme using shared key for all apps
+                    localStorage.setItem('appTheme', theme);
+                    themeDropdown.classList.remove('visible');
+                });
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!themeBtnActive.contains(e.target) && !themeDropdown.contains(e.target)) {
+                    themeDropdown.classList.remove('visible');
+                }
+            });
+        }
+
         // Initialize the app when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
+            initializeTheme();
             new DrawingApp();
         });
     </script>

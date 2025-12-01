@@ -43,7 +43,8 @@ class DrumPad {
     }
 
     initializeTheme() {
-        const savedTheme = localStorage.getItem('padTheme') || 'default';
+        // Use shared 'appTheme' key for consistency across all apps
+        const savedTheme = localStorage.getItem('appTheme') || 'default';
         this.setTheme(savedTheme);
     }
 
@@ -62,7 +63,8 @@ class DrumPad {
         });
 
         this.themeBtnActive.className = `theme-btn-active theme-${theme}`;
-        localStorage.setItem('padTheme', theme);
+        // Save to localStorage using shared key for all apps
+        localStorage.setItem('appTheme', theme);
     }
 
     initializeUI() {

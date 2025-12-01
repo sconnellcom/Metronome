@@ -731,8 +731,8 @@
         const themeDropdown = document.querySelector('.theme-dropdown');
         const themeButtons = document.querySelectorAll('.theme-btn');
 
-        // Load saved theme
-        const savedTheme = localStorage.getItem('scanner-theme') || 'default';
+        // Load saved theme - use shared 'appTheme' key for consistency across all apps
+        const savedTheme = localStorage.getItem('appTheme') || 'default';
         if (savedTheme !== 'default') {
             document.body.classList.add(`theme-${savedTheme}`);
             themePickerActive.className = `theme-btn-active theme-${savedTheme}`;
@@ -759,8 +759,8 @@
                 }
                 themePickerActive.classList.add(`theme-${theme}`);
 
-                // Save theme
-                localStorage.setItem('scanner-theme', theme);
+                // Save theme using shared key for all apps
+                localStorage.setItem('appTheme', theme);
                 themeDropdown.style.display = 'none';
             });
         });

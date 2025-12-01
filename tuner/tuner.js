@@ -117,7 +117,8 @@ class Tuner {
     }
 
     initializeTheme() {
-        const savedTheme = localStorage.getItem('tunerTheme') || 'default';
+        // Use shared 'appTheme' key for consistency across all apps
+        const savedTheme = localStorage.getItem('appTheme') || 'default';
         this.setTheme(savedTheme);
     }
 
@@ -136,7 +137,8 @@ class Tuner {
         });
 
         this.themeBtnActive.className = `theme-btn-active theme-${theme}`;
-        localStorage.setItem('tunerTheme', theme);
+        // Save to localStorage using shared key for all apps
+        localStorage.setItem('appTheme', theme);
     }
 
     initializeUI() {
