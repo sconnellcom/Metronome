@@ -33,6 +33,9 @@ class DrumPad {
         // Track mouse button state for drag support
         this.isMouseDown = false;
         
+        // Track which pad each touch is currently over (touchId -> pad element)
+        this.touchPadMap = new Map();
+        
         this.initializeUI();
         this.setupEventListeners();
         this.initializeTheme();
@@ -173,11 +176,19 @@ class DrumPad {
             // Touch events for multi-touch support
             pad.addEventListener('touchstart', (e) => {
                 e.preventDefault();
+                // Register this touch with the pad
+                for (const touch of e.changedTouches) {
+                    this.touchPadMap.set(touch.identifier, pad);
+                }
                 this.handlePadPress(pad);
             }, { passive: false });
             
             pad.addEventListener('touchend', (e) => {
                 e.preventDefault();
+                // Clean up touch tracking
+                for (const touch of e.changedTouches) {
+                    this.touchPadMap.delete(touch.identifier);
+                }
                 this.handlePadRelease(pad);
             }, { passive: false });
             
@@ -216,15 +227,23 @@ class DrumPad {
             for (const touch of e.changedTouches) {
                 const element = document.elementFromPoint(touch.clientX, touch.clientY);
                 const pad = element?.closest('.drum-pad');
-                if (pad && !pad.classList.contains('active')) {
-                    // Release all other pads for this touch
-                    document.querySelectorAll('.drum-pad.active').forEach(activePad => {
-                        if (activePad !== pad) {
-                            this.handlePadRelease(activePad);
-                        }
-                    });
-                    // Press the new pad
-                    this.handlePadPress(pad);
+                const previousPad = this.touchPadMap.get(touch.identifier);
+                
+                // If touch moved to a different pad (or no pad)
+                if (pad !== previousPad) {
+                    // Release the previous pad if there was one
+                    if (previousPad) {
+                        this.handlePadRelease(previousPad);
+                    }
+                    
+                    // If moved to a new pad, press it
+                    if (pad) {
+                        this.touchPadMap.set(touch.identifier, pad);
+                        this.handlePadPress(pad);
+                    } else {
+                        // Moved off all pads
+                        this.touchPadMap.delete(touch.identifier);
+                    }
                 }
             }
         }, { passive: false });
@@ -331,8 +350,9 @@ class DrumPad {
         const shakeFactor = this.accelerometer.shakeFactor || 1;
         
         // Base volume adjusted by shake factor
-        const baseVolume = 0.5;
-        const volume = Math.min(1.0, baseVolume * shakeFactor);
+        // Lower base volume (0.3) with wider range to 1.0 makes shake more noticeable
+        const baseVolume = 0.3;
+        const volume = Math.min(1.0, baseVolume + (shakeFactor - 1) * 0.7);
         
         // Apply slight pitch variation based on accelerometer
         if (this.accelerometer.supported && shakeFactor > 1.05) {
