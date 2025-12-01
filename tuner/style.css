@@ -694,6 +694,73 @@ h1 {
     color: var(--out-tune-color);
 }
 
+/* Audio Level Meter */
+.audio-level-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: var(--surface-bg);
+    border-radius: 8px;
+    margin-bottom: 15px;
+}
+
+.audio-level-label {
+    font-size: 0.85em;
+    color: var(--text-secondary);
+    font-weight: 500;
+    white-space: nowrap;
+    min-width: 70px;
+}
+
+.audio-level-meter {
+    flex: 1;
+    height: 12px;
+    background: var(--border-color);
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.audio-level-bar {
+    height: 100%;
+    width: 0%;
+    background: var(--in-tune-color);
+    border-radius: 6px;
+    transition: width 0.05s ease-out, background-color 0.1s ease;
+}
+
+.audio-level-bar.low {
+    background: var(--out-tune-color);
+}
+
+.audio-level-bar.medium {
+    background: var(--close-color);
+}
+
+.audio-level-bar.good {
+    background: var(--in-tune-color);
+}
+
+.audio-level-status {
+    font-size: 0.8em;
+    color: var(--text-tertiary);
+    min-width: 60px;
+    text-align: right;
+}
+
+.audio-level-status.no-signal {
+    color: var(--out-tune-color);
+}
+
+.audio-level-status.weak {
+    color: var(--close-color);
+}
+
+.audio-level-status.good {
+    color: var(--in-tune-color);
+}
+
 /* Buttons */
 .btn {
     width: 100%;

@@ -157,6 +157,8 @@ class Tuner {
         this.permissionOverlay = document.getElementById('permissionOverlay');
         this.permissionBtn = document.getElementById('permissionBtn');
         this.errorMessage = document.getElementById('errorMessage');
+        this.audioLevelBar = document.getElementById('audioLevelBar');
+        this.audioLevelStatus = document.getElementById('audioLevelStatus');
 
         // Theme elements
         this.themeBtnActive = document.querySelector('.theme-btn-active');
@@ -350,12 +352,29 @@ class Tuner {
         this.gaugeNeedle.className = 'gauge-needle';
         this.tuningStatus.className = 'tuning-status';
         this.tuningStatus.querySelector('.status-text').textContent = 'Ready to tune';
+        
+        // Reset audio level meter
+        this.audioLevelBar.style.width = '0%';
+        this.audioLevelBar.classList.remove('low', 'medium', 'good');
+        this.audioLevelStatus.textContent = 'No signal';
+        this.audioLevelStatus.classList.remove('weak', 'good');
+        this.audioLevelStatus.classList.add('no-signal');
     }
 
     detectPitch() {
         if (!this.isRunning) return;
 
         this.analyser.getFloatTimeDomainData(this.dataArray);
+
+        // Calculate RMS for audio level display
+        let rms = 0;
+        for (let i = 0; i < this.dataArray.length; i++) {
+            rms += this.dataArray[i] * this.dataArray[i];
+        }
+        rms = Math.sqrt(rms / this.dataArray.length);
+
+        // Update audio level meter
+        this.updateAudioLevel(rms);
 
         // Use autocorrelation to detect pitch
         const frequency = this.autoCorrelate(this.dataArray, this.audioContext.sampleRate);
@@ -365,6 +384,35 @@ class Tuner {
         }
 
         this.animationId = requestAnimationFrame(() => this.detectPitch());
+    }
+
+    updateAudioLevel(rms) {
+        // Convert RMS to a percentage (0-100)
+        // RMS values typically range from 0 to about 0.5 for loud sounds
+        const percentage = Math.min(100, rms * 200);
+        
+        this.audioLevelBar.style.width = percentage + '%';
+        
+        // Update bar color and status based on level
+        this.audioLevelBar.classList.remove('low', 'medium', 'good');
+        this.audioLevelStatus.classList.remove('no-signal', 'weak', 'good');
+        
+        if (percentage < 1) {
+            this.audioLevelStatus.textContent = 'No signal';
+            this.audioLevelStatus.classList.add('no-signal');
+        } else if (percentage < 10) {
+            this.audioLevelBar.classList.add('low');
+            this.audioLevelStatus.textContent = 'Too quiet';
+            this.audioLevelStatus.classList.add('weak');
+        } else if (percentage < 30) {
+            this.audioLevelBar.classList.add('medium');
+            this.audioLevelStatus.textContent = 'Low';
+            this.audioLevelStatus.classList.add('weak');
+        } else {
+            this.audioLevelBar.classList.add('good');
+            this.audioLevelStatus.textContent = 'Good';
+            this.audioLevelStatus.classList.add('good');
+        }
     }
 
     autoCorrelate(buffer, sampleRate) {
