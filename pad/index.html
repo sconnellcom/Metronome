@@ -120,24 +120,6 @@
             </div>
         </div>
 
-        <!-- Modifiers Row -->
-        <div class="modifiers-panel">
-            <button class="modifier-btn" data-modifier="reverb" title="Toggle Reverb">
-                <span class="modifier-label">Reverb</span>
-            </button>
-            <button class="modifier-btn" data-modifier="distortion" title="Toggle Distortion">
-                <span class="modifier-label">Distort</span>
-            </button>
-            <div class="main-pitch-control">
-                <label for="mainPitchSlider" class="pitch-label">Pitch:</label>
-                <input type="range" id="mainPitchSlider" class="main-pitch-slider" min="-10" max="10" step="1" value="0">
-                <span id="pitchDisplay" class="pitch-display">0</span>
-            </div>
-            <button id="defaultSoundBtn" class="modifier-btn default-sound-btn" title="Reset Pad to Default Sound">
-                <span class="modifier-label">Reset</span>
-            </button>
-        </div>
-
         <!-- Recording Controls -->
         <div class="recording-controls">
             <button id="sampleBtn" class="sample-btn" title="Record a Sample">
@@ -160,12 +142,30 @@
                 <span class="save-play-icon">💾▶</span>
                 <span class="save-play-label">Save & Play</span>
             </button>
-            <div class="menu-container">
-                <button id="menuBtn" class="menu-btn" title="Menu">
-                    <span class="menu-icon">☰</span>
+            <div class="settings-menu-container">
+                <button id="settingsMenuBtn" class="settings-menu-btn" title="Settings">
+                    <span class="settings-icon">⚙️</span>
                 </button>
-                <div id="menuDropdown" class="menu-dropdown">
-                    <!-- Menu items will be added dynamically if needed -->
+                <div id="settingsMenuDropdown" class="settings-menu-dropdown">
+                    <div class="settings-menu-label">Global Effects:</div>
+                    <label class="settings-menu-checkbox">
+                        <input type="checkbox" id="reverbCheckbox" data-modifier="reverb">
+                        Reverb
+                    </label>
+                    <label class="settings-menu-checkbox">
+                        <input type="checkbox" id="distortionCheckbox" data-modifier="distortion">
+                        Distortion
+                    </label>
+                    <div class="settings-menu-pitch">
+                        <label for="settingsPitchSlider" class="pitch-label">Pitch:</label>
+                        <div class="pitch-slider-container">
+                            <input type="range" id="settingsPitchSlider" class="pitch-slider" min="-10" max="10"
+                                step="1" value="0">
+                        </div>
+                        <span id="settingsPitchDisplay" class="pitch-value">0</span>
+                    </div>
+                    <div class="settings-menu-divider"></div>
+                    <button id="settingsResetBtn" class="settings-menu-item">🔄 Reset A Pad</button>
                 </div>
             </div>
         </div>
@@ -183,6 +183,14 @@
             <div class="sample-list-header">Saved Samples</div>
             <div id="sampleListItems" class="sample-list-items">
                 <!-- Sample items will be added here dynamically -->
+            </div>
+        </div>
+
+        <!-- Default Samples List -->
+        <div id="defaultSampleList" class="default-sample-list">
+            <div class="default-sample-list-header">Default Samples</div>
+            <div id="defaultSampleListItems" class="default-sample-list-items">
+                <!-- Default sample items will be added here dynamically -->
             </div>
         </div>
 

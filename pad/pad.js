@@ -49,6 +49,10 @@ class DrumPad {
         this.loadSamples();
         this.loadSampleLibrary();
 
+        // Default sound settings for each sound type
+        this.defaultSoundSettings = {};
+        this.loadDefaultSoundSettings();
+
         // Default sound mode state
         this.isDefaultSoundMode = false;
 
@@ -56,11 +60,16 @@ class DrumPad {
         this.isSampleApplyMode = false;
         this.sampleToApply = null;
 
+        // Default sound apply mode state
+        this.isDefaultSoundApplyMode = false;
+        this.defaultSoundToApply = null;
+
         this.initializeUI();
         this.setupEventListeners();
         this.initializeTheme();
         this.renderBeatList();
         this.renderSampleList();
+        this.renderDefaultSampleList();
         this.updatePadSampleIndicators();
     }
 
@@ -89,23 +98,7 @@ class DrumPad {
         localStorage.setItem('appTheme', theme);
     }
 
-    /**
-     * Updates the pitch display element to show the current pitch level.
-     * Called when pitch up or pitch down buttons are clicked.
-     * Shows "Pitch: 0" when neutral, or "Pitch: +N" / "Pitch: -N" when adjusted.
-     */
-    updatePitchDisplay() {
-        const pitchLevel = this.modifiers.pitchLevel;
-        if (this.pitchDisplay) {
-            if (pitchLevel === 0) {
-                this.pitchDisplay.textContent = '0';
-                this.pitchDisplay.classList.remove('active');
-            } else {
-                this.pitchDisplay.textContent = `${pitchLevel > 0 ? '+' : ''}${pitchLevel}`;
-                this.pitchDisplay.classList.add('active');
-            }
-        }
-    }
+
 
     initializeUI() {
         // Theme elements
@@ -121,15 +114,19 @@ class DrumPad {
         this.recordBtn = document.getElementById('recordBtn');
         this.saveBtn = document.getElementById('saveBtn');
         this.savePlayBtn = document.getElementById('savePlayBtn');
-        this.menuBtn = document.getElementById('menuBtn');
-        this.menuDropdown = document.getElementById('menuDropdown');
 
         // Sample button and save sample button
         this.sampleBtn = document.getElementById('sampleBtn');
         this.saveSampleBtn = document.getElementById('saveSampleBtn');
 
-        // Default sound button
-        this.defaultSoundBtn = document.getElementById('defaultSoundBtn');
+        // Settings menu
+        this.settingsMenuBtn = document.getElementById('settingsMenuBtn');
+        this.settingsMenuDropdown = document.getElementById('settingsMenuDropdown');
+        this.reverbCheckbox = document.getElementById('reverbCheckbox');
+        this.distortionCheckbox = document.getElementById('distortionCheckbox');
+        this.settingsPitchSlider = document.getElementById('settingsPitchSlider');
+        this.settingsPitchDisplay = document.getElementById('settingsPitchDisplay');
+        this.settingsResetBtn = document.getElementById('settingsResetBtn');
 
         // Beat list
         this.beatList = document.getElementById('beatList');
@@ -139,8 +136,9 @@ class DrumPad {
         this.sampleList = document.getElementById('sampleList');
         this.sampleListItems = document.getElementById('sampleListItems');
 
-        // Pitch display
-        this.pitchDisplay = document.getElementById('pitchDisplay');
+        // Default sample list
+        this.defaultSampleList = document.getElementById('defaultSampleList');
+        this.defaultSampleListItems = document.getElementById('defaultSampleListItems');
     }
 
     setupEventListeners() {
@@ -262,24 +260,6 @@ class DrumPad {
             }
         }, { passive: false });
 
-        // Modifier buttons
-        document.querySelectorAll('.modifier-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const modifier = btn.dataset.modifier;
-
-                // Toggle other modifiers (reverb, distortion)
-                this.modifiers[modifier] = !this.modifiers[modifier];
-                btn.classList.toggle('active');
-            });
-        });
-
-        // Main pitch slider
-        const mainPitchSlider = document.getElementById('mainPitchSlider');
-        mainPitchSlider.addEventListener('input', (e) => {
-            this.modifiers.pitchLevel = parseInt(e.target.value);
-            this.updatePitchDisplay();
-        });
-
         // Info modal
         this.infoBtn.addEventListener('click', () => {
             this.infoModal.style.display = 'flex';
@@ -318,20 +298,53 @@ class DrumPad {
             this.saveSampleToLibrary();
         });
 
-        // Default sound button
-        this.defaultSoundBtn.addEventListener('click', () => {
+        // Settings menu
+        this.settingsMenuBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.settingsMenuDropdown.classList.toggle('visible');
+        });
+
+        // Reverb checkbox
+        this.reverbCheckbox.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        this.reverbCheckbox.addEventListener('change', (e) => {
+            e.stopPropagation();
+            this.modifiers.reverb = e.target.checked;
+        });
+
+        // Distortion checkbox
+        this.distortionCheckbox.addEventListener('click', (e) => {
+            e.stopPropagation();
+        });
+        this.distortionCheckbox.addEventListener('change', (e) => {
+            e.stopPropagation();
+            this.modifiers.distortion = e.target.checked;
+        });
+
+        // Settings pitch slider
+        this.settingsPitchSlider.addEventListener('input', (e) => {
+            e.stopPropagation();
+            this.modifiers.pitchLevel = parseInt(e.target.value);
+            this.settingsPitchDisplay.textContent = this.modifiers.pitchLevel > 0 ? `+${this.modifiers.pitchLevel}` : this.modifiers.pitchLevel;
+        });
+
+        this.settingsPitchSlider.addEventListener('change', (e) => {
+            e.stopPropagation();
+        });
+
+        // Reset button
+        this.settingsResetBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
             this.toggleDefaultSoundMode();
         });
 
-        // Menu
-        this.menuBtn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            this.menuDropdown.classList.toggle('visible');
-        });
-
         document.addEventListener('click', (e) => {
-            if (!this.menuBtn.contains(e.target) && !this.menuDropdown.contains(e.target)) {
-                this.menuDropdown.classList.remove('visible');
+            // Close settings menu when clicking outside (but not on pads)
+            if (!this.settingsMenuBtn.contains(e.target) &&
+                !this.settingsMenuDropdown.contains(e.target) &&
+                !e.target.closest('.drum-pad')) {
+                this.settingsMenuDropdown.classList.remove('visible');
             }
             // Close settings dropdowns when clicking outside
             // Check if click is outside both container AND dropdown
@@ -340,6 +353,16 @@ class DrumPad {
 
             if (!isInsideSettingsContainer && !isInsideDropdown) {
                 this.closeOtherDropdowns();
+            }
+
+            // Cancel apply modes when clicking outside drum pads and not on apply buttons
+            if (!e.target.closest('.drum-pad') && !e.target.closest('.sample-apply-btn')) {
+                if (this.isSampleApplyMode) {
+                    this.cancelSampleApplyMode();
+                }
+                if (this.isDefaultSoundApplyMode) {
+                    this.cancelDefaultSoundApplyMode();
+                }
             }
         });
     }
@@ -350,6 +373,9 @@ class DrumPad {
             this.isRecording = false;
             this.recordBtn.classList.remove('recording');
             this.recordBtn.querySelector('.record-label').textContent = 'Record';
+
+            // Show sample button again
+            this.sampleBtn.style.display = 'flex';
 
             // Hide save buttons if no events recorded
             if (this.recordedEvents.length === 0) {
@@ -363,6 +389,9 @@ class DrumPad {
             this.recordedEvents = [];
             this.recordBtn.classList.add('recording');
             this.recordBtn.querySelector('.record-label').textContent = 'Stop';
+
+            // Hide sample button while recording
+            this.sampleBtn.style.display = 'none';
 
             // Show save buttons
             this.saveBtn.style.display = 'flex';
@@ -409,6 +438,7 @@ class DrumPad {
         this.recordBtn.querySelector('.record-label').textContent = 'Record';
         this.saveBtn.style.display = 'none';
         this.savePlayBtn.style.display = 'none';
+        this.sampleBtn.style.display = 'flex'; // Show sample button again
         this.recordedEvents = [];
 
         if (playAfterSave) {
@@ -446,6 +476,7 @@ class DrumPad {
             this.sampleBtn.classList.add('recording');
             this.sampleBtn.querySelector('.sample-label').textContent = 'Cancel';
             this.saveSampleBtn.style.display = 'flex';
+            this.recordBtn.style.display = 'none'; // Hide record button while sampling
             document.body.classList.add('sample-save-mode');
 
         } catch (err) {
@@ -469,6 +500,7 @@ class DrumPad {
         this.sampleBtn.classList.remove('recording');
         this.sampleBtn.querySelector('.sample-label').textContent = 'Sample';
         this.saveSampleBtn.style.display = 'none';
+        this.recordBtn.style.display = 'flex'; // Show record button again
         document.body.classList.remove('sample-save-mode');
     }
 
@@ -492,6 +524,7 @@ class DrumPad {
                 this.sampleBtn.classList.remove('recording');
                 this.sampleBtn.querySelector('.sample-label').textContent = 'Sample';
                 this.saveSampleBtn.style.display = 'none';
+                this.recordBtn.style.display = 'flex'; // Show record button again
                 document.body.classList.remove('sample-save-mode');
 
                 if (chunks.length > 0) {
@@ -626,7 +659,7 @@ class DrumPad {
             const reader = new FileReader();
             reader.onloadend = async () => {
                 const base64data = reader.result;
-                
+
                 // Decode audio to get duration
                 let duration = 0;
                 try {
@@ -643,7 +676,7 @@ class DrumPad {
                 } catch (err) {
                     console.error('Error decoding audio for duration:', err);
                 }
-                
+
                 // Use timestamp-based naming for unique sample names
                 const sampleName = padName || `Sample ${Date.now().toString(36).toUpperCase()}`;
                 const sample = {
@@ -723,6 +756,26 @@ class DrumPad {
             localStorage.setItem(DrumPad.SAMPLE_LIBRARY_KEY, JSON.stringify(this.sampleLibrary));
         } catch (e) {
             console.error('Error saving sample library:', e);
+        }
+    }
+
+    loadDefaultSoundSettings() {
+        try {
+            const stored = localStorage.getItem('drumPadDefaultSoundSettings');
+            if (stored) {
+                this.defaultSoundSettings = JSON.parse(stored);
+            }
+        } catch (e) {
+            console.error('Error loading default sound settings:', e);
+            this.defaultSoundSettings = {};
+        }
+    }
+
+    saveDefaultSoundSettings() {
+        try {
+            localStorage.setItem('drumPadDefaultSoundSettings', JSON.stringify(this.defaultSoundSettings));
+        } catch (e) {
+            console.error('Error saving default sound settings:', e);
         }
     }
 
@@ -854,7 +907,7 @@ class DrumPad {
         if (beatEffects.reverb) merged.reverb = true;
         if (beatEffects.distortion) merged.distortion = true;
         if (beatEffects.pitchLevel !== undefined && beatEffects.pitchLevel !== 0) {
-            merged.pitchLevel = Math.max(-5, Math.min(5, (merged.pitchLevel || 0) + beatEffects.pitchLevel));
+            merged.pitchLevel = Math.max(-10, Math.min(10, (merged.pitchLevel || 0) + beatEffects.pitchLevel));
         }
 
         return merged;
@@ -1528,6 +1581,8 @@ class DrumPad {
         this.isSampleApplyMode = true;
         this.sampleToApply = index;
         document.body.classList.add('sample-apply-mode');
+        // Scroll to top to show the drum pads
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     cancelSampleApplyMode() {
@@ -1569,6 +1624,258 @@ class DrumPad {
         this.renderSampleList();
     }
 
+    renderDefaultSampleList() {
+        const defaultSounds = ['kick', 'snare', 'hihat', 'tom', 'cymbal', 'clap', 'cowbell', 'rim', 'shaker'];
+
+        this.defaultSampleListItems.innerHTML = '';
+
+        defaultSounds.forEach(soundType => {
+            const sampleItem = document.createElement('div');
+            sampleItem.className = 'default-sample-item';
+
+            // Get the sound label with emoji
+            const soundLabel = this.getSoundLabel(soundType);
+
+            // Get settings for this default sound
+            const settings = this.defaultSoundSettings[soundType] || { reverb: false, distortion: false, pitchLevel: 0 };
+
+            // Build effects indicators
+            const effectIndicators = [];
+            if (settings.reverb) effectIndicators.push('R');
+            if (settings.distortion) effectIndicators.push('D');
+            if (settings.pitchLevel && settings.pitchLevel !== 0) effectIndicators.push(`P${settings.pitchLevel > 0 ? '+' : ''}${settings.pitchLevel}`);
+            const effectsText = effectIndicators.length > 0 ? ` [${effectIndicators.join(',')}]` : '';
+
+            sampleItem.innerHTML = `
+                <span class="default-sample-name">${soundLabel}${effectsText}</span>
+                <button class="sample-btn-small sample-apply-btn" data-sound="${soundType}" title="Apply to Pad">
+                    📌
+                </button>
+                <button class="sample-btn-small sample-play-btn" data-sound="${soundType}" title="Play Sound">
+                    ▶
+                </button>
+                <div class="sample-settings-container">
+                    <button class="sample-btn-small sample-settings-btn" data-sound="${soundType}" title="Effects">
+                        ⚙️
+                    </button>
+                    <div class="sample-settings-dropdown" data-sound="${soundType}">
+                        <div class="sample-settings-label">Effects:</div>
+                        <label class="sample-settings-checkbox">
+                            <input type="checkbox" data-effect="reverb" ${settings.reverb ? 'checked' : ''}>
+                            Reverb
+                        </label>
+                        <label class="sample-settings-checkbox">
+                            <input type="checkbox" data-effect="distortion" ${settings.distortion ? 'checked' : ''}>
+                            Distortion
+                        </label>
+                        <div class="sample-settings-pitch">
+                            <span>Pitch: <span class="pitch-value">${settings.pitchLevel || 0}</span></span>
+                            <div class="pitch-slider-container">
+                                <input type="range" class="pitch-slider" min="-10" max="10" step="1" value="${settings.pitchLevel || 0}">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            this.defaultSampleListItems.appendChild(sampleItem);
+
+            // Settings button dropdown toggle
+            const settingsBtn = sampleItem.querySelector('.sample-settings-btn');
+            const settingsDropdown = sampleItem.querySelector('.sample-settings-dropdown');
+
+            settingsBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.closeOtherDropdowns(settingsDropdown);
+                settingsDropdown.classList.toggle('visible');
+            });
+
+            // Prevent dropdown from closing when clicking inside it
+            settingsDropdown.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+
+            // Effect checkboxes
+            settingsDropdown.querySelectorAll('input[data-effect]').forEach(checkbox => {
+                checkbox.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                });
+                checkbox.addEventListener('change', (e) => {
+                    e.stopPropagation();
+                    const effect = e.target.dataset.effect;
+                    if (!this.defaultSoundSettings[soundType]) {
+                        this.defaultSoundSettings[soundType] = { reverb: false, distortion: false, pitchLevel: 0 };
+                    }
+                    this.defaultSoundSettings[soundType][effect] = e.target.checked;
+                    this.saveDefaultSoundSettings();
+                    // Update the display without re-rendering the entire list
+                    this.updateDefaultSampleDisplay(soundType);
+                });
+            });
+
+            // Pitch slider
+            const pitchSlider = settingsDropdown.querySelector('.pitch-slider');
+            const pitchValue = settingsDropdown.querySelector('.pitch-value');
+
+            pitchSlider.addEventListener('input', (e) => {
+                e.stopPropagation();
+                const value = parseInt(e.target.value);
+                pitchValue.textContent = value;
+            });
+
+            pitchSlider.addEventListener('change', (e) => {
+                e.stopPropagation();
+                if (!this.defaultSoundSettings[soundType]) {
+                    this.defaultSoundSettings[soundType] = { reverb: false, distortion: false, pitchLevel: 0 };
+                }
+                this.defaultSoundSettings[soundType].pitchLevel = parseInt(e.target.value);
+                this.saveDefaultSoundSettings();
+                // Update the display without re-rendering the entire list
+                this.updateDefaultSampleDisplay(soundType);
+            });
+
+            // Play button - plays the original default sound with its settings
+            sampleItem.querySelector('.sample-play-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.playDefaultSound(soundType);
+            });
+
+            // Apply button - applies default sound with settings to pad
+            sampleItem.querySelector('.sample-apply-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.startDefaultSoundApplyMode(soundType);
+            });
+        });
+    }
+
+    updateDefaultSampleDisplay(soundType) {
+        // Find the sample item for this sound type
+        const sampleItems = this.defaultSampleListItems.querySelectorAll('.default-sample-item');
+        const targetItem = Array.from(sampleItems).find(item => {
+            return item.querySelector('.sample-play-btn').dataset.sound === soundType;
+        });
+
+        if (!targetItem) return;
+
+        // Get updated settings
+        const settings = this.defaultSoundSettings[soundType] || { reverb: false, distortion: false, pitchLevel: 0 };
+
+        // Build effects indicators
+        const effectIndicators = [];
+        if (settings.reverb) effectIndicators.push('R');
+        if (settings.distortion) effectIndicators.push('D');
+        if (settings.pitchLevel && settings.pitchLevel !== 0) effectIndicators.push(`P${settings.pitchLevel > 0 ? '+' : ''}${settings.pitchLevel}`);
+        const effectsText = effectIndicators.length > 0 ? ` [${effectIndicators.join(',')}]` : '';
+
+        // Update the name display
+        const nameSpan = targetItem.querySelector('.default-sample-name');
+        const soundLabel = this.getSoundLabel(soundType);
+        nameSpan.textContent = `${soundLabel}${effectsText}`;
+    }
+
+    getSoundLabel(soundType) {
+        const labels = {
+            'kick': '🥁 Kick',
+            'snare': '🥁 Snare',
+            'hihat': '🎵 Hi-Hat',
+            'tom': '🥁 Tom',
+            'cymbal': '💿 Cymbal',
+            'clap': '👏 Clap',
+            'cowbell': '🔔 Cowbell',
+            'rim': '🎯 Rim',
+            'shaker': '🎶 Shaker'
+        };
+        return labels[soundType] || soundType;
+    }
+
+    startDefaultSoundApplyMode(sourceSound) {
+        this.isDefaultSoundApplyMode = true;
+        this.defaultSoundToApply = sourceSound;
+        document.body.classList.add('default-sound-apply-mode');
+        // Scroll to top to show the drum pads
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    cancelDefaultSoundApplyMode() {
+        this.isDefaultSoundApplyMode = false;
+        this.defaultSoundToApply = null;
+        document.body.classList.remove('default-sound-apply-mode');
+    }
+
+    applyDefaultSoundToPad(targetSound) {
+        if (!this.isDefaultSoundApplyMode || !this.defaultSoundToApply) return;
+
+        // Get the settings for this default sound
+        const settings = this.defaultSoundSettings[this.defaultSoundToApply] || { reverb: false, distortion: false, pitchLevel: 0 };
+
+        // Apply the default sound with its settings to another pad
+        this.customSamples[targetSound] = {
+            defaultSound: this.defaultSoundToApply,
+            effects: { ...settings }
+        };
+        this.saveSamplesToStorage();
+        this.updatePadSampleIndicators();
+        this.cancelDefaultSoundApplyMode();
+    }
+
+    playDefaultSound(soundType, volume = 0.8) {
+        if (!this.audioContext) {
+            this.initAudioContext();
+        }
+
+        const time = this.audioContext.currentTime;
+
+        // Get the settings for this default sound
+        const settings = this.defaultSoundSettings[soundType] || { reverb: false, distortion: false, pitchLevel: 0 };
+
+        // Calculate pitch modifier based on pitch level
+        const pitchMod = this.getPitchMultiplier(settings.pitchLevel);
+
+        // Create the sound based on sound type
+        const soundNode = this.createSound(soundType, time, pitchMod);
+        if (!soundNode) return;
+
+        // Create gain node for volume control
+        const gainNode = this.audioContext.createGain();
+        gainNode.gain.setValueAtTime(volume, time);
+
+        // Apply effects chain
+        let currentNode = soundNode;
+
+        // Distortion
+        if (settings.distortion) {
+            const distortion = this.createDistortion();
+            currentNode.connect(distortion);
+            currentNode = distortion;
+        }
+
+        // Reverb
+        if (settings.reverb && this.reverbBuffer) {
+            const convolver = this.audioContext.createConvolver();
+            convolver.buffer = this.reverbBuffer;
+
+            const dryGain = this.audioContext.createGain();
+            const wetGain = this.audioContext.createGain();
+            dryGain.gain.value = 0.7;
+            wetGain.gain.value = 0.5;
+
+            currentNode.connect(dryGain);
+            currentNode.connect(convolver);
+            convolver.connect(wetGain);
+
+            dryGain.connect(gainNode);
+            wetGain.connect(gainNode);
+        } else {
+            currentNode.connect(gainNode);
+        }
+
+        gainNode.connect(this.audioContext.destination);
+
+        // Start sound
+        if (soundNode.start) {
+            soundNode.start(time);
+        }
+    }
+
     renameSample(index) {
         const sample = this.sampleLibrary[index];
         if (!sample) return;
@@ -1598,10 +1905,10 @@ class DrumPad {
         this.isDefaultSoundMode = !this.isDefaultSoundMode;
 
         if (this.isDefaultSoundMode) {
-            this.defaultSoundBtn.classList.add('active');
+            this.settingsResetBtn.classList.add('active');
             document.body.classList.add('default-sound-mode');
         } else {
-            this.defaultSoundBtn.classList.remove('active');
+            this.settingsResetBtn.classList.remove('active');
             document.body.classList.remove('default-sound-mode');
         }
     }
@@ -1615,7 +1922,7 @@ class DrumPad {
 
         // Turn off default sound mode after resetting
         this.isDefaultSoundMode = false;
-        this.defaultSoundBtn.classList.remove('active');
+        this.settingsResetBtn.classList.remove('active');
         document.body.classList.remove('default-sound-mode');
     }
 
@@ -1862,6 +2169,12 @@ class DrumPad {
             return;
         }
 
+        // If in default sound apply mode, apply the default sound to this pad
+        if (this.isDefaultSoundApplyMode) {
+            this.applyDefaultSoundToPad(soundType);
+            return;
+        }
+
         // If in sample apply mode, apply the sample to this pad
         if (this.isSampleApplyMode) {
             this.applySampleToPad(soundType);
@@ -1913,24 +2226,37 @@ class DrumPad {
         this.reverbBuffer = impulse;
     }
 
-    playSound(soundType) {
+    playSound(soundType, volume = 0.8) {
         if (!this.audioContext) return;
+
+        let useStoredEffects = false;
+        let storedEffects = null;
 
         // Check for custom sample first
         if (this.customSamples[soundType]) {
-            this.playCustomSample(soundType).catch(err => {
-                console.error('Error playing custom sample:', err);
-            });
-            return;
+            const customSample = this.customSamples[soundType];
+
+            // If it's a redirected default sound with effects, play that with its effects
+            if (customSample.defaultSound) {
+                soundType = customSample.defaultSound;
+                if (customSample.effects) {
+                    useStoredEffects = true;
+                    storedEffects = customSample.effects;
+                }
+            } else {
+                // Otherwise play the custom sample
+                this.playCustomSample(soundType).catch(err => {
+                    console.error('Error playing custom sample:', err);
+                });
+                return;
+            }
         }
 
         const time = this.audioContext.currentTime;
 
-        // Calculate pitch modifier based on pitch level
-        const pitchMod = this.getPitchMultiplier();
-
-        // Set volume
-        const volume = 0.8;
+        // Calculate pitch modifier - use stored effects if available, otherwise use global modifiers
+        const pitchLevel = useStoredEffects ? (storedEffects.pitchLevel || 0) : this.modifiers.pitchLevel;
+        const pitchMod = this.getPitchMultiplier(pitchLevel);
 
         // Create the sound based on sound type
         const soundNode = this.createSound(soundType, time, pitchMod);
@@ -1940,18 +2266,21 @@ class DrumPad {
         const gainNode = this.audioContext.createGain();
         gainNode.gain.setValueAtTime(volume, time);
 
-        // Apply effects chain
+        // Apply effects chain - use stored effects if available, otherwise use global modifiers
         let currentNode = soundNode;
 
+        const useDistortion = useStoredEffects ? storedEffects.distortion : this.modifiers.distortion;
+        const useReverb = useStoredEffects ? storedEffects.reverb : this.modifiers.reverb;
+
         // Distortion
-        if (this.modifiers.distortion) {
+        if (useDistortion) {
             const distortion = this.createDistortion();
             currentNode.connect(distortion);
             currentNode = distortion;
         }
 
         // Reverb
-        if (this.modifiers.reverb && this.reverbBuffer) {
+        if (useReverb && this.reverbBuffer) {
             const convolver = this.audioContext.createConvolver();
             convolver.buffer = this.reverbBuffer;
 
