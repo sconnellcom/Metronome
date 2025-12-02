@@ -1126,6 +1126,9 @@ class DrumPad {
             sampleItem.className = 'sample-item';
             sampleItem.innerHTML = `
                 <span class="sample-name">${this.escapeHtml(sample.name)}</span>
+                <button class="sample-btn-small sample-rename-btn" data-index="${index}" title="Rename Sample">
+                    ✏️
+                </button>
                 <button class="sample-btn-small sample-play-btn" data-index="${index}" title="Play Sample">
                     ▶
                 </button>
@@ -1139,6 +1142,10 @@ class DrumPad {
             this.sampleListItems.appendChild(sampleItem);
 
             // Add event listeners
+            sampleItem.querySelector('.sample-rename-btn').addEventListener('click', () => {
+                this.renameSample(index);
+            });
+
             sampleItem.querySelector('.sample-play-btn').addEventListener('click', () => {
                 this.playSampleFromLibrary(index);
             });
@@ -1222,6 +1229,18 @@ class DrumPad {
         this.sampleLibrary.splice(index, 1);
         this.saveSampleLibraryToStorage();
         this.renderSampleList();
+    }
+
+    renameSample(index) {
+        const sample = this.sampleLibrary[index];
+        if (!sample) return;
+
+        const newName = prompt('Enter new name for sample:', sample.name);
+        if (newName !== null && newName.trim() !== '') {
+            this.sampleLibrary[index].name = newName.trim();
+            this.saveSampleLibraryToStorage();
+            this.renderSampleList();
+        }
     }
 
     // Default sound mode

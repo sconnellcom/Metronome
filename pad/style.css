@@ -1347,6 +1347,18 @@ body.sample-save-mode .pad-label::before {
     opacity: 0.8;
 }
 
+.sample-rename-btn {
+    background: var(--surface-bg);
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-color);
+}
+
+.sample-rename-btn:hover {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
 .sample-delete-btn {
     background: var(--surface-bg);
     color: var(--text-tertiary);
