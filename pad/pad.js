@@ -408,10 +408,19 @@ class DrumPad {
     recordEvent(soundType) {
         if (this.isRecording) {
             const timestamp = Date.now() - this.recordingStartTime;
+
+            // Capture the current sound mapping for this pad
+            let soundData = null;
+            if (this.customSamples[soundType]) {
+                // Clone the custom sample data (including redirected default sounds)
+                soundData = JSON.parse(JSON.stringify(this.customSamples[soundType]));
+            }
+
             this.recordedEvents.push({
                 sound: soundType,
                 time: timestamp,
-                modifiers: { ...this.modifiers }
+                modifiers: { ...this.modifiers },
+                soundData: soundData // Store the sound mapping at recording time
             });
         }
     }
@@ -431,7 +440,8 @@ class DrumPad {
             name: `Beat ${this.savedBeats.length + 1}`,
             events: [...this.recordedEvents],
             duration: duration,
-            repeat: true
+            repeat: true,
+            useCurrentMapping: false // Play as recorded by default
         };
 
         this.savedBeats.push(beat);
@@ -956,9 +966,9 @@ class DrumPad {
      */
     async applyEffectsToBuffer(audioBuffer) {
         // Check if any effects are enabled
-        const hasEffects = (this.modifiers.reverb && this.modifiers.reverb > 0) || 
-                          (this.modifiers.distortion && this.modifiers.distortion > 0) ||
-                          this.modifiers.pitchLevel !== 0;
+        const hasEffects = (this.modifiers.reverb && this.modifiers.reverb > 0) ||
+            (this.modifiers.distortion && this.modifiers.distortion > 0) ||
+            this.modifiers.pitchLevel !== 0;
 
         if (!hasEffects) {
             return audioBuffer;
@@ -991,7 +1001,7 @@ class DrumPad {
         if (this.modifiers.distortion && this.modifiers.distortion > 0) {
             const distortionLevel = this.modifiers.distortion;
             const amount = 10 * distortionLevel;
-            
+
             const distortion = offlineContext.createWaveShaper();
             const curve = new Float32Array(DrumPad.WAVE_SHAPER_SAMPLES);
             for (let i = 0; i < DrumPad.WAVE_SHAPER_SAMPLES; i++) {
@@ -1024,12 +1034,12 @@ class DrumPad {
 
             const dryGain = offlineContext.createGain();
             const wetGain = offlineContext.createGain();
-            
+
             // Scale wet/dry mix based on reverb level (0-10)
             const reverbLevel = this.modifiers.reverb;
             const wetAmount = 0.05 + (reverbLevel / 10) * 0.85;
             const dryAmount = 1.0 - (reverbLevel / 20);
-            
+
             dryGain.gain.value = dryAmount;
             wetGain.gain.value = wetAmount;
 
@@ -1176,8 +1186,11 @@ class DrumPad {
         });
     }
 
-    async playCustomSample(soundType) {
-        if (!this.customSamples[soundType]) {
+    async playCustomSample(soundType, overrideSoundData = undefined) {
+        // Use override sound data if explicitly provided (even if null), otherwise use current mapping
+        const soundData = overrideSoundData !== undefined ? overrideSoundData : this.customSamples[soundType];
+
+        if (!soundData) {
             return false;
         }
 
@@ -1185,7 +1198,7 @@ class DrumPad {
 
         try {
             // Get sample data using helper (supports both old string format and new object format)
-            const { data: base64data, effects: sampleEffects } = this.parseSampleEntry(this.customSamples[soundType]);
+            const { data: base64data, effects: sampleEffects } = this.parseSampleEntry(soundData);
 
             // Extract the base64 content from the data URL
             const base64Content = base64data.split(',')[1];
@@ -1232,12 +1245,12 @@ class DrumPad {
 
                 const dryGain = this.audioContext.createGain();
                 const wetGain = this.audioContext.createGain();
-                
+
                 // Scale wet/dry mix based on reverb level (0-10)
                 const reverbLevel = effectiveModifiers.reverb;
                 const wetAmount = 0.05 + (reverbLevel / 10) * 0.85;
                 const dryAmount = 1.0 - (reverbLevel / 20);
-                
+
                 dryGain.gain.value = dryAmount;
                 wetGain.gain.value = wetAmount;
 
@@ -1266,6 +1279,12 @@ class DrumPad {
             const stored = localStorage.getItem(DrumPad.STORAGE_KEY);
             if (stored) {
                 this.savedBeats = JSON.parse(stored);
+                // Ensure backward compatibility - set useCurrentMapping to false for old beats
+                this.savedBeats.forEach(beat => {
+                    if (beat.useCurrentMapping === undefined) {
+                        beat.useCurrentMapping = false;
+                    }
+                });
             }
         } catch (e) {
             console.error('Error loading beats:', e);
@@ -1304,8 +1323,11 @@ class DrumPad {
             if (normalizedEffects.pitchLevel && normalizedEffects.pitchLevel !== 0) effectIndicators.push(`P${normalizedEffects.pitchLevel > 0 ? '+' : ''}${normalizedEffects.pitchLevel}`);
             const effectsText = effectIndicators.length > 0 ? ` [${effectIndicators.join(',')}]` : '';
 
+            // Add indicator for mapping mode
+            const mappingIndicator = beat.useCurrentMapping ? ' 🔄' : '';
+
             beatItem.innerHTML = `
-                <span class="beat-name">${this.escapeHtml(beat.name)}${effectsText}</span>
+                <span class="beat-name">${this.escapeHtml(beat.name)}${mappingIndicator}${effectsText}</span>
                 <span class="beat-duration">${this.formatDuration(beat.duration)}</span>
                 <button class="beat-btn beat-repeat-btn ${beat.repeat ? '' : 'off'}" data-index="${index}" title="Toggle Repeat">
                     🔁
@@ -1337,6 +1359,11 @@ class DrumPad {
                                 <input type="range" class="pitch-slider" min="-10" max="10" step="1" value="${normalizedEffects.pitchLevel || 0}">
                             </div>
                         </div>
+                        <div class="beat-settings-divider"></div>
+                        <label class="beat-settings-checkbox">
+                            <input type="checkbox" data-action="toggle-mapping" ${beat.useCurrentMapping ? 'checked' : ''}>
+                            Use Current Pad Mapping
+                        </label>
                         <div class="beat-settings-divider"></div>
                         <button class="beat-settings-item" data-action="cleanup">🔧 Cleanup Tempo</button>
                         <button class="beat-settings-item" data-action="rename">✏️ Rename</button>
@@ -1375,6 +1402,17 @@ class DrumPad {
                 e.stopPropagation();
                 this.deleteBeat(index);
                 settingsDropdown.classList.remove('visible');
+            });
+
+            // Toggle mapping checkbox
+            const toggleMappingCheckbox = settingsDropdown.querySelector('[data-action="toggle-mapping"]');
+            toggleMappingCheckbox.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+            toggleMappingCheckbox.addEventListener('change', (e) => {
+                e.stopPropagation();
+                this.savedBeats[index].useCurrentMapping = e.target.checked;
+                this.saveBeatsToStorage();
             });
 
             // Effect sliders (reverb and distortion)
@@ -1637,12 +1675,12 @@ class DrumPad {
 
                 const dryGain = this.audioContext.createGain();
                 const wetGain = this.audioContext.createGain();
-                
+
                 // Scale wet/dry mix based on reverb level (0-10)
                 const reverbLevel = sampleEffects.reverb;
                 const wetAmount = 0.05 + (reverbLevel / 10) * 0.85;
                 const dryAmount = 1.0 - (reverbLevel / 20);
-                
+
                 dryGain.gain.value = dryAmount;
                 wetGain.gain.value = wetAmount;
 
@@ -1954,12 +1992,12 @@ class DrumPad {
 
             const dryGain = this.audioContext.createGain();
             const wetGain = this.audioContext.createGain();
-            
+
             // Scale wet/dry mix based on reverb level (0-10)
             const reverbLevel = settings.reverb;
             const wetAmount = 0.05 + (reverbLevel / 10) * 0.85;
             const dryAmount = 1.0 - (reverbLevel / 20);
-            
+
             dryGain.gain.value = dryAmount;
             wetGain.gain.value = wetAmount;
 
@@ -2081,8 +2119,14 @@ class DrumPad {
                         this.modifiers = this.mergeEffects(this.modifiers, beat.effects);
                     }
 
-                    // Play the sound
-                    this.playSound(event.sound);
+                    // Play the sound - use current mapping or recorded sound data
+                    if (beat.useCurrentMapping) {
+                        // Use current pad mapping
+                        this.playSound(event.sound);
+                    } else {
+                        // Play as recorded - pass saved sound data as override
+                        this.playSound(event.sound, 0.8, event.soundData);
+                    }
 
                     // Restore modifiers
                     this.modifiers = savedModifiers;
@@ -2331,15 +2375,19 @@ class DrumPad {
         this.reverbBuffer = impulse;
     }
 
-    playSound(soundType, volume = 0.8) {
+    playSound(soundType, volume = 0.8, overrideSoundData = undefined) {
         if (!this.audioContext) return;
 
         let useStoredEffects = false;
         let storedEffects = null;
 
+        // Use override sound data if explicitly provided (even if null)
+        // undefined means not provided, use current mapping
+        const soundData = overrideSoundData !== undefined ? overrideSoundData : this.customSamples[soundType];
+
         // Check for custom sample first
-        if (this.customSamples[soundType]) {
-            const customSample = this.customSamples[soundType];
+        if (soundData) {
+            const customSample = soundData;
 
             // If it's a redirected default sound with effects, play that with its effects
             if (customSample.defaultSound) {
@@ -2349,8 +2397,8 @@ class DrumPad {
                     storedEffects = customSample.effects;
                 }
             } else {
-                // Otherwise play the custom sample
-                this.playCustomSample(soundType).catch(err => {
+                // Otherwise play the custom sample - pass soundData not overrideSoundData
+                this.playCustomSample(soundType, soundData).catch(err => {
                     console.error('Error playing custom sample:', err);
                 });
                 return;
@@ -2391,14 +2439,14 @@ class DrumPad {
 
             const dryGain = this.audioContext.createGain();
             const wetGain = this.audioContext.createGain();
-            
+
             // Scale wet/dry mix based on reverb level (0-10)
             // At level 1: 10% wet, 90% dry
             // At level 5: 50% wet, 70% dry (default from before)
             // At level 10: 90% wet, 50% dry
             const wetAmount = 0.05 + (reverbLevel / 10) * 0.85; // 0.05 to 0.9
             const dryAmount = 1.0 - (reverbLevel / 20); // 1.0 to 0.5
-            
+
             dryGain.gain.value = dryAmount;
             wetGain.gain.value = wetAmount;
 
@@ -2715,7 +2763,7 @@ class DrumPad {
         // Level ranges from 0-10, with 5 being the original default amount
         const distortion = this.audioContext.createWaveShaper();
         const curve = new Float32Array(DrumPad.WAVE_SHAPER_SAMPLES);
-        
+
         // Scale distortion amount based on level (0-10)
         // Level 1: minimal distortion (amount = 10)
         // Level 5: medium distortion (amount = 50, original default)
