@@ -427,13 +427,23 @@ class DrumPad {
             return;
         }
 
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
             this.mediaRecorder.onstop = async () => {
                 // Stop all tracks to release the microphone
                 this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
                 
-                if (this.recordedChunks.length > 0) {
-                    const blob = new Blob(this.recordedChunks, { type: 'audio/webm' });
+                const chunks = this.recordedChunks;
+                
+                // Update UI 
+                this.isSampleRecording = false;
+                this.recordedChunks = [];
+                this.mediaRecorder = null;
+                this.sampleBtn.classList.remove('recording');
+                this.sampleBtn.querySelector('.modifier-label').textContent = 'Sample';
+                document.body.classList.remove('sample-save-mode');
+                
+                if (chunks.length > 0) {
+                    const blob = new Blob(chunks, { type: 'audio/webm' });
                     
                     // Store the sample as base64 for persistence
                     const reader = new FileReader();
@@ -442,20 +452,16 @@ class DrumPad {
                         this.customSamples[soundType] = base64data;
                         this.saveSamplesToStorage();
                         this.updatePadSampleIndicators();
+                        resolve();
+                    };
+                    reader.onerror = () => {
+                        console.error('Error reading audio file');
+                        resolve(); // Still resolve to not block the UI
                     };
                     reader.readAsDataURL(blob);
+                } else {
+                    resolve();
                 }
-                
-                this.isSampleRecording = false;
-                this.recordedChunks = [];
-                this.mediaRecorder = null;
-                
-                // Update UI
-                this.sampleBtn.classList.remove('recording');
-                this.sampleBtn.querySelector('.modifier-label').textContent = 'Sample';
-                document.body.classList.remove('sample-save-mode');
-                
-                resolve();
             };
             
             this.mediaRecorder.stop();
@@ -501,10 +507,18 @@ class DrumPad {
         this.initAudioContext();
 
         try {
-            // Decode base64 to audio buffer
+            // Decode base64 data URL to audio buffer
             const base64data = this.customSamples[soundType];
-            const response = await fetch(base64data);
-            const arrayBuffer = await response.arrayBuffer();
+            
+            // Extract the base64 content from the data URL
+            const base64Content = base64data.split(',')[1];
+            const binaryString = atob(base64Content);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            const arrayBuffer = bytes.buffer;
+            
             const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
 
             // Create buffer source
@@ -918,7 +932,9 @@ class DrumPad {
 
         // Check for custom sample first
         if (this.customSamples[soundType]) {
-            this.playCustomSample(soundType);
+            this.playCustomSample(soundType).catch(err => {
+                console.error('Error playing custom sample:', err);
+            });
             return;
         }
 
