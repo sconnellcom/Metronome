@@ -7,6 +7,7 @@ class DrumPad {
     static STORAGE_KEY = 'drumPadBeats';
     static SAMPLES_STORAGE_KEY = 'drumPadSamples';
     static RECORDING_BUFFER_MS = 200; // Buffer added to raw recordings for looping
+    static SILENCE_THRESHOLD = 0.01; // Amplitude threshold for silence/noise detection
 
     constructor() {
         this.audioContext = null;
@@ -445,26 +446,58 @@ class DrumPad {
                 if (chunks.length > 0) {
                     const blob = new Blob(chunks, { type: 'audio/webm' });
                     
-                    // Store the sample as base64 for persistence
-                    const reader = new FileReader();
-                    reader.onloadend = () => {
-                        const base64data = reader.result;
-                        this.customSamples[soundType] = base64data;
-                        this.saveSamplesToStorage();
-                        this.updatePadSampleIndicators();
+                    try {
+                        // Initialize audio context if needed for processing
+                        this.initAudioContext();
+                        
+                        // Convert blob to ArrayBuffer for decoding
+                        const arrayBuffer = await blob.arrayBuffer();
+                        
+                        // Decode the audio to an AudioBuffer
+                        const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+                        
+                        // Trim silence from beginning and end
+                        const trimmedBuffer = this.trimSilence(audioBuffer);
+                        
+                        // Re-encode as WAV blob
+                        const trimmedBlob = this.audioBufferToWavBlob(trimmedBuffer);
+                        
+                        // Store the trimmed sample as base64 for persistence
+                        await this.storeSampleBlob(soundType, trimmedBlob);
                         resolve();
-                    };
-                    reader.onerror = () => {
-                        console.error('Error reading audio file');
-                        resolve(); // Still resolve to not block the UI
-                    };
-                    reader.readAsDataURL(blob);
+                    } catch (e) {
+                        console.error('Error processing audio sample:', e);
+                        // Fall back to original behavior if trimming fails
+                        await this.storeSampleBlob(soundType, blob);
+                        resolve();
+                    }
                 } else {
                     resolve();
                 }
             };
             
             this.mediaRecorder.stop();
+        });
+    }
+
+    /**
+     * Store a sample blob as base64 in localStorage for the given sound type.
+     */
+    storeSampleBlob(soundType, blob) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64data = reader.result;
+                this.customSamples[soundType] = base64data;
+                this.saveSamplesToStorage();
+                this.updatePadSampleIndicators();
+                resolve();
+            };
+            reader.onerror = () => {
+                console.error('Error reading audio file');
+                resolve(); // Still resolve to not block the UI
+            };
+            reader.readAsDataURL(blob);
         });
     }
 
@@ -486,6 +519,171 @@ class DrumPad {
         } catch (e) {
             console.error('Error saving samples:', e);
         }
+    }
+
+    /**
+     * Find the first sample index in an audio buffer that exceeds the silence threshold.
+     * Checks all channels and returns the earliest non-silent sample.
+     */
+    findFirstNonSilentSample(audioBuffer, threshold = DrumPad.SILENCE_THRESHOLD) {
+        let firstNonSilent = audioBuffer.length;
+        
+        for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
+            const data = audioBuffer.getChannelData(channel);
+            for (let i = 0; i < data.length; i++) {
+                if (Math.abs(data[i]) > threshold) {
+                    firstNonSilent = Math.min(firstNonSilent, i);
+                    break;
+                }
+            }
+        }
+        
+        return firstNonSilent;
+    }
+
+    /**
+     * Find the last sample index in an audio buffer that exceeds the silence threshold.
+     * Checks all channels and returns the latest non-silent sample.
+     */
+    findLastNonSilentSample(audioBuffer, threshold = DrumPad.SILENCE_THRESHOLD) {
+        let lastNonSilent = 0;
+        
+        for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
+            const data = audioBuffer.getChannelData(channel);
+            for (let i = data.length - 1; i >= 0; i--) {
+                if (Math.abs(data[i]) > threshold) {
+                    lastNonSilent = Math.max(lastNonSilent, i);
+                    break;
+                }
+            }
+        }
+        
+        return lastNonSilent;
+    }
+
+    /**
+     * Trim silence from the beginning and end of an audio buffer.
+     * Returns a new AudioBuffer with silence removed.
+     */
+    trimSilence(audioBuffer) {
+        const firstNonSilent = this.findFirstNonSilentSample(audioBuffer);
+        const lastNonSilent = this.findLastNonSilentSample(audioBuffer);
+        
+        // If the entire buffer is silent or invalid range, return original buffer
+        if (firstNonSilent >= audioBuffer.length || firstNonSilent > lastNonSilent) {
+            return audioBuffer;
+        }
+        
+        // Calculate the new length (add 1 because lastNonSilent is an index)
+        const newLength = lastNonSilent - firstNonSilent + 1;
+        
+        // Create a new buffer with the trimmed length
+        const trimmedBuffer = this.audioContext.createBuffer(
+            audioBuffer.numberOfChannels,
+            newLength,
+            audioBuffer.sampleRate
+        );
+        
+        // Copy the non-silent portion to the new buffer
+        for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
+            const sourceData = audioBuffer.getChannelData(channel);
+            const destData = trimmedBuffer.getChannelData(channel);
+            for (let i = 0; i < newLength; i++) {
+                destData[i] = sourceData[firstNonSilent + i];
+            }
+        }
+        
+        return trimmedBuffer;
+    }
+
+    /**
+     * Encode an AudioBuffer to a WAV blob.
+     * This is needed because we need to re-encode the trimmed audio.
+     * Supports mono, stereo, and multi-channel audio (mixes down to stereo if > 2 channels).
+     */
+    audioBufferToWavBlob(audioBuffer) {
+        const sampleRate = audioBuffer.sampleRate;
+        const format = 1; // PCM
+        const bitsPerSample = 16;
+        const inputChannels = audioBuffer.numberOfChannels;
+        
+        // Interleave channels (mix down to stereo if more than 2 channels)
+        let interleaved;
+        let outputChannels;
+        
+        if (inputChannels === 1) {
+            // Mono
+            interleaved = audioBuffer.getChannelData(0);
+            outputChannels = 1;
+        } else if (inputChannels === 2) {
+            // Stereo
+            const left = audioBuffer.getChannelData(0);
+            const right = audioBuffer.getChannelData(1);
+            interleaved = new Float32Array(left.length * 2);
+            for (let i = 0; i < left.length; i++) {
+                interleaved[i * 2] = left[i];
+                interleaved[i * 2 + 1] = right[i];
+            }
+            outputChannels = 2;
+        } else {
+            // Multi-channel: mix down to stereo
+            const length = audioBuffer.getChannelData(0).length;
+            const left = new Float32Array(length);
+            const right = new Float32Array(length);
+            
+            // Mix odd channels to left, even channels to right
+            for (let ch = 0; ch < inputChannels; ch++) {
+                const channelData = audioBuffer.getChannelData(ch);
+                const target = (ch % 2 === 0) ? left : right;
+                for (let i = 0; i < length; i++) {
+                    target[i] += channelData[i] / Math.ceil(inputChannels / 2);
+                }
+            }
+            
+            interleaved = new Float32Array(length * 2);
+            for (let i = 0; i < length; i++) {
+                interleaved[i * 2] = left[i];
+                interleaved[i * 2 + 1] = right[i];
+            }
+            outputChannels = 2;
+        }
+        
+        // Convert to 16-bit PCM
+        const dataLength = interleaved.length * (bitsPerSample / 8);
+        const buffer = new ArrayBuffer(44 + dataLength);
+        const view = new DataView(buffer);
+        
+        // Write WAV header
+        const writeString = (offset, str) => {
+            for (let i = 0; i < str.length; i++) {
+                view.setUint8(offset + i, str.charCodeAt(i));
+            }
+        };
+        
+        writeString(0, 'RIFF');
+        view.setUint32(4, 36 + dataLength, true);
+        writeString(8, 'WAVE');
+        writeString(12, 'fmt ');
+        view.setUint32(16, 16, true); // Subchunk1Size
+        view.setUint16(20, format, true);
+        view.setUint16(22, outputChannels, true);
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * outputChannels * (bitsPerSample / 8), true);
+        view.setUint16(32, outputChannels * (bitsPerSample / 8), true);
+        view.setUint16(34, bitsPerSample, true);
+        writeString(36, 'data');
+        view.setUint32(40, dataLength, true);
+        
+        // Write PCM samples
+        let offset = 44;
+        for (let i = 0; i < interleaved.length; i++) {
+            const sample = Math.max(-1, Math.min(1, interleaved[i]));
+            const intSample = sample < 0 ? sample * 0x8000 : sample * 0x7FFF;
+            view.setInt16(offset, intSample, true);
+            offset += 2;
+        }
+        
+        return new Blob([buffer], { type: 'audio/wav' });
     }
 
     updatePadSampleIndicators() {
