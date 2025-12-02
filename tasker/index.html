@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tasker - Task Management</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>📋 Tasker</h1>
+            <p class="subtitle">Import and manage your Todoist tasks</p>
+        </header>
+
+        <div class="import-section">
+            <label for="zipFile" class="file-label">
+                <span class="upload-icon">📁</span>
+                <span>Import Todoist Backup (ZIP)</span>
+            </label>
+            <input type="file" id="zipFile" accept=".zip" />
+            <div id="importStatus" class="status-message"></div>
+        </div>
+
+        <div id="statsBar" class="stats-bar hidden">
+            <div class="stat">
+                <span class="stat-label">Tags:</span>
+                <span id="tagCount" class="stat-value">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Tasks:</span>
+                <span id="taskCount" class="stat-value">0</span>
+            </div>
+            <div class="stat">
+                <span class="stat-label">Notes:</span>
+                <span id="noteCount" class="stat-value">0</span>
+            </div>
+        </div>
+
+        <div id="filterBar" class="filter-bar hidden">
+            <button id="filterAll" class="filter-btn active">All Tasks</button>
+            <button id="filterToday" class="filter-btn">Today</button>
+            <button id="filterOverdue" class="filter-btn">Overdue</button>
+        </div>
+
+        <div id="tagsContainer" class="tags-container"></div>
+    </div>
+
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <div id="taskDetails">
+                <h2 id="taskTitle"></h2>
+                <div id="taskMeta" class="task-meta"></div>
+                <div id="taskDescription" class="task-description"></div>
+                <div id="taskNotes" class="task-notes"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="tasker.js"></script>
+</body>
+
+</html>
