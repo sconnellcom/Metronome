@@ -127,11 +127,12 @@
             <button class="modifier-btn" data-modifier="distortion" title="Toggle Distortion">
                 <span class="modifier-label">Distort</span>
             </button>
-            <button class="modifier-btn" data-modifier="pitch-up" title="Pitch Up">
-                <span class="modifier-label">Pitch ↑</span>
-            </button>
             <button class="modifier-btn" data-modifier="pitch-down" title="Pitch Down">
                 <span class="modifier-label">Pitch ↓</span>
+            </button>
+            <span id="pitchDisplay" class="pitch-display">Pitch: 0</span>
+            <button class="modifier-btn" data-modifier="pitch-up" title="Pitch Up">
+                <span class="modifier-label">Pitch ↑</span>
             </button>
             <button id="defaultSoundBtn" class="modifier-btn default-sound-btn" title="Reset Pad to Default Sound">
                 <span class="modifier-label">Default</span>
@@ -218,8 +219,7 @@
                     <ul>
                         <li><strong>Reverb:</strong> Adds echo/room effect to sounds</li>
                         <li><strong>Distort:</strong> Adds gritty distortion</li>
-                        <li><strong>Pitch ↑:</strong> Raises the pitch of sounds</li>
-                        <li><strong>Pitch ↓:</strong> Lowers the pitch of sounds</li>
+                        <li><strong>Pitch ↑/↓:</strong> Adjust pitch level from -5 to +5 (each step is one semitone)</li>
                     </ul>
 
                     <h4>Tips</h4>
@@ -236,7 +236,7 @@
                         <li><strong>Save:</strong> Save your recorded beat to the list</li>
                         <li><strong>Save & Play:</strong> Save and immediately play your beat</li>
                         <li><strong>Repeat:</strong> Toggle looping for each saved beat</li>
-                        <li><strong>Clean up tempo:</strong> Automatically detect tempo and trim to a perfect loop</li>
+                        <li><strong>⚙️ Settings:</strong> Access cleanup tempo and add effects (reverb, distortion, pitch) to saved beats</li>
                     </ul>
 
                     <h4>Custom Samples</h4>
@@ -246,6 +246,7 @@
                         <li><strong>Tap a pad:</strong> While recording, tap a pad to save and apply the sample directly</li>
                         <li><strong>Cancel:</strong> Tap the Sample button again to cancel recording</li>
                         <li><strong>Sample Library:</strong> View all saved samples with play, apply, and delete options</li>
+                        <li><strong>⚙️ Sample Effects:</strong> Add effects to samples - effects are pinned with the sample to pads</li>
                         <li><strong>Default:</strong> Tap Default, then tap a pad to reset it to the default sound</li>
                     </ul>
                 </div>

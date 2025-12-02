@@ -1438,15 +1438,160 @@ body.sample-apply-mode .pad-label::before {
     }
 }
 
-/* Cleanup button in beat list */
-.beat-cleanup-btn {
+/* Pitch Display */
+.pitch-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background: var(--surface-bg);
+    border-radius: 8px;
+    min-width: 70px;
+    border: 1px solid var(--border-color);
+}
+
+.pitch-display.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* Settings Container for Beats and Samples */
+.beat-settings-container,
+.sample-settings-container {
+    position: relative;
+    display: inline-block;
+}
+
+.beat-settings-btn,
+.sample-settings-btn {
     background: var(--surface-bg);
     color: var(--text-tertiary);
     border: 1px solid var(--border-color);
 }
 
-.beat-cleanup-btn:hover {
+.beat-settings-btn:hover,
+.sample-settings-btn:hover {
     background: var(--primary-color);
     color: white;
     border-color: var(--primary-color);
+}
+
+/* Settings Dropdown */
+.beat-settings-dropdown,
+.sample-settings-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: var(--container-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 12px;
+    display: none;
+    min-width: 180px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+    z-index: 1001;
+    margin-top: 5px;
+}
+
+.beat-settings-dropdown.visible,
+.sample-settings-dropdown.visible {
+    display: block;
+}
+
+.beat-settings-item {
+    width: 100%;
+    padding: 10px 12px;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    cursor: pointer;
+    text-align: left;
+    font-size: 0.9em;
+    font-weight: 500;
+    color: var(--text-color);
+    font-family: inherit;
+    transition: background 0.2s ease;
+}
+
+.beat-settings-item:hover {
+    background: var(--surface-bg);
+}
+
+.beat-settings-divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 8px 0;
+}
+
+.beat-settings-label,
+.sample-settings-label {
+    font-size: 0.8em;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+.beat-settings-checkbox,
+.sample-settings-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    cursor: pointer;
+    font-size: 0.9em;
+    color: var(--text-color);
+}
+
+.beat-settings-checkbox input,
+.sample-settings-checkbox input {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+.beat-settings-pitch,
+.sample-settings-pitch {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0;
+    font-size: 0.9em;
+    color: var(--text-color);
+}
+
+.beat-settings-pitch span:first-child,
+.sample-settings-pitch span:first-child {
+    flex: 1;
+}
+
+.pitch-adjust-btn {
+    width: 28px;
+    height: 28px;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--surface-bg);
+    cursor: pointer;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.pitch-adjust-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.pitch-value {
+    min-width: 30px;
+    text-align: center;
+    font-weight: 600;
 }
