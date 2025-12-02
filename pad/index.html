@@ -133,13 +133,21 @@
             <button class="modifier-btn" data-modifier="pitch-down" title="Pitch Down">
                 <span class="modifier-label">Pitch ↓</span>
             </button>
-            <button id="sampleBtn" class="modifier-btn sample-btn" title="Record a Sample">
-                <span class="modifier-label">Sample</span>
+            <button id="defaultSoundBtn" class="modifier-btn default-sound-btn" title="Reset Pad to Default Sound">
+                <span class="modifier-label">Default</span>
             </button>
         </div>
 
         <!-- Recording Controls -->
         <div class="recording-controls">
+            <button id="sampleBtn" class="sample-btn" title="Record a Sample">
+                <span class="sample-icon">🎤</span>
+                <span class="sample-label">Sample</span>
+            </button>
+            <button id="saveSampleBtn" class="save-sample-btn" style="display: none;" title="Save Sample">
+                <span class="save-sample-icon">💾</span>
+                <span class="save-sample-label">Save</span>
+            </button>
             <button id="recordBtn" class="record-btn" title="Start Recording">
                 <span class="record-icon">⏺</span>
                 <span class="record-label">Record</span>
@@ -157,7 +165,7 @@
                     <span class="menu-icon">☰</span>
                 </button>
                 <div id="menuDropdown" class="menu-dropdown">
-                    <button id="cleanupBtn" class="menu-item">🔧 Clean up tempo</button>
+                    <!-- Menu items will be added dynamically if needed -->
                 </div>
             </div>
         </div>
@@ -167,6 +175,14 @@
             <div class="beat-list-header">Saved Beats</div>
             <div id="beatListItems" class="beat-list-items">
                 <!-- Beat items will be added here dynamically -->
+            </div>
+        </div>
+
+        <!-- Sample List -->
+        <div id="sampleList" class="sample-list">
+            <div class="sample-list-header">Saved Samples</div>
+            <div id="sampleListItems" class="sample-list-items">
+                <!-- Sample items will be added here dynamically -->
             </div>
         </div>
 
@@ -226,9 +242,11 @@
                     <h4>Custom Samples</h4>
                     <ul>
                         <li><strong>Sample:</strong> Tap to start recording audio from your microphone</li>
-                        <li><strong>While recording:</strong> All pads turn into save buttons - tap one to assign your sample</li>
-                        <li><strong>Cancel:</strong> Tap the cancel button to discard the recording</li>
-                        <li><strong>Play sample:</strong> Once saved, tap the pad to play your custom sample</li>
+                        <li><strong>Save:</strong> While recording, tap Save to save the sample to the library</li>
+                        <li><strong>Tap a pad:</strong> While recording, tap a pad to save and apply the sample directly</li>
+                        <li><strong>Cancel:</strong> Tap the Sample button again to cancel recording</li>
+                        <li><strong>Sample Library:</strong> View all saved samples with play, apply, and delete options</li>
+                        <li><strong>Default:</strong> Tap Default, then tap a pad to reset it to the default sound</li>
                     </ul>
                 </div>
             </div>

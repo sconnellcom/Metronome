@@ -1116,27 +1116,92 @@ h1 {
     border-color: #dc2626;
 }
 
-/* Sample Recording Button */
+/* Sample Recording Button - moved to recording controls */
 .sample-btn {
-    position: relative;
+    flex: 1;
+    padding: 12px 8px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    font-family: inherit;
+    background: var(--surface-bg);
+    border: 2px solid var(--border-color);
+}
+
+.sample-btn:hover {
+    border-color: #a855f7;
+}
+
+.sample-icon {
+    font-size: 1.2em;
+}
+
+.sample-label {
+    font-size: 0.8em;
+    font-weight: 600;
+    color: var(--text-secondary);
 }
 
 .sample-btn.recording {
-    background: #dc2626;
-    border-color: #dc2626;
+    background: #a855f7;
+    border-color: #a855f7;
     animation: sample-recording-pulse 1s infinite;
 }
 
-.sample-btn.recording .modifier-label {
+.sample-btn.recording .sample-icon,
+.sample-btn.recording .sample-label {
     color: white;
+}
+
+/* Save Sample Button */
+.save-sample-btn {
+    flex: 1;
+    padding: 12px 8px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    font-family: inherit;
+    background: #22c55e;
+    border: 2px solid #22c55e;
+}
+
+.save-sample-btn .save-sample-icon,
+.save-sample-btn .save-sample-label {
+    color: white;
+}
+
+.save-sample-btn:hover {
+    background: #16a34a;
+    border-color: #16a34a;
+}
+
+.save-sample-icon {
+    font-size: 1.2em;
+}
+
+.save-sample-label {
+    font-size: 0.8em;
+    font-weight: 600;
 }
 
 @keyframes sample-recording-pulse {
     0%, 100% {
-        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+        box-shadow: 0 0 0 0 rgba(168, 85, 247, 0.4);
     }
     50% {
-        box-shadow: 0 0 0 8px rgba(220, 38, 38, 0);
+        box-shadow: 0 0 0 8px rgba(168, 85, 247, 0);
     }
 }
 
@@ -1195,4 +1260,193 @@ body.sample-save-mode .pad-label::before {
     right: 4px;
     font-size: 0.7em;
     opacity: 0.8;
+}
+
+/* Sample List */
+.sample-list {
+    display: none;
+    flex-direction: column;
+    background: var(--surface-bg);
+    border-radius: 12px;
+    padding: 10px;
+    max-height: 150px;
+    overflow-y: auto;
+    flex-shrink: 0;
+    touch-action: pan-y;
+    -webkit-overflow-scrolling: touch;
+    margin-top: 10px;
+}
+
+.sample-list.has-samples {
+    display: flex;
+}
+
+.sample-list-header {
+    font-size: 0.85em;
+    font-weight: 600;
+    color: var(--text-secondary);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 8px;
+}
+
+.sample-list-items {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sample-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px;
+    background: var(--container-bg);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.sample-name {
+    flex: 1;
+    font-size: 0.85em;
+    font-weight: 500;
+    color: var(--text-color);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sample-btn-small {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    font-size: 1em;
+}
+
+.sample-play-btn {
+    background: #22c55e;
+    color: white;
+}
+
+.sample-play-btn:hover {
+    opacity: 0.8;
+}
+
+.sample-apply-btn {
+    background: var(--primary-color);
+    color: white;
+}
+
+.sample-apply-btn:hover {
+    opacity: 0.8;
+}
+
+.sample-rename-btn {
+    background: var(--surface-bg);
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-color);
+}
+
+.sample-rename-btn:hover {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+}
+
+.sample-delete-btn {
+    background: var(--surface-bg);
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-color);
+}
+
+.sample-delete-btn:hover {
+    background: #dc2626;
+    color: white;
+    border-color: #dc2626;
+}
+
+/* Default Sound Mode */
+.default-sound-btn.active {
+    background: #f59e0b;
+    border-color: #f59e0b;
+}
+
+.default-sound-btn.active .modifier-label {
+    color: white;
+}
+
+body.default-sound-mode .drum-pad.has-sample {
+    background: linear-gradient(145deg, #f59e0b 0%, #d97706 100%);
+    border-color: #f59e0b;
+    animation: default-mode-pulse 1.5s infinite;
+}
+
+body.default-sound-mode .drum-pad.has-sample:hover {
+    background: linear-gradient(145deg, #d97706 0%, #b45309 100%);
+}
+
+body.default-sound-mode .drum-pad.has-sample:active,
+body.default-sound-mode .drum-pad.has-sample.active {
+    background: linear-gradient(145deg, #b45309 0%, #92400e 100%);
+}
+
+body.default-sound-mode .drum-pad.has-sample .pad-label::before {
+    content: 'Reset ';
+}
+
+@keyframes default-mode-pulse {
+    0%, 100% {
+        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3), inset 0 2px 10px rgba(255, 255, 255, 0.1);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(245, 158, 11, 0.6), inset 0 2px 10px rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* Sample Apply Mode */
+body.sample-apply-mode .drum-pad {
+    background: linear-gradient(145deg, #3b82f6 0%, #2563eb 100%);
+    border-color: #3b82f6;
+    animation: apply-mode-pulse 1.5s infinite;
+}
+
+body.sample-apply-mode .drum-pad:hover {
+    background: linear-gradient(145deg, #2563eb 0%, #1d4ed8 100%);
+}
+
+body.sample-apply-mode .drum-pad:active,
+body.sample-apply-mode .drum-pad.active {
+    background: linear-gradient(145deg, #1d4ed8 0%, #1e40af 100%);
+}
+
+body.sample-apply-mode .pad-label::before {
+    content: 'Apply ';
+}
+
+@keyframes apply-mode-pulse {
+    0%, 100% {
+        box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3), inset 0 2px 10px rgba(255, 255, 255, 0.1);
+    }
+    50% {
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.6), inset 0 2px 10px rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* Cleanup button in beat list */
+.beat-cleanup-btn {
+    background: var(--surface-bg);
+    color: var(--text-tertiary);
+    border: 1px solid var(--border-color);
+}
+
+.beat-cleanup-btn:hover {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
 }

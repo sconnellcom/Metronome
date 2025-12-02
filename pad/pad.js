@@ -6,6 +6,7 @@ class DrumPad {
     static WAVE_SHAPER_SAMPLES = 44100;
     static STORAGE_KEY = 'drumPadBeats';
     static SAMPLES_STORAGE_KEY = 'drumPadSamples';
+    static SAMPLE_LIBRARY_KEY = 'drumPadSampleLibrary'; // For named samples
     static RECORDING_BUFFER_MS = 200; // Buffer added to raw recordings for looping
     static SILENCE_THRESHOLD = 0.01; // Amplitude threshold for silence/noise detection
 
@@ -44,13 +45,23 @@ class DrumPad {
         this.isSampleRecording = false;
         this.mediaRecorder = null;
         this.recordedChunks = [];
-        this.customSamples = {}; // Map of soundType -> audio buffer
+        this.customSamples = {}; // Map of soundType -> audio buffer (for pads)
+        this.sampleLibrary = []; // Array of {id, name, data} for saved samples
         this.loadSamples();
+        this.loadSampleLibrary();
+
+        // Default sound mode state
+        this.isDefaultSoundMode = false;
+
+        // Sample apply mode state
+        this.isSampleApplyMode = false;
+        this.sampleToApply = null;
 
         this.initializeUI();
         this.setupEventListeners();
         this.initializeTheme();
         this.renderBeatList();
+        this.renderSampleList();
         this.updatePadSampleIndicators();
     }
 
@@ -95,14 +106,21 @@ class DrumPad {
         this.savePlayBtn = document.getElementById('savePlayBtn');
         this.menuBtn = document.getElementById('menuBtn');
         this.menuDropdown = document.getElementById('menuDropdown');
-        this.cleanupBtn = document.getElementById('cleanupBtn');
 
-        // Sample button
+        // Sample button and save sample button
         this.sampleBtn = document.getElementById('sampleBtn');
+        this.saveSampleBtn = document.getElementById('saveSampleBtn');
+
+        // Default sound button
+        this.defaultSoundBtn = document.getElementById('defaultSoundBtn');
 
         // Beat list
         this.beatList = document.getElementById('beatList');
         this.beatListItems = document.getElementById('beatListItems');
+
+        // Sample list
+        this.sampleList = document.getElementById('sampleList');
+        this.sampleListItems = document.getElementById('sampleListItems');
     }
 
     setupEventListeners() {
@@ -279,15 +297,20 @@ class DrumPad {
             this.toggleSampleRecording();
         });
 
+        // Save sample button (saves to library without applying to pad)
+        this.saveSampleBtn.addEventListener('click', () => {
+            this.saveSampleToLibrary();
+        });
+
+        // Default sound button
+        this.defaultSoundBtn.addEventListener('click', () => {
+            this.toggleDefaultSoundMode();
+        });
+
         // Menu
         this.menuBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             this.menuDropdown.classList.toggle('visible');
-        });
-
-        this.cleanupBtn.addEventListener('click', () => {
-            this.cleanupTempo();
-            this.menuDropdown.classList.remove('visible');
         });
 
         document.addEventListener('click', (e) => {
@@ -397,7 +420,8 @@ class DrumPad {
             
             // Update UI
             this.sampleBtn.classList.add('recording');
-            this.sampleBtn.querySelector('.modifier-label').textContent = 'Cancel';
+            this.sampleBtn.querySelector('.sample-label').textContent = 'Cancel';
+            this.saveSampleBtn.style.display = 'flex';
             document.body.classList.add('sample-save-mode');
             
         } catch (err) {
@@ -419,16 +443,18 @@ class DrumPad {
         
         // Update UI
         this.sampleBtn.classList.remove('recording');
-        this.sampleBtn.querySelector('.modifier-label').textContent = 'Sample';
+        this.sampleBtn.querySelector('.sample-label').textContent = 'Sample';
+        this.saveSampleBtn.style.display = 'none';
         document.body.classList.remove('sample-save-mode');
     }
 
-    async saveSampleToPad(soundType) {
+    // Save sample to library (without applying to a pad)
+    async saveSampleToLibrary(padName = null) {
         if (!this.isSampleRecording || !this.mediaRecorder) {
             return;
         }
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.mediaRecorder.onstop = async () => {
                 // Stop all tracks to release the microphone
                 this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
@@ -440,7 +466,8 @@ class DrumPad {
                 this.recordedChunks = [];
                 this.mediaRecorder = null;
                 this.sampleBtn.classList.remove('recording');
-                this.sampleBtn.querySelector('.modifier-label').textContent = 'Sample';
+                this.sampleBtn.querySelector('.sample-label').textContent = 'Sample';
+                this.saveSampleBtn.style.display = 'none';
                 document.body.classList.remove('sample-save-mode');
                 
                 if (chunks.length > 0) {
@@ -465,13 +492,13 @@ class DrumPad {
                         // Re-encode as WAV blob
                         const processedBlob = this.audioBufferToWavBlob(processedBuffer);
                         
-                        // Store the processed sample as base64 for persistence
-                        await this.storeSampleBlob(soundType, processedBlob);
+                        // Store the processed sample in library
+                        await this.storeSampleToLibrary(processedBlob, padName);
                         resolve();
                     } catch (e) {
                         console.error('Error processing audio sample:', e);
                         // Fall back to original behavior if processing fails
-                        await this.storeSampleBlob(soundType, blob);
+                        await this.storeSampleToLibrary(blob, padName);
                         resolve();
                     }
                 } else {
@@ -480,6 +507,118 @@ class DrumPad {
             };
             
             this.mediaRecorder.stop();
+        });
+    }
+
+    async saveSampleToPad(soundType) {
+        if (!this.isSampleRecording || !this.mediaRecorder) {
+            return;
+        }
+
+        // Get the pad name for naming the sample
+        const padName = this.getSoundTypeName(soundType);
+
+        return new Promise((resolve) => {
+            this.mediaRecorder.onstop = async () => {
+                // Stop all tracks to release the microphone
+                this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                
+                const chunks = this.recordedChunks;
+                
+                // Update UI 
+                this.isSampleRecording = false;
+                this.recordedChunks = [];
+                this.mediaRecorder = null;
+                this.sampleBtn.classList.remove('recording');
+                this.sampleBtn.querySelector('.sample-label').textContent = 'Sample';
+                this.saveSampleBtn.style.display = 'none';
+                document.body.classList.remove('sample-save-mode');
+                
+                if (chunks.length > 0) {
+                    const blob = new Blob(chunks, { type: 'audio/webm' });
+                    
+                    try {
+                        // Initialize audio context if needed for processing
+                        this.initAudioContext();
+                        
+                        // Convert blob to ArrayBuffer for decoding
+                        const arrayBuffer = await blob.arrayBuffer();
+                        
+                        // Decode the audio to an AudioBuffer
+                        const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+                        
+                        // Trim silence from beginning and end
+                        const trimmedBuffer = this.trimSilence(audioBuffer);
+                        
+                        // Apply effects (reverb, distortion, pitch) if enabled
+                        const processedBuffer = await this.applyEffectsToBuffer(trimmedBuffer);
+                        
+                        // Re-encode as WAV blob
+                        const processedBlob = this.audioBufferToWavBlob(processedBuffer);
+                        
+                        // Store the processed sample as base64 for persistence (to pad and library)
+                        await this.storeSampleBlob(soundType, processedBlob);
+                        await this.storeSampleToLibrary(processedBlob, padName);
+                        resolve();
+                    } catch (e) {
+                        console.error('Error processing audio sample:', e);
+                        // Fall back to original behavior if processing fails
+                        await this.storeSampleBlob(soundType, blob);
+                        await this.storeSampleToLibrary(blob, padName);
+                        resolve();
+                    }
+                } else {
+                    resolve();
+                }
+            };
+            
+            this.mediaRecorder.stop();
+        });
+    }
+
+    /**
+     * Get human-readable name for a sound type.
+     */
+    getSoundTypeName(soundType) {
+        const names = {
+            kick: 'Kick',
+            snare: 'Snare',
+            hihat: 'Hi-Hat',
+            tom: 'Tom',
+            cymbal: 'Cymbal',
+            clap: 'Clap',
+            cowbell: 'Cowbell',
+            rim: 'Rim',
+            shaker: 'Shaker'
+        };
+        return names[soundType] || soundType;
+    }
+
+    /**
+     * Store a sample blob to the sample library.
+     */
+    storeSampleToLibrary(blob, padName = null) {
+        return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                const base64data = reader.result;
+                // Use timestamp-based naming for unique sample names
+                const sampleName = padName || `Sample ${Date.now().toString(36).toUpperCase()}`;
+                const sample = {
+                    id: Date.now(),
+                    name: sampleName,
+                    data: base64data
+                };
+                this.sampleLibrary.push(sample);
+                this.saveSampleLibraryToStorage();
+                this.renderSampleList();
+                resolve();
+            };
+            reader.onerror = () => {
+                console.error('Error reading audio file');
+                resolve(); // Still resolve to not block the UI
+            };
+            reader.readAsDataURL(blob);
         });
     }
 
@@ -521,6 +660,26 @@ class DrumPad {
             localStorage.setItem(DrumPad.SAMPLES_STORAGE_KEY, JSON.stringify(this.customSamples));
         } catch (e) {
             console.error('Error saving samples:', e);
+        }
+    }
+
+    loadSampleLibrary() {
+        try {
+            const stored = localStorage.getItem(DrumPad.SAMPLE_LIBRARY_KEY);
+            if (stored) {
+                this.sampleLibrary = JSON.parse(stored);
+            }
+        } catch (e) {
+            console.error('Error loading sample library:', e);
+            this.sampleLibrary = [];
+        }
+    }
+
+    saveSampleLibraryToStorage() {
+        try {
+            localStorage.setItem(DrumPad.SAMPLE_LIBRARY_KEY, JSON.stringify(this.sampleLibrary));
+        } catch (e) {
+            console.error('Error saving sample library:', e);
         }
     }
 
@@ -910,6 +1069,9 @@ class DrumPad {
             beatItem.innerHTML = `
                 <span class="beat-name">${this.escapeHtml(beat.name)}</span>
                 <span class="beat-duration">${this.formatDuration(beat.duration)}</span>
+                <button class="beat-btn beat-cleanup-btn" data-index="${index}" title="Clean Up Tempo">
+                    🔧
+                </button>
                 <button class="beat-btn beat-repeat-btn ${beat.repeat ? '' : 'off'}" data-index="${index}" title="Toggle Repeat">
                     🔁
                 </button>
@@ -923,11 +1085,18 @@ class DrumPad {
             this.beatListItems.appendChild(beatItem);
 
             // Add event listeners
+            beatItem.querySelector('.beat-cleanup-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.cleanupTempoBeat(index);
+            });
+
             beatItem.querySelector('.beat-repeat-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
                 this.toggleRepeat(index);
             });
 
             beatItem.querySelector('.beat-play-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
                 if (this.playingBeats.has(index)) {
                     this.stopBeat(index);
                 } else {
@@ -936,9 +1105,175 @@ class DrumPad {
             });
 
             beatItem.querySelector('.beat-delete-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
                 this.deleteBeat(index);
             });
         });
+    }
+
+    renderSampleList() {
+        if (this.sampleLibrary.length === 0) {
+            this.sampleList.classList.remove('has-samples');
+            this.sampleListItems.innerHTML = '';
+            return;
+        }
+
+        this.sampleList.classList.add('has-samples');
+        this.sampleListItems.innerHTML = '';
+
+        this.sampleLibrary.forEach((sample, index) => {
+            const sampleItem = document.createElement('div');
+            sampleItem.className = 'sample-item';
+            sampleItem.innerHTML = `
+                <span class="sample-name">${this.escapeHtml(sample.name)}</span>
+                <button class="sample-btn-small sample-rename-btn" data-index="${index}" title="Rename Sample">
+                    ✏️
+                </button>
+                <button class="sample-btn-small sample-play-btn" data-index="${index}" title="Play Sample">
+                    ▶
+                </button>
+                <button class="sample-btn-small sample-apply-btn" data-index="${index}" title="Apply to Pad">
+                    📌
+                </button>
+                <button class="sample-btn-small sample-delete-btn" data-index="${index}" title="Delete Sample">
+                    🗑
+                </button>
+            `;
+            this.sampleListItems.appendChild(sampleItem);
+
+            // Add event listeners
+            sampleItem.querySelector('.sample-rename-btn').addEventListener('click', () => {
+                this.renameSample(index);
+            });
+
+            sampleItem.querySelector('.sample-play-btn').addEventListener('click', () => {
+                this.playSampleFromLibrary(index);
+            });
+
+            sampleItem.querySelector('.sample-apply-btn').addEventListener('click', () => {
+                this.startSampleApplyMode(index);
+            });
+
+            sampleItem.querySelector('.sample-delete-btn').addEventListener('click', () => {
+                this.deleteSampleFromLibrary(index);
+            });
+        });
+    }
+
+    async playSampleFromLibrary(index) {
+        const sample = this.sampleLibrary[index];
+        if (!sample) return;
+
+        this.initAudioContext();
+
+        try {
+            // Decode base64 data URL to audio buffer
+            const base64data = sample.data;
+            
+            // Extract the base64 content from the data URL
+            const base64Content = base64data.split(',')[1];
+            const binaryString = atob(base64Content);
+            const bytes = new Uint8Array(binaryString.length);
+            for (let i = 0; i < binaryString.length; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            const arrayBuffer = bytes.buffer;
+            
+            const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+
+            // Create buffer source
+            const source = this.audioContext.createBufferSource();
+            source.buffer = audioBuffer;
+
+            // Create gain node for volume control
+            const gainNode = this.audioContext.createGain();
+            gainNode.gain.setValueAtTime(0.8, this.audioContext.currentTime);
+
+            source.connect(gainNode);
+            gainNode.connect(this.audioContext.destination);
+            source.start();
+        } catch (e) {
+            console.error('Error playing sample from library:', e);
+        }
+    }
+
+    startSampleApplyMode(index) {
+        this.isSampleApplyMode = true;
+        this.sampleToApply = index;
+        document.body.classList.add('sample-apply-mode');
+    }
+
+    cancelSampleApplyMode() {
+        this.isSampleApplyMode = false;
+        this.sampleToApply = null;
+        document.body.classList.remove('sample-apply-mode');
+    }
+
+    applySampleToPad(soundType) {
+        if (!this.isSampleApplyMode || this.sampleToApply === null) return;
+
+        const sample = this.sampleLibrary[this.sampleToApply];
+        if (!sample) {
+            this.cancelSampleApplyMode();
+            return;
+        }
+
+        // Apply the sample data to the pad
+        this.customSamples[soundType] = sample.data;
+        this.saveSamplesToStorage();
+        this.updatePadSampleIndicators();
+        this.cancelSampleApplyMode();
+    }
+
+    deleteSampleFromLibrary(index) {
+        const sample = this.sampleLibrary[index];
+        if (!sample) return;
+
+        if (!confirm(`Delete sample "${sample.name}"?`)) {
+            return;
+        }
+
+        this.sampleLibrary.splice(index, 1);
+        this.saveSampleLibraryToStorage();
+        this.renderSampleList();
+    }
+
+    renameSample(index) {
+        const sample = this.sampleLibrary[index];
+        if (!sample) return;
+
+        const newName = prompt('Enter new name for sample:', sample.name);
+        if (newName !== null && newName.trim() !== '') {
+            this.sampleLibrary[index].name = newName.trim();
+            this.saveSampleLibraryToStorage();
+            this.renderSampleList();
+        }
+    }
+
+    // Default sound mode
+    toggleDefaultSoundMode() {
+        this.isDefaultSoundMode = !this.isDefaultSoundMode;
+        
+        if (this.isDefaultSoundMode) {
+            this.defaultSoundBtn.classList.add('active');
+            document.body.classList.add('default-sound-mode');
+        } else {
+            this.defaultSoundBtn.classList.remove('active');
+            document.body.classList.remove('default-sound-mode');
+        }
+    }
+
+    resetPadToDefault(soundType) {
+        if (this.customSamples[soundType]) {
+            delete this.customSamples[soundType];
+            this.saveSamplesToStorage();
+            this.updatePadSampleIndicators();
+        }
+        
+        // Turn off default sound mode after resetting
+        this.isDefaultSoundMode = false;
+        this.defaultSoundBtn.classList.remove('active');
+        document.body.classList.remove('default-sound-mode');
     }
 
     escapeHtml(text) {
@@ -1038,6 +1373,13 @@ class DrumPad {
     }
 
     deleteBeat(index) {
+        const beat = this.savedBeats[index];
+        if (!beat) return;
+
+        if (!confirm(`Delete beat "${beat.name}"?`)) {
+            return;
+        }
+
         if (this.playingBeats.has(index)) {
             this.stopBeat(index);
         }
@@ -1057,22 +1399,13 @@ class DrumPad {
         this.renderBeatList();
     }
 
-    cleanupTempo() {
-        // Only works on the most recent recording or if we have a selected beat
-        if (this.recordedEvents.length === 0 && this.savedBeats.length === 0) {
+    cleanupTempoBeat(targetBeatIndex) {
+        // Clean up tempo for a specific beat
+        if (targetBeatIndex < 0 || targetBeatIndex >= this.savedBeats.length) {
             return;
         }
 
-        // Get events to analyze (either current recording or last saved beat)
-        let events;
-        let targetBeatIndex = -1;
-
-        if (this.recordedEvents.length > 0) {
-            events = this.recordedEvents;
-        } else {
-            targetBeatIndex = this.savedBeats.length - 1;
-            events = this.savedBeats[targetBeatIndex].events;
-        }
+        const events = this.savedBeats[targetBeatIndex].events;
 
         if (events.length < 4) {
             return; // Need at least 4 events to detect tempo
@@ -1160,15 +1493,11 @@ class DrumPad {
         // This ensures seamless looping where listeners can't detect the loop point.
         const loopDuration = idealDuration;
 
-        // Update the events
-        if (this.recordedEvents.length > 0) {
-            this.recordedEvents = trimmedEvents;
-        } else {
-            this.savedBeats[targetBeatIndex].events = trimmedEvents;
-            this.savedBeats[targetBeatIndex].duration = loopDuration;
-            this.saveBeatsToStorage();
-            this.renderBeatList();
-        }
+        // Update the beat
+        this.savedBeats[targetBeatIndex].events = trimmedEvents;
+        this.savedBeats[targetBeatIndex].duration = loopDuration;
+        this.saveBeatsToStorage();
+        this.renderBeatList();
     }
 
     handlePadPress(pad) {
@@ -1178,6 +1507,18 @@ class DrumPad {
 
         // Add active class for visual feedback
         pad.classList.add('active');
+
+        // If in default sound mode, reset the pad to default
+        if (this.isDefaultSoundMode) {
+            this.resetPadToDefault(soundType);
+            return;
+        }
+
+        // If in sample apply mode, apply the sample to this pad
+        if (this.isSampleApplyMode) {
+            this.applySampleToPad(soundType);
+            return;
+        }
 
         // If in sample recording mode, save the sample to this pad
         if (this.isSampleRecording) {
