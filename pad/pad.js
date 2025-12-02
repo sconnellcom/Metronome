@@ -98,10 +98,10 @@ class DrumPad {
         const pitchLevel = this.modifiers.pitchLevel;
         if (this.pitchDisplay) {
             if (pitchLevel === 0) {
-                this.pitchDisplay.textContent = 'Pitch: 0';
+                this.pitchDisplay.textContent = '0';
                 this.pitchDisplay.classList.remove('active');
             } else {
-                this.pitchDisplay.textContent = `Pitch: ${pitchLevel > 0 ? '+' : ''}${pitchLevel}`;
+                this.pitchDisplay.textContent = `${pitchLevel > 0 ? '+' : ''}${pitchLevel}`;
                 this.pitchDisplay.classList.add('active');
             }
         }
@@ -267,25 +267,17 @@ class DrumPad {
             btn.addEventListener('click', () => {
                 const modifier = btn.dataset.modifier;
 
-                // Handle pitch level modifiers
-                if (modifier === 'pitch-up') {
-                    if (this.modifiers.pitchLevel < 5) {
-                        this.modifiers.pitchLevel++;
-                    }
-                    this.updatePitchDisplay();
-                    return;
-                } else if (modifier === 'pitch-down') {
-                    if (this.modifiers.pitchLevel > -5) {
-                        this.modifiers.pitchLevel--;
-                    }
-                    this.updatePitchDisplay();
-                    return;
-                }
-
                 // Toggle other modifiers (reverb, distortion)
                 this.modifiers[modifier] = !this.modifiers[modifier];
                 btn.classList.toggle('active');
             });
+        });
+
+        // Main pitch slider
+        const mainPitchSlider = document.getElementById('mainPitchSlider');
+        mainPitchSlider.addEventListener('input', (e) => {
+            this.modifiers.pitchLevel = parseInt(e.target.value);
+            this.updatePitchDisplay();
         });
 
         // Info modal
@@ -342,7 +334,11 @@ class DrumPad {
                 this.menuDropdown.classList.remove('visible');
             }
             // Close settings dropdowns when clicking outside
-            if (!e.target.closest('.beat-settings-container') && !e.target.closest('.sample-settings-container')) {
+            // Check if click is outside both container AND dropdown
+            const isInsideSettingsContainer = e.target.closest('.beat-settings-container') || e.target.closest('.sample-settings-container');
+            const isInsideDropdown = e.target.closest('.beat-settings-dropdown') || e.target.closest('.sample-settings-dropdown');
+
+            if (!isInsideSettingsContainer && !isInsideDropdown) {
                 this.closeOtherDropdowns();
             }
         });
@@ -432,26 +428,26 @@ class DrumPad {
     async startSampleRecording() {
         try {
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            
+
             this.isSampleRecording = true;
             this.recordedChunks = [];
-            
+
             this.mediaRecorder = new MediaRecorder(stream);
-            
+
             this.mediaRecorder.ondataavailable = (event) => {
                 if (event.data.size > 0) {
                     this.recordedChunks.push(event.data);
                 }
             };
-            
+
             this.mediaRecorder.start();
-            
+
             // Update UI
             this.sampleBtn.classList.add('recording');
             this.sampleBtn.querySelector('.sample-label').textContent = 'Cancel';
             this.saveSampleBtn.style.display = 'flex';
             document.body.classList.add('sample-save-mode');
-            
+
         } catch (err) {
             console.error('Error accessing microphone:', err);
             alert('Could not access microphone. Please grant microphone permission.');
@@ -464,11 +460,11 @@ class DrumPad {
             // Stop all tracks to release the microphone
             this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
         }
-        
+
         this.isSampleRecording = false;
         this.recordedChunks = [];
         this.mediaRecorder = null;
-        
+
         // Update UI
         this.sampleBtn.classList.remove('recording');
         this.sampleBtn.querySelector('.sample-label').textContent = 'Sample';
@@ -486,9 +482,9 @@ class DrumPad {
             this.mediaRecorder.onstop = async () => {
                 // Stop all tracks to release the microphone
                 this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
-                
+
                 const chunks = this.recordedChunks;
-                
+
                 // Update UI 
                 this.isSampleRecording = false;
                 this.recordedChunks = [];
@@ -497,29 +493,29 @@ class DrumPad {
                 this.sampleBtn.querySelector('.sample-label').textContent = 'Sample';
                 this.saveSampleBtn.style.display = 'none';
                 document.body.classList.remove('sample-save-mode');
-                
+
                 if (chunks.length > 0) {
                     const blob = new Blob(chunks, { type: 'audio/webm' });
-                    
+
                     try {
                         // Initialize audio context if needed for processing
                         this.initAudioContext();
-                        
+
                         // Convert blob to ArrayBuffer for decoding
                         const arrayBuffer = await blob.arrayBuffer();
-                        
+
                         // Decode the audio to an AudioBuffer
                         const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-                        
+
                         // Trim silence from beginning and end
                         const trimmedBuffer = this.trimSilence(audioBuffer);
-                        
+
                         // Apply effects (reverb, distortion, pitch) if enabled
                         const processedBuffer = await this.applyEffectsToBuffer(trimmedBuffer);
-                        
+
                         // Re-encode as WAV blob
                         const processedBlob = this.audioBufferToWavBlob(processedBuffer);
-                        
+
                         // Store the processed sample in library
                         await this.storeSampleToLibrary(processedBlob, padName);
                         resolve();
@@ -533,7 +529,7 @@ class DrumPad {
                     resolve();
                 }
             };
-            
+
             this.mediaRecorder.stop();
         });
     }
@@ -550,9 +546,9 @@ class DrumPad {
             this.mediaRecorder.onstop = async () => {
                 // Stop all tracks to release the microphone
                 this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
-                
+
                 const chunks = this.recordedChunks;
-                
+
                 // Update UI 
                 this.isSampleRecording = false;
                 this.recordedChunks = [];
@@ -561,29 +557,29 @@ class DrumPad {
                 this.sampleBtn.querySelector('.sample-label').textContent = 'Sample';
                 this.saveSampleBtn.style.display = 'none';
                 document.body.classList.remove('sample-save-mode');
-                
+
                 if (chunks.length > 0) {
                     const blob = new Blob(chunks, { type: 'audio/webm' });
-                    
+
                     try {
                         // Initialize audio context if needed for processing
                         this.initAudioContext();
-                        
+
                         // Convert blob to ArrayBuffer for decoding
                         const arrayBuffer = await blob.arrayBuffer();
-                        
+
                         // Decode the audio to an AudioBuffer
                         const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
-                        
+
                         // Trim silence from beginning and end
                         const trimmedBuffer = this.trimSilence(audioBuffer);
-                        
+
                         // Apply effects (reverb, distortion, pitch) if enabled
                         const processedBuffer = await this.applyEffectsToBuffer(trimmedBuffer);
-                        
+
                         // Re-encode as WAV blob
                         const processedBlob = this.audioBufferToWavBlob(processedBuffer);
-                        
+
                         // Store the processed sample as base64 for persistence (to pad and library)
                         await this.storeSampleBlob(soundType, processedBlob);
                         await this.storeSampleToLibrary(processedBlob, padName);
@@ -599,7 +595,7 @@ class DrumPad {
                     resolve();
                 }
             };
-            
+
             this.mediaRecorder.stop();
         });
     }
@@ -625,17 +621,36 @@ class DrumPad {
     /**
      * Store a sample blob to the sample library.
      */
-    storeSampleToLibrary(blob, padName = null) {
+    async storeSampleToLibrary(blob, padName = null) {
         return new Promise((resolve) => {
             const reader = new FileReader();
-            reader.onloadend = () => {
+            reader.onloadend = async () => {
                 const base64data = reader.result;
+                
+                // Decode audio to get duration
+                let duration = 0;
+                try {
+                    this.initAudioContext();
+                    const base64Content = base64data.split(',')[1];
+                    const binaryString = atob(base64Content);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    const arrayBuffer = bytes.buffer;
+                    const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
+                    duration = Math.round(audioBuffer.duration * 1000); // Convert to milliseconds
+                } catch (err) {
+                    console.error('Error decoding audio for duration:', err);
+                }
+                
                 // Use timestamp-based naming for unique sample names
                 const sampleName = padName || `Sample ${Date.now().toString(36).toUpperCase()}`;
                 const sample = {
                     id: Date.now(),
                     name: sampleName,
-                    data: base64data
+                    data: base64data,
+                    duration: duration
                 };
                 this.sampleLibrary.push(sample);
                 this.saveSampleLibraryToStorage();
@@ -717,7 +732,7 @@ class DrumPad {
      */
     findFirstNonSilentSample(audioBuffer, threshold = DrumPad.SILENCE_THRESHOLD) {
         let firstNonSilent = audioBuffer.length;
-        
+
         for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
             const data = audioBuffer.getChannelData(channel);
             for (let i = 0; i < data.length; i++) {
@@ -727,7 +742,7 @@ class DrumPad {
                 }
             }
         }
-        
+
         return firstNonSilent;
     }
 
@@ -737,7 +752,7 @@ class DrumPad {
      */
     findLastNonSilentSample(audioBuffer, threshold = DrumPad.SILENCE_THRESHOLD) {
         let lastNonSilent = 0;
-        
+
         for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
             const data = audioBuffer.getChannelData(channel);
             for (let i = data.length - 1; i >= 0; i--) {
@@ -747,7 +762,7 @@ class DrumPad {
                 }
             }
         }
-        
+
         return lastNonSilent;
     }
 
@@ -758,22 +773,22 @@ class DrumPad {
     trimSilence(audioBuffer) {
         const firstNonSilent = this.findFirstNonSilentSample(audioBuffer);
         const lastNonSilent = this.findLastNonSilentSample(audioBuffer);
-        
+
         // If the entire buffer is silent or invalid range, return original buffer
         if (firstNonSilent >= audioBuffer.length || firstNonSilent > lastNonSilent) {
             return audioBuffer;
         }
-        
+
         // Calculate the new length (add 1 because lastNonSilent is an index)
         const newLength = lastNonSilent - firstNonSilent + 1;
-        
+
         // Create a new buffer with the trimmed length
         const trimmedBuffer = this.audioContext.createBuffer(
             audioBuffer.numberOfChannels,
             newLength,
             audioBuffer.sampleRate
         );
-        
+
         // Copy the non-silent portion to the new buffer
         for (let channel = 0; channel < audioBuffer.numberOfChannels; channel++) {
             const sourceData = audioBuffer.getChannelData(channel);
@@ -782,7 +797,7 @@ class DrumPad {
                 destData[i] = sourceData[firstNonSilent + i];
             }
         }
-        
+
         return trimmedBuffer;
     }
 
@@ -803,7 +818,7 @@ class DrumPad {
      */
     normalizeModifiers(modifiers) {
         const normalized = { ...modifiers };
-        
+
         // Convert old pitchUp/pitchDown to pitchLevel.
         // Old behavior used playback rates of 1.5 (pitchUp) and 0.7 (pitchDown).
         // These correspond roughly to +7 and -6 semitones respectively.
@@ -820,12 +835,12 @@ class DrumPad {
             delete normalized.pitchUp;
             delete normalized.pitchDown;
         }
-        
+
         // Ensure pitchLevel is set
         if (normalized.pitchLevel === undefined) {
             normalized.pitchLevel = 0;
         }
-        
+
         return normalized;
     }
 
@@ -835,13 +850,13 @@ class DrumPad {
      */
     mergeEffects(modifiers, beatEffects) {
         const merged = { ...modifiers };
-        
+
         if (beatEffects.reverb) merged.reverb = true;
         if (beatEffects.distortion) merged.distortion = true;
         if (beatEffects.pitchLevel !== undefined && beatEffects.pitchLevel !== 0) {
             merged.pitchLevel = Math.max(-5, Math.min(5, (merged.pitchLevel || 0) + beatEffects.pitchLevel));
         }
-        
+
         return merged;
     }
 
@@ -852,9 +867,9 @@ class DrumPad {
      */
     async applyEffectsToBuffer(audioBuffer) {
         // Check if any effects are enabled
-        const hasEffects = this.modifiers.reverb || this.modifiers.distortion || 
-                          this.modifiers.pitchLevel !== 0;
-        
+        const hasEffects = this.modifiers.reverb || this.modifiers.distortion ||
+            this.modifiers.pitchLevel !== 0;
+
         if (!hasEffects) {
             return audioBuffer;
         }
@@ -888,8 +903,8 @@ class DrumPad {
             const curve = new Float32Array(DrumPad.WAVE_SHAPER_SAMPLES);
             for (let i = 0; i < DrumPad.WAVE_SHAPER_SAMPLES; i++) {
                 const x = (i * 2) / DrumPad.WAVE_SHAPER_SAMPLES - 1;
-                curve[i] = ((3 + DrumPad.DISTORTION_AMOUNT) * x * 20 * (Math.PI / 180)) / 
-                          (Math.PI + DrumPad.DISTORTION_AMOUNT * Math.abs(x));
+                curve[i] = ((3 + DrumPad.DISTORTION_AMOUNT) * x * 20 * (Math.PI / 180)) /
+                    (Math.PI + DrumPad.DISTORTION_AMOUNT * Math.abs(x));
             }
             distortion.curve = curve;
             distortion.oversample = '4x';
@@ -946,11 +961,11 @@ class DrumPad {
         const format = 1; // PCM
         const bitsPerSample = 16;
         const inputChannels = audioBuffer.numberOfChannels;
-        
+
         // Interleave channels (mix down to stereo if more than 2 channels)
         let interleaved;
         let outputChannels;
-        
+
         if (inputChannels === 1) {
             // Mono
             interleaved = audioBuffer.getChannelData(0);
@@ -970,7 +985,7 @@ class DrumPad {
             const length = audioBuffer.getChannelData(0).length;
             const left = new Float32Array(length);
             const right = new Float32Array(length);
-            
+
             // Mix odd channels to left, even channels to right
             for (let ch = 0; ch < inputChannels; ch++) {
                 const channelData = audioBuffer.getChannelData(ch);
@@ -979,7 +994,7 @@ class DrumPad {
                     target[i] += channelData[i] / Math.ceil(inputChannels / 2);
                 }
             }
-            
+
             interleaved = new Float32Array(length * 2);
             for (let i = 0; i < length; i++) {
                 interleaved[i * 2] = left[i];
@@ -987,19 +1002,19 @@ class DrumPad {
             }
             outputChannels = 2;
         }
-        
+
         // Convert to 16-bit PCM
         const dataLength = interleaved.length * (bitsPerSample / 8);
         const buffer = new ArrayBuffer(44 + dataLength);
         const view = new DataView(buffer);
-        
+
         // Write WAV header
         const writeString = (offset, str) => {
             for (let i = 0; i < str.length; i++) {
                 view.setUint8(offset + i, str.charCodeAt(i));
             }
         };
-        
+
         writeString(0, 'RIFF');
         view.setUint32(4, 36 + dataLength, true);
         writeString(8, 'WAVE');
@@ -1013,7 +1028,7 @@ class DrumPad {
         view.setUint16(34, bitsPerSample, true);
         writeString(36, 'data');
         view.setUint32(40, dataLength, true);
-        
+
         // Write PCM samples
         let offset = 44;
         for (let i = 0; i < interleaved.length; i++) {
@@ -1022,7 +1037,7 @@ class DrumPad {
             view.setInt16(offset, intSample, true);
             offset += 2;
         }
-        
+
         return new Blob([buffer], { type: 'audio/wav' });
     }
 
@@ -1072,7 +1087,7 @@ class DrumPad {
         try {
             // Get sample data using helper (supports both old string format and new object format)
             const { data: base64data, effects: sampleEffects } = this.parseSampleEntry(this.customSamples[soundType]);
-            
+
             // Extract the base64 content from the data URL
             const base64Content = base64data.split(',')[1];
             const binaryString = atob(base64Content);
@@ -1081,7 +1096,7 @@ class DrumPad {
                 bytes[i] = binaryString.charCodeAt(i);
             }
             const arrayBuffer = bytes.buffer;
-            
+
             const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
 
             // Create buffer source
@@ -1175,7 +1190,7 @@ class DrumPad {
             const isPlaying = this.playingBeats.has(index);
             const beatItem = document.createElement('div');
             beatItem.className = 'beat-item';
-            
+
             // Build effects indicators
             const effects = beat.effects || {};
             const effectIndicators = [];
@@ -1183,17 +1198,21 @@ class DrumPad {
             if (effects.distortion) effectIndicators.push('D');
             if (effects.pitchLevel && effects.pitchLevel !== 0) effectIndicators.push(`P${effects.pitchLevel > 0 ? '+' : ''}${effects.pitchLevel}`);
             const effectsText = effectIndicators.length > 0 ? ` [${effectIndicators.join(',')}]` : '';
-            
+
             beatItem.innerHTML = `
                 <span class="beat-name">${this.escapeHtml(beat.name)}${effectsText}</span>
                 <span class="beat-duration">${this.formatDuration(beat.duration)}</span>
+                <button class="beat-btn beat-repeat-btn ${beat.repeat ? '' : 'off'}" data-index="${index}" title="Toggle Repeat">
+                    🔁
+                </button>
+                <button class="beat-btn beat-play-btn ${isPlaying ? 'playing' : ''}" data-index="${index}" title="${isPlaying ? 'Pause' : 'Play'}">
+                    ${isPlaying ? '⏸' : '▶'}
+                </button>
                 <div class="beat-settings-container">
                     <button class="beat-btn beat-settings-btn" data-index="${index}" title="Settings">
                         ⚙️
                     </button>
                     <div class="beat-settings-dropdown" data-index="${index}">
-                        <button class="beat-settings-item" data-action="cleanup">🔧 Cleanup Tempo</button>
-                        <div class="beat-settings-divider"></div>
                         <div class="beat-settings-label">Effects:</div>
                         <label class="beat-settings-checkbox">
                             <input type="checkbox" data-effect="reverb" ${effects.reverb ? 'checked' : ''}>
@@ -1204,29 +1223,24 @@ class DrumPad {
                             Distortion
                         </label>
                         <div class="beat-settings-pitch">
-                            <span>Pitch:</span>
-                            <button class="pitch-adjust-btn" data-pitch-action="down">−</button>
-                            <span class="pitch-value">${effects.pitchLevel || 0}</span>
-                            <button class="pitch-adjust-btn" data-pitch-action="up">+</button>
+                            <span>Pitch: <span class="pitch-value">${effects.pitchLevel || 0}</span></span>
+                            <div class="pitch-slider-container">
+                                <input type="range" class="pitch-slider" min="-10" max="10" step="1" value="${effects.pitchLevel || 0}">
+                            </div>
                         </div>
+                        <div class="beat-settings-divider"></div>
+                        <button class="beat-settings-item" data-action="cleanup">🔧 Cleanup Tempo</button>
+                        <button class="beat-settings-item" data-action="rename">✏️ Rename</button>
+                        <button class="beat-settings-item" data-action="delete">🗑 Delete</button>
                     </div>
                 </div>
-                <button class="beat-btn beat-repeat-btn ${beat.repeat ? '' : 'off'}" data-index="${index}" title="Toggle Repeat">
-                    🔁
-                </button>
-                <button class="beat-btn beat-play-btn ${isPlaying ? 'playing' : ''}" data-index="${index}" title="${isPlaying ? 'Pause' : 'Play'}">
-                    ${isPlaying ? '⏸' : '▶'}
-                </button>
-                <button class="beat-btn beat-delete-btn" data-index="${index}" title="Delete">
-                    🗑
-                </button>
             `;
             this.beatListItems.appendChild(beatItem);
 
             // Settings button dropdown toggle
             const settingsBtn = beatItem.querySelector('.beat-settings-btn');
             const settingsDropdown = beatItem.querySelector('.beat-settings-dropdown');
-            
+
             settingsBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.closeOtherDropdowns(settingsDropdown);
@@ -1240,39 +1254,53 @@ class DrumPad {
                 settingsDropdown.classList.remove('visible');
             });
 
+            // Rename action
+            settingsDropdown.querySelector('[data-action="rename"]').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.renameBeat(index);
+                settingsDropdown.classList.remove('visible');
+            });
+
+            // Delete action
+            settingsDropdown.querySelector('[data-action="delete"]').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deleteBeat(index);
+                settingsDropdown.classList.remove('visible');
+            });
+
             // Effect checkboxes
             settingsDropdown.querySelectorAll('input[data-effect]').forEach(checkbox => {
                 checkbox.addEventListener('click', (e) => {
                     e.stopPropagation();
                 });
                 checkbox.addEventListener('change', (e) => {
+                    e.stopPropagation();
                     const effect = e.target.dataset.effect;
                     if (!this.savedBeats[index].effects) {
                         this.savedBeats[index].effects = {};
                     }
                     this.savedBeats[index].effects[effect] = e.target.checked;
                     this.saveBeatsToStorage();
-                    this.renderBeatList();
                 });
             });
 
-            // Pitch adjustment
-            settingsDropdown.querySelectorAll('.pitch-adjust-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const action = e.target.dataset.pitchAction;
-                    if (!this.savedBeats[index].effects) {
-                        this.savedBeats[index].effects = {};
-                    }
-                    const currentPitch = this.savedBeats[index].effects.pitchLevel || 0;
-                    if (action === 'up' && currentPitch < 5) {
-                        this.savedBeats[index].effects.pitchLevel = currentPitch + 1;
-                    } else if (action === 'down' && currentPitch > -5) {
-                        this.savedBeats[index].effects.pitchLevel = currentPitch - 1;
-                    }
-                    this.saveBeatsToStorage();
-                    this.renderBeatList();
-                });
+            // Pitch slider
+            const pitchSlider = settingsDropdown.querySelector('.pitch-slider');
+            const pitchValue = settingsDropdown.querySelector('.pitch-value');
+
+            pitchSlider.addEventListener('input', (e) => {
+                e.stopPropagation();
+                const value = parseInt(e.target.value);
+                pitchValue.textContent = value;
+            });
+
+            pitchSlider.addEventListener('change', (e) => {
+                e.stopPropagation();
+                if (!this.savedBeats[index].effects) {
+                    this.savedBeats[index].effects = {};
+                }
+                this.savedBeats[index].effects.pitchLevel = parseInt(e.target.value);
+                this.saveBeatsToStorage();
             });
 
             // Add event listeners for other buttons
@@ -1288,11 +1316,6 @@ class DrumPad {
                 } else {
                     this.playBeat(index);
                 }
-            });
-
-            beatItem.querySelector('.beat-delete-btn').addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.deleteBeat(index);
             });
         });
     }
@@ -1310,7 +1333,7 @@ class DrumPad {
         this.sampleLibrary.forEach((sample, index) => {
             const sampleItem = document.createElement('div');
             sampleItem.className = 'sample-item';
-            
+
             // Build effects indicators
             const effects = sample.effects || {};
             const effectIndicators = [];
@@ -1318,9 +1341,16 @@ class DrumPad {
             if (effects.distortion) effectIndicators.push('D');
             if (effects.pitchLevel && effects.pitchLevel !== 0) effectIndicators.push(`P${effects.pitchLevel > 0 ? '+' : ''}${effects.pitchLevel}`);
             const effectsText = effectIndicators.length > 0 ? ` [${effectIndicators.join(',')}]` : '';
-            
+
             sampleItem.innerHTML = `
                 <span class="sample-name">${this.escapeHtml(sample.name)}${effectsText}</span>
+                <span class="sample-duration">${this.formatDuration(sample.duration || 0)}</span>
+                <button class="sample-btn-small sample-apply-btn" data-index="${index}" title="Apply to Pad">
+                    📌
+                </button>
+                <button class="sample-btn-small sample-play-btn" data-index="${index}" title="Play Sample">
+                    ▶
+                </button>
                 <div class="sample-settings-container">
                     <button class="sample-btn-small sample-settings-btn" data-index="${index}" title="Effects">
                         ⚙️
@@ -1336,36 +1366,41 @@ class DrumPad {
                             Distortion
                         </label>
                         <div class="sample-settings-pitch">
-                            <span>Pitch:</span>
-                            <button class="pitch-adjust-btn" data-pitch-action="down">−</button>
-                            <span class="pitch-value">${effects.pitchLevel || 0}</span>
-                            <button class="pitch-adjust-btn" data-pitch-action="up">+</button>
+                            <span>Pitch: <span class="pitch-value">${effects.pitchLevel || 0}</span></span>
+                            <div class="pitch-slider-container">
+                                <input type="range" class="pitch-slider" min="-10" max="10" step="1" value="${effects.pitchLevel || 0}">
+                            </div>
                         </div>
+                        <div class="sample-settings-divider"></div>
+                        <button class="sample-settings-item" data-action="rename">✏️ Rename</button>
+                        <button class="sample-settings-item" data-action="delete">🗑 Delete</button>
                     </div>
                 </div>
-                <button class="sample-btn-small sample-rename-btn" data-index="${index}" title="Rename Sample">
-                    ✏️
-                </button>
-                <button class="sample-btn-small sample-play-btn" data-index="${index}" title="Play Sample">
-                    ▶
-                </button>
-                <button class="sample-btn-small sample-apply-btn" data-index="${index}" title="Apply to Pad">
-                    📌
-                </button>
-                <button class="sample-btn-small sample-delete-btn" data-index="${index}" title="Delete Sample">
-                    🗑
-                </button>
             `;
             this.sampleListItems.appendChild(sampleItem);
 
             // Settings button dropdown toggle
             const settingsBtn = sampleItem.querySelector('.sample-settings-btn');
             const settingsDropdown = sampleItem.querySelector('.sample-settings-dropdown');
-            
+
             settingsBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.closeOtherDropdowns(settingsDropdown);
                 settingsDropdown.classList.toggle('visible');
+            });
+
+            // Rename action
+            settingsDropdown.querySelector('[data-action="rename"]').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.renameSample(index);
+                settingsDropdown.classList.remove('visible');
+            });
+
+            // Delete action
+            settingsDropdown.querySelector('[data-action="delete"]').addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.deleteSampleFromLibrary(index);
+                settingsDropdown.classList.remove('visible');
             });
 
             // Effect checkboxes
@@ -1374,50 +1409,44 @@ class DrumPad {
                     e.stopPropagation();
                 });
                 checkbox.addEventListener('change', (e) => {
+                    e.stopPropagation();
                     const effect = e.target.dataset.effect;
                     if (!this.sampleLibrary[index].effects) {
                         this.sampleLibrary[index].effects = {};
                     }
                     this.sampleLibrary[index].effects[effect] = e.target.checked;
                     this.saveSampleLibraryToStorage();
-                    this.renderSampleList();
                 });
             });
 
-            // Pitch adjustment
-            settingsDropdown.querySelectorAll('.pitch-adjust-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const action = e.target.dataset.pitchAction;
-                    if (!this.sampleLibrary[index].effects) {
-                        this.sampleLibrary[index].effects = {};
-                    }
-                    const currentPitch = this.sampleLibrary[index].effects.pitchLevel || 0;
-                    if (action === 'up' && currentPitch < 5) {
-                        this.sampleLibrary[index].effects.pitchLevel = currentPitch + 1;
-                    } else if (action === 'down' && currentPitch > -5) {
-                        this.sampleLibrary[index].effects.pitchLevel = currentPitch - 1;
-                    }
-                    this.saveSampleLibraryToStorage();
-                    this.renderSampleList();
-                });
+            // Pitch slider
+            const pitchSlider = settingsDropdown.querySelector('.pitch-slider');
+            const pitchValue = settingsDropdown.querySelector('.pitch-value');
+
+            pitchSlider.addEventListener('input', (e) => {
+                e.stopPropagation();
+                const value = parseInt(e.target.value);
+                pitchValue.textContent = value;
+            });
+
+            pitchSlider.addEventListener('change', (e) => {
+                e.stopPropagation();
+                if (!this.sampleLibrary[index].effects) {
+                    this.sampleLibrary[index].effects = {};
+                }
+                this.sampleLibrary[index].effects.pitchLevel = parseInt(e.target.value);
+                this.saveSampleLibraryToStorage();
             });
 
             // Add event listeners for other buttons
-            sampleItem.querySelector('.sample-rename-btn').addEventListener('click', () => {
-                this.renameSample(index);
-            });
-
-            sampleItem.querySelector('.sample-play-btn').addEventListener('click', () => {
+            sampleItem.querySelector('.sample-play-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
                 this.playSampleFromLibrary(index);
             });
 
-            sampleItem.querySelector('.sample-apply-btn').addEventListener('click', () => {
+            sampleItem.querySelector('.sample-apply-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
                 this.startSampleApplyMode(index);
-            });
-
-            sampleItem.querySelector('.sample-delete-btn').addEventListener('click', () => {
-                this.deleteSampleFromLibrary(index);
             });
         });
     }
@@ -1431,7 +1460,7 @@ class DrumPad {
         try {
             // Decode base64 data URL to audio buffer
             const base64data = sample.data;
-            
+
             // Extract the base64 content from the data URL
             const base64Content = base64data.split(',')[1];
             const binaryString = atob(base64Content);
@@ -1440,7 +1469,7 @@ class DrumPad {
                 bytes[i] = binaryString.charCodeAt(i);
             }
             const arrayBuffer = bytes.buffer;
-            
+
             const audioBuffer = await this.audioContext.decodeAudioData(arrayBuffer);
 
             // Create buffer source
@@ -1453,7 +1482,7 @@ class DrumPad {
 
             // Get sample effects
             const sampleEffects = sample.effects || {};
-            
+
             // Apply effects chain
             let currentNode = source;
 
@@ -1552,10 +1581,22 @@ class DrumPad {
         }
     }
 
+    renameBeat(index) {
+        const beat = this.savedBeats[index];
+        if (!beat) return;
+
+        const newName = prompt('Enter new name for beat:', beat.name);
+        if (newName !== null && newName.trim() !== '') {
+            this.savedBeats[index].name = newName.trim();
+            this.saveBeatsToStorage();
+            this.renderBeatList();
+        }
+    }
+
     // Default sound mode
     toggleDefaultSoundMode() {
         this.isDefaultSoundMode = !this.isDefaultSoundMode;
-        
+
         if (this.isDefaultSoundMode) {
             this.defaultSoundBtn.classList.add('active');
             document.body.classList.add('default-sound-mode');
@@ -1571,7 +1612,7 @@ class DrumPad {
             this.saveSamplesToStorage();
             this.updatePadSampleIndicators();
         }
-        
+
         // Turn off default sound mode after resetting
         this.isDefaultSoundMode = false;
         this.defaultSoundBtn.classList.remove('active');
@@ -1622,7 +1663,7 @@ class DrumPad {
 
                     // Apply recorded modifiers (with backward compatibility)
                     this.modifiers = this.normalizeModifiers(event.modifiers);
-                    
+
                     // Apply beat-level effects on top of event modifiers
                     if (beat.effects) {
                         this.modifiers = this.mergeEffects(this.modifiers, beat.effects);

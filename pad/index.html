@@ -25,7 +25,8 @@
                     <button class="theme-btn theme-blue-dark" data-theme="blue-dark" title="Dark Blue Theme"></button>
                     <button class="theme-btn theme-light" data-theme="light" title="Olive Theme"></button>
                     <button class="theme-btn theme-dark" data-theme="dark" title="Dark Olive Theme"></button>
-                    <button class="theme-btn theme-warm-light" data-theme="warm-light" title="Warm Light Theme"></button>
+                    <button class="theme-btn theme-warm-light" data-theme="warm-light"
+                        title="Warm Light Theme"></button>
                     <button class="theme-btn theme-warm-dark" data-theme="warm-dark" title="Warm Dark Theme"></button>
                     <button class="theme-btn theme-red" data-theme="red" title="Red Theme"></button>
                     <button class="theme-btn theme-red-dark" data-theme="red-dark" title="Dark Red Theme"></button>
@@ -127,15 +128,13 @@
             <button class="modifier-btn" data-modifier="distortion" title="Toggle Distortion">
                 <span class="modifier-label">Distort</span>
             </button>
-            <button class="modifier-btn" data-modifier="pitch-down" title="Pitch Down">
-                <span class="modifier-label">Pitch ↓</span>
-            </button>
-            <span id="pitchDisplay" class="pitch-display">Pitch: 0</span>
-            <button class="modifier-btn" data-modifier="pitch-up" title="Pitch Up">
-                <span class="modifier-label">Pitch ↑</span>
-            </button>
+            <div class="main-pitch-control">
+                <label for="mainPitchSlider" class="pitch-label">Pitch:</label>
+                <input type="range" id="mainPitchSlider" class="main-pitch-slider" min="-10" max="10" step="1" value="0">
+                <span id="pitchDisplay" class="pitch-display">0</span>
+            </div>
             <button id="defaultSoundBtn" class="modifier-btn default-sound-btn" title="Reset Pad to Default Sound">
-                <span class="modifier-label">Default</span>
+                <span class="modifier-label">Reset</span>
             </button>
         </div>
 
@@ -219,7 +218,8 @@
                     <ul>
                         <li><strong>Reverb:</strong> Adds echo/room effect to sounds</li>
                         <li><strong>Distort:</strong> Adds gritty distortion</li>
-                        <li><strong>Pitch ↑/↓:</strong> Adjust pitch level from -5 to +5 (each step is one semitone)</li>
+                        <li><strong>Pitch ↑/↓:</strong> Adjust pitch level from -5 to +5 (each step is one semitone)
+                        </li>
                     </ul>
 
                     <h4>Tips</h4>
@@ -236,18 +236,22 @@
                         <li><strong>Save:</strong> Save your recorded beat to the list</li>
                         <li><strong>Save & Play:</strong> Save and immediately play your beat</li>
                         <li><strong>Repeat:</strong> Toggle looping for each saved beat</li>
-                        <li><strong>⚙️ Settings:</strong> Access cleanup tempo and add effects (reverb, distortion, pitch) to saved beats</li>
+                        <li><strong>⚙️ Settings:</strong> Access cleanup tempo and add effects (reverb, distortion,
+                            pitch) to saved beats</li>
                     </ul>
 
                     <h4>Custom Samples</h4>
                     <ul>
                         <li><strong>Sample:</strong> Tap to start recording audio from your microphone</li>
                         <li><strong>Save:</strong> While recording, tap Save to save the sample to the library</li>
-                        <li><strong>Tap a pad:</strong> While recording, tap a pad to save and apply the sample directly</li>
+                        <li><strong>Tap a pad:</strong> While recording, tap a pad to save and apply the sample directly
+                        </li>
                         <li><strong>Cancel:</strong> Tap the Sample button again to cancel recording</li>
-                        <li><strong>Sample Library:</strong> View all saved samples with play, apply, and delete options</li>
-                        <li><strong>⚙️ Sample Effects:</strong> Add effects to samples - effects are pinned with the sample to pads</li>
-                        <li><strong>Default:</strong> Tap Default, then tap a pad to reset it to the default sound</li>
+                        <li><strong>Sample Library:</strong> View all saved samples with play, apply, and delete options
+                        </li>
+                        <li><strong>⚙️ Sample Effects:</strong> Add effects to samples - effects are pinned with the
+                            sample to pads</li>
+                        <li><strong>Reset:</strong> Tap Reset, then tap a pad to reset it to the default sound</li>
                     </ul>
                 </div>
             </div>
