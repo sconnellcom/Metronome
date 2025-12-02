@@ -7,6 +7,128 @@ session_start();
 $passwordFile = __DIR__ . '/../data/password.txt';
 $correctPassword = file_exists($passwordFile) ? trim(file_get_contents($passwordFile)) : 'greenfish';
 
+// COMMON HTML HEADER & FOOTER
+function renderHeader($title) {
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title><?php echo htmlspecialchars($title); ?></title>
+        <style>
+            * { margin: 0; padding: 0; box-sizing: border-box; }
+            body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                min-height: 100vh;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                padding: 20px;
+            }
+            .content-box {
+                background: white;
+                padding: 40px;
+                border-radius: 20px;
+                box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+                max-width: 800px;
+                width: 100%;
+            }
+            h2 {
+                color: #333;
+                margin-bottom: 10px;
+                font-size: 1.8em;
+                text-align: center;
+            }
+            p {
+                color: #666;
+                margin-bottom: 25px;
+                text-align: center;
+            }
+            input[type="password"] {
+                width: 100%;
+                padding: 15px;
+                border: 2px solid #e2e8f0;
+                border-radius: 10px;
+                font-size: 1.1em;
+                text-align: center;
+                margin-bottom: 15px;
+                transition: border-color 0.3s ease;
+            }
+            input[type="password"]:focus {
+                outline: none;
+                border-color: #667eea;
+            }
+            input[type="password"].error {
+                border-color: #dc2626;
+                animation: shake 0.5s;
+            }
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-10px); }
+                75% { transform: translateX(10px); }
+            }
+            button {
+                width: 100%;
+                padding: 15px;
+                background: #667eea;
+                color: white;
+                border: none;
+                border-radius: 10px;
+                font-size: 1.1em;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+            }
+            button:hover {
+                background: #764ba2;
+                transform: translateY(-2px);
+                box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            }
+            .error-message {
+                color: #dc2626;
+                font-size: 0.9em;
+                margin-top: 10px;
+                text-align: center;
+            }
+            .output {
+                background: #f8fafc;
+                border: 2px solid #e2e8f0;
+                border-radius: 10px;
+                padding: 20px;
+                margin-bottom: 20px;
+                font-family: 'Courier New', monospace;
+                font-size: 0.9em;
+                color: #334155;
+                max-height: 400px;
+                overflow-y: auto;
+                text-align: left;
+            }
+            .output br {
+                margin-bottom: 5px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="content-box">
+    <?php
+}
+
+function renderFooter() {
+    ?>
+        </div>
+    </body>
+    </html>
+    <?php
+}
+
+// Check if update was triggered
+$runUpdate = false;
+if (isset($_SESSION['authenticated']) && $_SESSION['authenticated'] === true && isset($_POST['run_update'])) {
+    $runUpdate = true;
+}
+
 if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['password'])) {
         if ($_POST['password'] === $correctPassword) {
@@ -17,112 +139,47 @@ if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
     }
     
     if (!isset($_SESSION['authenticated']) || $_SESSION['authenticated'] !== true) {
+        renderHeader('Password Required');
         ?>
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Password Required</title>
-            <style>
-                * { margin: 0; padding: 0; box-sizing: border-box; }
-                body {
-                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                    min-height: 100vh;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 20px;
-                }
-                .password-box {
-                    background: white;
-                    padding: 40px;
-                    border-radius: 20px;
-                    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-                    text-align: center;
-                    max-width: 400px;
-                    width: 100%;
-                }
-                h2 {
-                    color: #333;
-                    margin-bottom: 10px;
-                    font-size: 1.8em;
-                }
-                p {
-                    color: #666;
-                    margin-bottom: 25px;
-                }
-                input[type="password"] {
-                    width: 100%;
-                    padding: 15px;
-                    border: 2px solid #e2e8f0;
-                    border-radius: 10px;
-                    font-size: 1.1em;
-                    text-align: center;
-                    margin-bottom: 15px;
-                    transition: border-color 0.3s ease;
-                }
-                input[type="password"]:focus {
-                    outline: none;
-                    border-color: #667eea;
-                }
-                input[type="password"].error {
-                    border-color: #dc2626;
-                    animation: shake 0.5s;
-                }
-                @keyframes shake {
-                    0%, 100% { transform: translateX(0); }
-                    25% { transform: translateX(-10px); }
-                    75% { transform: translateX(10px); }
-                }
-                button {
-                    width: 100%;
-                    padding: 15px;
-                    background: #667eea;
-                    color: white;
-                    border: none;
-                    border-radius: 10px;
-                    font-size: 1.1em;
-                    font-weight: 600;
-                    cursor: pointer;
-                    transition: all 0.3s ease;
-                }
-                button:hover {
-                    background: #764ba2;
-                    transform: translateY(-2px);
-                    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-                }
-                .error-message {
-                    color: #dc2626;
-                    font-size: 0.9em;
-                    margin-top: 10px;
-                }
-            </style>
-        </head>
-        <body>
-            <div class="password-box">
-                <h2>🔒 Password Required</h2>
-                <p>Please enter the password to access the updater</p>
-                <form method="POST">
-                    <input type="password" name="password" placeholder="Enter password" 
-                           class="<?php echo isset($loginError) ? 'error' : ''; ?>" 
-                           autocomplete="off" autofocus required>
-                    <button type="submit">Unlock</button>
-                    <?php if (isset($loginError)): ?>
-                        <div class="error-message"><?php echo htmlspecialchars($loginError); ?></div>
-                    <?php endif; ?>
-                </form>
-            </div>
-        </body>
-        </html>
+        <h2>🔒 Password Required</h2>
+        <p>Please enter the password to access the updater</p>
+        <form method="POST">
+            <input type="password" name="password" placeholder="Enter password" 
+                   class="<?php echo isset($loginError) ? 'error' : ''; ?>" 
+                   autocomplete="off" autofocus required>
+            <button type="submit">Unlock</button>
+            <?php if (isset($loginError)): ?>
+                <div class="error-message"><?php echo htmlspecialchars($loginError); ?></div>
+            <?php endif; ?>
+        </form>
         <?php
+        renderFooter();
         exit;
     }
 }
 
-while (ob_get_level()) ob_end_clean(); // Clear all output buffers
-ob_implicit_flush(1);                   // Auto-flush output
+// Show update button if authenticated but update not triggered yet
+if (!$runUpdate) {
+    renderHeader('Update App');
+    ?>
+    <h2>🚀 Ready to Update</h2>
+    <p>Click the button below to update the app</p>
+    <form method="POST">
+        <input type="hidden" name="run_update" value="1">
+        <button type="submit">Update Now</button>
+    </form>
+    <?php
+    renderFooter();
+    exit;
+}
+
+// If we get here, authenticated and update triggered - show output in styled wrapper
+renderHeader('Updating App');
+?>
+<h2>⚙️ Updating App</h2>
+<div class="output">
+<?php
+flush();
 
 set_time_limit(300);        // 5min timeout
 ini_set('memory_limit', '512M');
@@ -343,4 +400,12 @@ $zip->close();
 
 echo "Update completed: $extracted files extracted.<br />";
 echo "Lock released. Script remains for manual re-runs.<br />";
+?>
+</div>
+<form method="POST">
+    <input type="hidden" name="run_update" value="1">
+    <button type="submit">Update Again</button>
+</form>
+<?php
+renderFooter();
 ?>
