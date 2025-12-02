@@ -709,9 +709,18 @@ h1 {
     transition: color 0.3s ease;
 }
 
-/* Responsive Design */
+/* Responsive Design - Mobile full width/height */
 @media (max-width: 480px) {
+    body {
+        padding: 0;
+        align-items: stretch;
+    }
+
     .container {
+        max-width: 100%;
+        width: 100%;
+        min-height: 100vh;
+        border-radius: 0;
         padding: 10px;
     }
 

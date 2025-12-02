@@ -916,15 +916,19 @@
             margin-top: 2px;
         }
 
-        /* Mobile Responsive Styles */
+        /* Mobile Responsive Styles - Full width/height */
         @media (max-width: 480px) {
             body {
-                padding-top: 20px;
+                padding: 0;
+                align-items: stretch;
             }
 
             .container {
+                max-width: 100%;
+                width: 100%;
+                min-height: 100vh;
+                border-radius: 0;
                 padding: 15px;
-                border-radius: 15px;
             }
         }
 
