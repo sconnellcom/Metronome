@@ -518,7 +518,7 @@ class DrumPad {
         // Get the pad name for naming the sample
         const padName = this.getSoundTypeName(soundType);
 
-        return new Promise((resolve, reject) => {
+        return new Promise((resolve) => {
             this.mediaRecorder.onstop = async () => {
                 // Stop all tracks to release the microphone
                 this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
@@ -602,7 +602,8 @@ class DrumPad {
             const reader = new FileReader();
             reader.onloadend = () => {
                 const base64data = reader.result;
-                const sampleName = padName || `Sample ${this.sampleLibrary.length + 1}`;
+                // Use timestamp-based naming for unique sample names
+                const sampleName = padName || `Sample ${Date.now().toString(36).toUpperCase()}`;
                 const sample = {
                     id: Date.now(),
                     name: sampleName,
@@ -1085,14 +1086,17 @@ class DrumPad {
 
             // Add event listeners
             beatItem.querySelector('.beat-cleanup-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
                 this.cleanupTempoBeat(index);
             });
 
             beatItem.querySelector('.beat-repeat-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
                 this.toggleRepeat(index);
             });
 
             beatItem.querySelector('.beat-play-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
                 if (this.playingBeats.has(index)) {
                     this.stopBeat(index);
                 } else {
@@ -1101,6 +1105,7 @@ class DrumPad {
             });
 
             beatItem.querySelector('.beat-delete-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
                 this.deleteBeat(index);
             });
         });
