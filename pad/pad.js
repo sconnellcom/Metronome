@@ -459,15 +459,18 @@ class DrumPad {
                         // Trim silence from beginning and end
                         const trimmedBuffer = this.trimSilence(audioBuffer);
                         
-                        // Re-encode as WAV blob
-                        const trimmedBlob = this.audioBufferToWavBlob(trimmedBuffer);
+                        // Apply effects (reverb, distortion, pitch) if enabled
+                        const processedBuffer = await this.applyEffectsToBuffer(trimmedBuffer);
                         
-                        // Store the trimmed sample as base64 for persistence
-                        await this.storeSampleBlob(soundType, trimmedBlob);
+                        // Re-encode as WAV blob
+                        const processedBlob = this.audioBufferToWavBlob(processedBuffer);
+                        
+                        // Store the processed sample as base64 for persistence
+                        await this.storeSampleBlob(soundType, processedBlob);
                         resolve();
                     } catch (e) {
                         console.error('Error processing audio sample:', e);
-                        // Fall back to original behavior if trimming fails
+                        // Fall back to original behavior if processing fails
                         await this.storeSampleBlob(soundType, blob);
                         resolve();
                     }
@@ -594,6 +597,102 @@ class DrumPad {
         }
         
         return trimmedBuffer;
+    }
+
+    /**
+     * Apply current effects (reverb, distortion, pitch) to an audio buffer.
+     * Returns a new AudioBuffer with effects applied.
+     * Uses OfflineAudioContext for offline rendering.
+     */
+    async applyEffectsToBuffer(audioBuffer) {
+        // Check if any effects are enabled
+        const hasEffects = this.modifiers.reverb || this.modifiers.distortion || 
+                          this.modifiers.pitchUp || this.modifiers.pitchDown;
+        
+        if (!hasEffects) {
+            return audioBuffer;
+        }
+
+        // Calculate output duration (pitch affects playback rate, which affects duration)
+        let playbackRate = 1;
+        if (this.modifiers.pitchUp) {
+            playbackRate = 1.5;
+        } else if (this.modifiers.pitchDown) {
+            playbackRate = 0.7;
+        }
+
+        // Reverb adds extra time to the output
+        const reverbTail = this.modifiers.reverb ? DrumPad.REVERB_DURATION : 0;
+        const outputDuration = (audioBuffer.duration / playbackRate) + reverbTail;
+        const outputLength = Math.ceil(outputDuration * audioBuffer.sampleRate);
+
+        // Create offline audio context for rendering
+        const offlineContext = new OfflineAudioContext(
+            audioBuffer.numberOfChannels,
+            outputLength,
+            audioBuffer.sampleRate
+        );
+
+        // Create buffer source
+        const source = offlineContext.createBufferSource();
+        source.buffer = audioBuffer;
+        source.playbackRate.value = playbackRate;
+
+        // Build effects chain
+        let currentNode = source;
+
+        // Apply distortion
+        if (this.modifiers.distortion) {
+            const distortion = offlineContext.createWaveShaper();
+            const curve = new Float32Array(DrumPad.WAVE_SHAPER_SAMPLES);
+            for (let i = 0; i < DrumPad.WAVE_SHAPER_SAMPLES; i++) {
+                const x = (i * 2) / DrumPad.WAVE_SHAPER_SAMPLES - 1;
+                curve[i] = ((3 + DrumPad.DISTORTION_AMOUNT) * x * 20 * (Math.PI / 180)) / 
+                          (Math.PI + DrumPad.DISTORTION_AMOUNT * Math.abs(x));
+            }
+            distortion.curve = curve;
+            distortion.oversample = '4x';
+            currentNode.connect(distortion);
+            currentNode = distortion;
+        }
+
+        // Apply reverb
+        if (this.modifiers.reverb) {
+            // Create reverb impulse response for offline context
+            // Use the same channel count as the input audio buffer
+            const reverbLength = offlineContext.sampleRate * DrumPad.REVERB_DURATION;
+            const impulseChannels = audioBuffer.numberOfChannels;
+            const impulse = offlineContext.createBuffer(impulseChannels, reverbLength, offlineContext.sampleRate);
+            for (let channel = 0; channel < impulseChannels; channel++) {
+                const channelData = impulse.getChannelData(channel);
+                for (let i = 0; i < reverbLength; i++) {
+                    channelData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / reverbLength, 2);
+                }
+            }
+
+            const convolver = offlineContext.createConvolver();
+            convolver.buffer = impulse;
+
+            const dryGain = offlineContext.createGain();
+            const wetGain = offlineContext.createGain();
+            dryGain.gain.value = 0.7;
+            wetGain.gain.value = 0.5;
+
+            currentNode.connect(dryGain);
+            currentNode.connect(convolver);
+            convolver.connect(wetGain);
+
+            dryGain.connect(offlineContext.destination);
+            wetGain.connect(offlineContext.destination);
+        } else {
+            currentNode.connect(offlineContext.destination);
+        }
+
+        // Start playback and render
+        source.start(0);
+        const renderedBuffer = await offlineContext.startRendering();
+
+        return renderedBuffer;
     }
 
     /**

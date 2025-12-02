@@ -487,11 +487,13 @@ h1 {
 
 .drum-pad-top {
     border-radius: 16px 16px 0 0;
+    flex: 0.75;
 }
 
 .drum-pad-bottom {
     border-radius: 0 0 16px 16px;
     border-top: none;
+    flex: 0.5;
 }
 
 .drum-pad:hover {
