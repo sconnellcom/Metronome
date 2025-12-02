@@ -448,18 +448,15 @@ h1 {
 
 /* Drum Pads Grid */
 .drum-pads {
-    flex: 1;
     display: flex;
     flex-direction: column;
     gap: 15px;
     padding: 10px 0;
-    min-height: 0;
 }
 
 .pads-row {
     display: flex;
     gap: 15px;
-    flex: 1;
 }
 
 .drum-pad-column {
@@ -470,7 +467,6 @@ h1 {
 }
 
 .drum-pad {
-    flex: 1;
     border: none;
     background: var(--pad-bg);
     cursor: pointer;
@@ -487,13 +483,13 @@ h1 {
 
 .drum-pad-top {
     border-radius: 16px 16px 0 0;
-    flex: 0.75;
+    height: 80px;
 }
 
 .drum-pad-bottom {
     border-radius: 0 0 16px 16px;
     border-top: none;
-    flex: 0.5;
+    height: 40px;
 }
 
 .drum-pad:hover {
@@ -739,10 +735,12 @@ h1 {
 
     .drum-pad-top {
         border-radius: 12px 12px 0 0;
+        height: 70px;
     }
 
     .drum-pad-bottom {
         border-radius: 0 0 12px 12px;
+        height: 35px;
     }
 
     .pad-icon {
@@ -773,10 +771,12 @@ h1 {
 
     .drum-pad-top {
         border-radius: 10px 10px 0 0;
+        height: 60px;
     }
 
     .drum-pad-bottom {
         border-radius: 0 0 10px 10px;
+        height: 30px;
     }
 
     .pad-icon {
@@ -804,6 +804,14 @@ h1 {
 
     .pads-row {
         gap: 10px;
+    }
+
+    .drum-pad-top {
+        height: 60px;
+    }
+
+    .drum-pad-bottom {
+        height: 30px;
     }
 
     .pad-icon {
