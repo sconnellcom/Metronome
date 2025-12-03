@@ -477,6 +477,12 @@ class Tuner {
         // For low frequencies, we need to start higher to avoid false peaks
         // Offset 30 corresponds to ~1470 Hz maximum frequency at 44100 Hz sample rate
         const MIN_OFFSET = 30;
+        
+        // Correlation thresholds for pitch detection
+        const LOCAL_PEAK_THRESHOLD = 0.7;      // Minimum correlation to consider as a local peak
+        const STRONG_CORRELATION_THRESHOLD = 0.9;  // Accept immediately if correlation is this strong
+        const MIN_CORRELATION_THRESHOLD = 0.5;     // Minimum acceptable correlation for final result
+        
         let bestOffset = -1;
         let bestCorrelation = 0;
         const correlations = new Array(MAX_SAMPLES);
@@ -500,13 +506,18 @@ class Tuner {
         // Helper function to refine offset with parabolic interpolation
         const refineWithInterpolation = (offset) => {
             // Ensure we have valid neighbors for interpolation
-            if (offset <= MIN_OFFSET || offset >= MAX_SAMPLES - 1 || correlations[offset] === 0) {
+            if (offset <= MIN_OFFSET || offset >= MAX_SAMPLES - 1) {
                 return offset;
             }
-            const shift = (correlations[offset + 1] - correlations[offset - 1]) / (2 * correlations[offset]);
+            const centerCorr = correlations[offset];
+            // Additional safety check for division by zero
+            if (centerCorr === 0 || !isFinite(centerCorr)) {
+                return offset;
+            }
+            const shift = (correlations[offset + 1] - correlations[offset - 1]) / (2 * centerCorr);
             const refinedOffset = offset + shift;
             // Validate refined offset is reasonable
-            if (refinedOffset > 0 && refinedOffset < MAX_SAMPLES) {
+            if (refinedOffset > 0 && refinedOffset < MAX_SAMPLES && isFinite(refinedOffset)) {
                 return refinedOffset;
             }
             return offset;
@@ -518,7 +529,7 @@ class Tuner {
             const correlation = correlations[offset];
             
             // Check if this is a local maximum with good correlation strength
-            if (correlation > 0.7 && 
+            if (correlation > LOCAL_PEAK_THRESHOLD && 
                 correlation > correlations[offset - 1] && 
                 correlation > correlations[offset + 1]) {
                 
@@ -528,7 +539,7 @@ class Tuner {
                     bestOffset = offset;
                     
                     // For strong correlation, accept this as the fundamental
-                    if (correlation > 0.9) {
+                    if (correlation > STRONG_CORRELATION_THRESHOLD) {
                         return sampleRate / refineWithInterpolation(offset);
                     }
                 }
@@ -536,7 +547,7 @@ class Tuner {
         }
 
         // If we found a good correlation peak, use it
-        if (bestCorrelation > 0.5 && bestOffset >= MIN_OFFSET) {
+        if (bestCorrelation > MIN_CORRELATION_THRESHOLD && bestOffset >= MIN_OFFSET) {
             return sampleRate / refineWithInterpolation(bestOffset);
         }
 
