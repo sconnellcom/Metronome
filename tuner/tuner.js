@@ -497,6 +497,21 @@ class Tuner {
             correlations[offset] = denominator > 0 ? 1 - (correlation / denominator) : 0;
         }
 
+        // Helper function to refine offset with parabolic interpolation
+        const refineWithInterpolation = (offset) => {
+            // Ensure we have valid neighbors for interpolation
+            if (offset <= MIN_OFFSET || offset >= MAX_SAMPLES - 1 || correlations[offset] === 0) {
+                return offset;
+            }
+            const shift = (correlations[offset + 1] - correlations[offset - 1]) / (2 * correlations[offset]);
+            const refinedOffset = offset + shift;
+            // Validate refined offset is reasonable
+            if (refinedOffset > 0 && refinedOffset < MAX_SAMPLES) {
+                return refinedOffset;
+            }
+            return offset;
+        };
+
         // Second pass: find first strong local maximum
         // This represents the fundamental period
         for (let offset = MIN_OFFSET + 1; offset < MAX_SAMPLES - 1; offset++) {
@@ -514,25 +529,15 @@ class Tuner {
                     
                     // For strong correlation, accept this as the fundamental
                     if (correlation > 0.9) {
-                        const shift = (correlations[offset + 1] - correlations[offset - 1]) / (2 * correlations[offset]);
-                        const refinedOffset = offset + shift;
-                        if (refinedOffset > 0 && refinedOffset < MAX_SAMPLES) {
-                            return sampleRate / refinedOffset;
-                        }
-                        return sampleRate / offset;
+                        return sampleRate / refineWithInterpolation(offset);
                     }
                 }
             }
         }
 
         // If we found a good correlation peak, use it
-        if (bestCorrelation > 0.5 && bestOffset > MIN_OFFSET) {
-            const shift = (correlations[bestOffset + 1] - correlations[bestOffset - 1]) / (2 * correlations[bestOffset]);
-            const refinedOffset = bestOffset + shift;
-            if (refinedOffset > 0 && refinedOffset < MAX_SAMPLES) {
-                return sampleRate / refinedOffset;
-            }
-            return sampleRate / bestOffset;
+        if (bestCorrelation > 0.5 && bestOffset >= MIN_OFFSET) {
+            return sampleRate / refineWithInterpolation(bestOffset);
         }
 
         return -1;
