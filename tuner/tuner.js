@@ -474,19 +474,14 @@ class Tuner {
         const SIZE = buffer.length;
         const MAX_SAMPLES = Math.floor(SIZE / 2);
         // Minimum offset to skip trivial self-correlation at offset 0
-        // This corresponds to the maximum detectable frequency
-        // At 44100 Hz sample rate: offset 20 = 2205 Hz, offset 30 = 1470 Hz
-        const MIN_OFFSET = 20;
+        // For low frequencies, we need to start higher to avoid false peaks
+        // Offset 30 corresponds to ~1470 Hz maximum frequency at 44100 Hz sample rate
+        const MIN_OFFSET = 30;
         let bestOffset = -1;
         let bestCorrelation = 0;
-        let foundGoodCorrelation = false;
         const correlations = new Array(MAX_SAMPLES);
-        
-        // To better detect low frequencies (like cello C string at 65.41 Hz),
-        // we need to search more thoroughly rather than short-circuiting early
-        // when harmonics might give false peaks
-        const MIN_LOW_FREQ_OFFSET = Math.floor(sampleRate / 300); // ~300 Hz threshold
 
+        // First pass: compute all correlations
         for (let offset = MIN_OFFSET; offset < MAX_SAMPLES; offset++) {
             let correlation = 0;
             let denominator = 0;
@@ -499,35 +494,44 @@ class Tuner {
             }
 
             // Normalize correlation: 1 when perfectly correlated, 0 when uncorrelated
-            correlation = denominator > 0 ? 1 - (correlation / denominator) : 0;
-            correlations[offset] = correlation;
+            correlations[offset] = denominator > 0 ? 1 - (correlation / denominator) : 0;
+        }
 
-            // Use a lower threshold (0.3) for initial detection to handle real-world audio with noise
-            if ((correlation > 0.3) && (correlation > bestCorrelation)) {
-                bestCorrelation = correlation;
-                bestOffset = offset;
-                foundGoodCorrelation = true;
-            } else if (foundGoodCorrelation) {
-                // For low frequencies (high offsets), continue searching a bit more
-                // to avoid being fooled by harmonics. This helps with cello C string.
-                const shouldContinueSearching = bestOffset < MIN_LOW_FREQ_OFFSET && offset < MIN_LOW_FREQ_OFFSET * 2;
+        // Second pass: find first strong local maximum
+        // This represents the fundamental period
+        for (let offset = MIN_OFFSET + 1; offset < MAX_SAMPLES - 1; offset++) {
+            const correlation = correlations[offset];
+            
+            // Check if this is a local maximum with good correlation strength
+            if (correlation > 0.7 && 
+                correlation > correlations[offset - 1] && 
+                correlation > correlations[offset + 1]) {
                 
-                if (!shouldContinueSearching) {
-                    // Short-circuit once we've found a good correlation and it starts decreasing
-                    // At this point, bestOffset >= MIN_OFFSET since we only set foundGoodCorrelation
-                    // when we also set bestOffset = offset (where offset >= MIN_OFFSET)
-                    if (bestOffset >= MIN_OFFSET && bestOffset < MAX_SAMPLES - 1 && correlations[bestOffset] !== 0) {
-                        // Parabolic interpolation to refine the peak position
-                        // The factor 8 is an empirical refinement constant for pitch detection accuracy
-                        const shift = (correlations[bestOffset + 1] - correlations[bestOffset - 1]) / correlations[bestOffset];
-                        return sampleRate / (bestOffset + (8 * shift));
+                // This is a local maximum - refine with parabolic interpolation
+                if (correlation > bestCorrelation) {
+                    bestCorrelation = correlation;
+                    bestOffset = offset;
+                    
+                    // For strong correlation, accept this as the fundamental
+                    if (correlation > 0.9) {
+                        const shift = (correlations[offset + 1] - correlations[offset - 1]) / (2 * correlations[offset]);
+                        const refinedOffset = offset + shift;
+                        if (refinedOffset > 0 && refinedOffset < MAX_SAMPLES) {
+                            return sampleRate / refinedOffset;
+                        }
+                        return sampleRate / offset;
                     }
-                    return sampleRate / bestOffset;
                 }
             }
         }
 
-        if (bestCorrelation > 0.01 && bestOffset >= MIN_OFFSET) {
+        // If we found a good correlation peak, use it
+        if (bestCorrelation > 0.5 && bestOffset > MIN_OFFSET) {
+            const shift = (correlations[bestOffset + 1] - correlations[bestOffset - 1]) / (2 * correlations[bestOffset]);
+            const refinedOffset = bestOffset + shift;
+            if (refinedOffset > 0 && refinedOffset < MAX_SAMPLES) {
+                return sampleRate / refinedOffset;
+            }
             return sampleRate / bestOffset;
         }
 
